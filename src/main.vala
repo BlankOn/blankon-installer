@@ -10,6 +10,10 @@ int main (string[] args) {
     w.add (i);
 
     w.show_all ();
+    w.fullscreen();
+    w.move(0, 0);
+    var screen = Gdk.Screen.get_default();
+    w.resize(screen.width(), screen.height());
     Gtk.main ();
     return 0;
 }
