@@ -61,7 +61,7 @@ div.column {
     var currentSlide = 0;
     var totalSlide = 3
     var width = window.innerWidth;
-    var locale="id";
+    var language="en";
     
     function slide() {
         var pos = currentSlide * width * -1;
@@ -91,29 +91,64 @@ div.column {
             columns[i].style.left = (i * width) + "px"; 
         }
         totalSlide = columns.length;
+        get_languages();
+        retranslate();
+    }
+
+    function update_language() {
+        var item = document.querySelector("select#language");
+        language = item.options[item.selectedIndex].value; 
         retranslate();
     }
 
     function retranslate() {
-        if (locale == "C") {
+        if (language == "C") {
             return;
         }
 
         var ajax = new XMLHttpRequest();
 
         ajax.onreadystatechange = function() {
+            var success = false;
             if (ajax.readyState==4 && ajax.responseText) {
-                var translations = eval("("+ajax.responseText+")")
-                var items = document.querySelectorAll("span");
+                var translations = eval("(" + ajax.responseText + ")")
+                    var items = document.querySelectorAll("span");
                 for (var i = 0; i < items.length; i++){
-                    console.log(translations[items[i].id]);
                     if (translations[items[i].id] != undefined) {
                         items[i].innerHTML = translations[items[i].id];
                     }
                 }
+                success = true;
+            } 
+                
+            if (success) {
+                language = "C";
             } 
         }
-        ajax.open("GET", "translations." + locale + ".json");
+        ajax.open("GET", "translations." + language + ".json");
+        ajax.send(null);
+    }
+
+    function get_languages() {
+
+        var ajax = new XMLHttpRequest();
+
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState == 4 && ajax.responseText) {
+                var languages = eval("(" + ajax.responseText + ")")
+                var item = document.querySelector("select#language");
+                item.options.length = 0;
+                for (var lang in languages) {
+                    var option = document.createElement("option");
+                    if (lang == language)
+                        option.selected = true;
+                    option.text = languages[lang];
+                    option.value = lang;
+                    item.add(option);
+                }
+            } 
+        }
+        ajax.open("GET", "languages.json");
         ajax.send(null);
     }
     -->
@@ -130,7 +165,7 @@ oo
             <h1><span id="welcome">Welcome to BlankOn</span></h1>
             <p><span id="">Welcome to BlankOn installation program. Please choose your language and region below continue:</span></p>
             <label><span id="">Language</span></label>
-            <select id="language">
+            <select id="language" onchange="update_language()">
             <option></option>
             </select>
             <label><span id="">Region</span></label>
