@@ -1,0 +1,52 @@
+body {
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+}
+
+div.topbar {
+    background-color:#00ff00;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+}
+
+nav.toolbar {
+    background-color:#00ff00;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+}
+
+div.viewport {
+    background-color: #e0e0e0;
+    width: 100px;
+    overflow: hidden;
+    bottom: 10px;
+    top: 10px;
+    left: 0px;
+    position: fixed;
+}
+
+div.main {
+    background-color: #e010e0;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+    width: 1000px;
+    position: fixed;
+    left: 0px;
+    -webkit-transition: all 0.2s ease-out;
+}
+
+div.column {
+    float: left;
+    width: 900px;
+    top: 0;
+    position: absolute;
+}
+
