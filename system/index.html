@@ -9,10 +9,9 @@
 </head>
 <body onload="setup()">
 <div class="topbar">
-oo
 </div>
 
-<div class="viewport" id="viewport" style="width=500px;">
+<div class="viewport" id="viewport">
     <div class="main" id="slider">
         <div class="column">
             <h1><span id="txt_welcome">Welcome to BlankOn</span></h1>
@@ -42,8 +41,8 @@ oo
     </div>
 </div>
 <nav class="toolbar">
-<input id="prev" type="button" value="Previous" onclick="previousSlide()"/>
-<input id="next" type="button" value="Next" onclick="nextSlide()"/>
+<button id="prev" onclick="previousSlide()"><span id="txt_previous">Previous</span></button>
+<button id="next" onclick="nextSlide()"/><span id="txt_next">Next</span></button>
 </nav>
 
 </body>
