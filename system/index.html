@@ -85,6 +85,7 @@ div.column {
     }
 
     function setup() {
+        width = window.innerWidth;
         var columns = document.querySelectorAll("div.column");
         for (var i = 0; i < columns.length; i++){
             columns[i].style.width = width + "px"; 
@@ -92,6 +93,7 @@ div.column {
         }
         totalSlide = columns.length;
         get_languages();
+        get_regions();
         retranslate();
     }
 
@@ -151,6 +153,30 @@ div.column {
         ajax.open("GET", "languages.json");
         ajax.send(null);
     }
+
+    function get_regions() {
+
+        var ajax = new XMLHttpRequest();
+
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState == 4 && ajax.responseText) {
+                var regions = eval("(" + ajax.responseText + ")")
+                var item = document.querySelector("select#region");
+                item.options.length = 0;
+                for (var region in regions) {
+                    var option = document.createElement("option");
+                    if (region == language)
+                        option.selected = true;
+                    option.text = regions[region];
+                    option.value = region;
+                    item.add(option);
+                }
+            } 
+        }
+        ajax.open("GET", "regions.json");
+        ajax.send(null);
+    }
+
     -->
 </script>
 </head>
