@@ -1,4 +1,5 @@
 body {
+    background-color: #dedede;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     font-family: "Sans";
@@ -35,7 +36,6 @@ div.viewport {
 }
 
 div.main {
-    background-color: #e010e0;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     width: 1000px;
@@ -53,3 +53,26 @@ div.column {
     padding-top: 80px;
 }
 
+label {
+    padding-left: 50px;
+    margin-bottom: 10px;
+}
+
+option {
+    font-size: 16px;
+}
+
+select{
+    position: fixed;
+    width: 350px;
+    left: 350px;
+    font-size: 16px;
+    height: 30px;
+    background-color: #eeeeee;
+    color: #000000;
+}
+
+select.hover{
+    background-color: #dddddd;
+    color: #000000;
+}
