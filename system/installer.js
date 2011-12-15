@@ -3,9 +3,18 @@ var totalSlide = 3
 var width = window.innerWidth;
 var language="en";
 
+function update_slide_visibility() {
+    var items = document.querySelectorAll("div.steps_long");
+    for (var i = 0; i < items.length; i++){
+        items[i].style.maxWidth = "0px";
+    }
+    items[currentSlide].style.maxWidth = "500px";
+}
+
 function slide() {
     var pos = currentSlide * width * -1;
     document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
+    update_slide_visibility();
 }
 
 function nextSlide() {
@@ -55,6 +64,7 @@ function setup() {
     get_regions();
     get_keyboards();
     retranslate();
+    update_slide_visibility();
 }
 
 function update_language() {

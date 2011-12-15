@@ -17,13 +17,14 @@ div.topbar {
 }
 
 nav.toolbar {
+    overflow: hidden;
     background-color:#909090;
     margin: 0px 0px 0px 0px;
-    padding: 10px 10px 10px 10px;
+    padding: 0px 0px 0px 0px;
     position: fixed;
     bottom: 0px;
+    left: 0px;
     right: 0px;
-    width: 100%;
 }
 
 div.viewport {
@@ -78,4 +79,29 @@ button.toolbar {
     font-size: 16px;
     padding-left: 5px;
     padding-right: 5px;
+}
+
+div.steps {
+    background-color: #909090; 
+    color: #A0A0A0;
+    font-size: 25px;
+    width: 20px;
+    float:left;
+    max-height: 60px;
+    display: block;
+    vertical-align: middle;
+}
+div.steps_long {
+    vertical-align: middle;
+    font-size: 25px;
+    overflow: hidden;
+    margin-left: 10px;
+    margin-right: 10px;
+    background-color: #909090; 
+    color: #e0e0e0;
+    float:left;
+    max-width: 0px;
+    max-height: 60px;
+    -webkit-transition: max-width 0.2s ease-out;
+    white-space: no-wrap;
 }
