@@ -25,10 +25,29 @@ function previousSlide() {
 }
 
 function setup() {
+    var padding_left  = 0;
+    var padding_right = 0;
+
+    // Get padding from CSS
+    if (document.styleSheets) {
+        for (var i = 0; i < document.styleSheets.length; i ++) {
+            var sheet = document.styleSheets[i];
+            for (var j = 0; j < sheet.cssRules.length; j ++) {
+                rules = sheet.cssRules[j];
+                if (rules.selectorText == "div.column") {
+                    padding_left  = rules.style.paddingLeft;
+                    padding_right = rules.style.paddingRight;
+                    break;
+                }
+            }
+        }
+    }
+
+    console.log(padding_left);
     width = window.innerWidth;
     var columns = document.querySelectorAll("div.column");
     for (var i = 0; i < columns.length; i++){
-        columns[i].style.width = width + "px"; 
+        columns[i].style.width = (width - padding_left - padding_right)+ "px"; 
         columns[i].style.left = (i * width) + "px"; 
     }
     totalSlide = columns.length;
