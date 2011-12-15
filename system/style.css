@@ -1,6 +1,8 @@
 body {
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
+    font-family: "Sans";
+    font-size: 16px;
 }
 
 div.topbar {
