@@ -72,7 +72,3 @@ select{
     color: #000000;
 }
 
-select.hover{
-    background-color: #dddddd;
-    color: #000000;
-}
