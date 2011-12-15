@@ -94,6 +94,7 @@ div.column {
         totalSlide = columns.length;
         get_languages();
         get_regions();
+        get_keyboards();
         retranslate();
     }
 
@@ -177,6 +178,29 @@ div.column {
         ajax.send(null);
     }
 
+    function get_keyboards() {
+
+        var ajax = new XMLHttpRequest();
+
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState == 4 && ajax.responseText) {
+                var keyboards = eval("(" + ajax.responseText + ")")
+                var item = document.querySelector("select#keyboard");
+                item.options.length = 0;
+                for (var keyboard in keyboards) {
+                    var option = document.createElement("option");
+                    if (keyboard == language)
+                        option.selected = true;
+                    option.text = keyboards[keyboard];
+                    option.value = keyboard;
+                    item.add(option);
+                }
+            } 
+        }
+        ajax.open("GET", "keyboards.json");
+        ajax.send(null);
+    }
+
     -->
 </script>
 </head>
@@ -198,6 +222,12 @@ oo
             <select id="region">
             <option></option>
             </select>
+            <label><span id="">Keyboard</span></label>
+            <select id="keyboard">
+            <option></option>
+            </select>
+
+
         </div>
         <div class="column">
         yyyyy
