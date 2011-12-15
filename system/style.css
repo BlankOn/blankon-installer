@@ -17,12 +17,12 @@ div.topbar {
 }
 
 nav.toolbar {
-    background-color:#00ff00;
+    background-color:#909090;
     margin: 0px 0px 0px 0px;
-    padding: 0px 0px 0px 0px;
+    padding: 10px 10px 10px 10px;
     position: fixed;
     bottom: 0px;
-    left: 0px;
+    right: 0px;
     width: 100%;
 }
 
@@ -72,3 +72,10 @@ select{
     color: #000000;
 }
 
+button.toolbar {
+    float: right;
+    margin: 5px;
+    font-size: 16px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
