@@ -66,7 +66,6 @@ function setup() {
         }
     }
 
-    console.log(padding_left);
     width = window.innerWidth;
     var columns = document.querySelectorAll("div.column");
     for (var i = 0; i < columns.length; i++){

@@ -29,6 +29,7 @@ nav.toolbar {
     right: 0px;
     border-top-left-radius: 15px;
     border-top-right-radius: 15px;
+    max-height: 60px;
 }
 
 div.viewport {
@@ -83,6 +84,7 @@ button.toolbar {
     font-size: 16px;
     padding-left: 5px;
     padding-right: 5px;
+    margin-top: 20px;
 }
 
 div.steps {
@@ -92,7 +94,6 @@ div.steps {
     font-size: 25px;
     width: 20px;
     float:left;
-    max-height: 60px;
     display: block;
     vertical-align: middle;
 }
@@ -108,7 +109,5 @@ div.steps_long {
     color: #e0e0e0;
     float:left;
     max-width: 0px;
-    max-height: 60px;
     -webkit-transition: max-width 0.2s ease-out;
-    white-space: no-wrap;
 }
