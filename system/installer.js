@@ -69,7 +69,7 @@ function setup() {
     width = window.innerWidth;
     var columns = document.querySelectorAll("div.column");
     for (var i = 0; i < columns.length; i++){
-        columns[i].style.width = (width - padding_left - padding_right)+ "px"; 
+        columns[i].style.width = (width - parseInt(padding_left) - parseInt(padding_right))+ "px"; 
         columns[i].style.left = (i * width) + "px"; 
     }
     totalSlide = columns.length;
