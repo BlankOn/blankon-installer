@@ -6,14 +6,20 @@ body {
     font-size: 16px;
 }
 
+img#logo {
+    float: right; 
+}
+
 div.topbar {
-    background-color:#00ff00;
+    background-color:#909090;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     position: fixed;
     top: 0px;
     left: 0px;
     width: 100%;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
 }
 
 nav.toolbar {
