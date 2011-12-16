@@ -2,13 +2,24 @@ var currentSlide = 0;
 var totalSlide = 3
 var width = window.innerWidth;
 var language="en";
+var stepActiveColor="";
+var stepInactiveColor="";
 
 function update_slide_visibility() {
     var items = document.querySelectorAll("div.steps_long");
     for (var i = 0; i < items.length; i++){
+        if (i == currentSlide)
+            continue;
         items[i].style.maxWidth = "0px";
     }
     items[currentSlide].style.maxWidth = "500px";
+
+    items = document.querySelectorAll("div.steps");
+    for (var i = 0; i < items.length; i++){
+        items[i].style.color = stepInactiveColor;
+    }
+    items[currentSlide].style.color = stepActiveColor;
+
 }
 
 function slide() {
@@ -46,7 +57,10 @@ function setup() {
                 if (rules.selectorText == "div.column") {
                     padding_left  = rules.style.paddingLeft;
                     padding_right = rules.style.paddingRight;
-                    break;
+                } else if (rules.selectorText == "div.steps") {
+                    stepInactiveColor = rules.style.color;
+                } else if (rules.selectorText == "div.steps_long") {
+                    stepActiveColor = rules.style.color;
                 }
             }
         }
