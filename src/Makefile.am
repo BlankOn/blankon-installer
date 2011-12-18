@@ -12,6 +12,7 @@ bin_PROGRAMS = blankon-installer
 blankon_installer_SOURCES = \
     main.vala \
 	installer.vala \
+	parted.vala \
 	$(NULL)
 
 blankon_installer_VALAFLAGS = \
