@@ -100,6 +100,43 @@ public class Parted {
         return retval;
     }
 
+    public string get_devices_json() {
+        string retval = "";
+        var list = get_devices ();
+        foreach (var device in list) {
+            retval += "{\n";
+            retval += "'" + device.path + "': {\n";
+            retval += " 'size' : " + device.size.to_string() + ",\n";
+            retval += " 'controller' : '" + device.controller + "',\n";
+            retval += " 'model' : '" + device.model + "',\n";
+            retval += " 'label' : '" + device.label + "',\n";
+            retval += " 'partitions' : \n";
+            foreach (var partition in device.partitions) {
+                retval += "     '" + partition.number.to_string() + "': \n";
+                retval += "     {\n";
+                retval += "     'start': " + partition.start.to_string() + ",\n";
+                retval += "     'end': " + partition.end.to_string() + ",\n";
+                retval += "     'size': " + partition.size.to_string() + ",\n";
+                retval += "     'filesystem': '" + partition.filesystem + "',\n";
+                retval += "     },\n";
+            }
+            retval += " \n";
+            retval += " }\n";
+            retval += "},\n";
+        }
+        stdout.printf(retval);
+        return retval;
+    }
+
+    public string process_request (string uri) {
+        var req_line = uri.replace("http://parted/", "");
+        var reqs = req_line.split("/");
+        if (reqs [0] == "get_devices") {
+            return get_devices_json();
+        }
+        return "{}";
+    }
+
     public Parted () {
     }
 
