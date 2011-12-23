@@ -1,5 +1,6 @@
 using Gee;
 
+
 public class Partition : Object {
     public enum MSDosType {
         PRIMARY,
@@ -71,7 +72,7 @@ public class InstallDevice : Object {
 }
 
 public class Parted {
-    string send_command (string command) {
+    static string send_command (string command) {
         string stdout;
         string stderr;
         int status;
@@ -86,7 +87,7 @@ public class Parted {
         return stdout;
     }
 
-    public ArrayList<InstallDevice> get_devices () {
+    public static ArrayList<InstallDevice> get_devices () {
         var retval = new ArrayList<InstallDevice> ();
         var output = send_command ("print");
 
@@ -100,7 +101,7 @@ public class Parted {
         return retval;
     }
 
-    public string get_devices_json() {
+    public static string get_devices_json() {
         string retval = "";
         var list = get_devices ();
         foreach (var device in list) {
@@ -128,8 +129,8 @@ public class Parted {
         return retval;
     }
 
-    public string process_request (string uri) {
-        var req_line = uri.replace("http://parted/", "");
+    public static string process_request (string uri) {
+        var req_line = uri.replace("parted:", "");
         var reqs = req_line.split("/");
         if (reqs [0] == "get_devices") {
             return get_devices_json();

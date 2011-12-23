@@ -117,3 +117,28 @@ div.steps_long {
     max-width: 0px;
     -webkit-transition: max-width 0.2s ease-out;
 }
+
+div.device {
+    width: 500px;
+    background-color: #d0d0d0;
+    border-color: #202020;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+div.partition {
+    width: 100%;
+    background-color: #a0a0a0;
+    border-color: #202020;
+    border-width: 1px;
+    border-style: solid;
+}
+
+div.partition:hover {
+    background-color: #e0e010;
+    border-color: #202020;
+    border-width: 1px;
+    border-style: solid;
+}

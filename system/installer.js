@@ -133,7 +133,8 @@ function get_languages() {
             }
         } 
     }
-    ajax.open("GET", "languages.json");
+    //ajax.open("GET", "languages.json");
+    ajax.open("GET", "http://parted/get_devices");
     ajax.send(null);
 }
 

@@ -1,6 +1,7 @@
 NULL = 
 
 AM_CPPFLAGS = \
+    -DLIBSOUP_USE_UNSTABLE_REQUEST_API \
 	$(INSTALLER_CFLAGS) \
 	-include config.h \
 	-DLOCALEDIR=\""$(localedir)"\" \
