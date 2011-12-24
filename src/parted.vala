@@ -104,35 +104,40 @@ public class Parted {
     public static string get_devices_json() {
         string retval = "";
         var list = get_devices ();
+        bool need_comma = false;
         foreach (var device in list) {
+            if (need_comma) retval += ",\n";
             retval += "{\n";
             retval += "'" + device.path + "': {\n";
             retval += " 'size' : " + device.size.to_string() + ",\n";
             retval += " 'controller' : '" + device.controller + "',\n";
             retval += " 'model' : '" + device.model + "',\n";
             retval += " 'label' : '" + device.label + "',\n";
-            retval += " 'partitions' : \n";
+            retval += " 'partitions' : {\n";
+            need_comma = false;
             foreach (var partition in device.partitions) {
+                if (need_comma) retval += ",\n";
                 retval += "     '" + partition.number.to_string() + "': \n";
                 retval += "     {\n";
                 retval += "     'start': " + partition.start.to_string() + ",\n";
                 retval += "     'end': " + partition.end.to_string() + ",\n";
                 retval += "     'size': " + partition.size.to_string() + ",\n";
                 retval += "     'filesystem': '" + partition.filesystem + "',\n";
-                retval += "     },\n";
+                retval += "     }\n";
+                need_comma = true;
             }
-            retval += " \n";
+            retval += "} \n";
             retval += " }\n";
-            retval += "},\n";
+            retval += "}\n";
+            need_comma = true;
         }
-        stdout.printf(retval);
         return retval;
     }
 
     public static string process_request (string uri) {
-        var req_line = uri.replace("parted:", "");
-        var reqs = req_line.split("/");
-        if (reqs [0] == "get_devices") {
+        var reqs = uri.split("parted/");
+        if (reqs [1] == "get_devices") {
+        stdout.printf("%s\n", reqs[1]);
             return get_devices_json();
         }
         return "{}";

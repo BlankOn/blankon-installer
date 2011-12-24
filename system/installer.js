@@ -120,6 +120,7 @@ function get_languages() {
 
     ajax.onreadystatechange = function() {
         if (ajax.readyState == 4 && ajax.responseText) {
+            console.log(ajax.responseText);
             var languages = eval("(" + ajax.responseText + ")")
                 var item = document.querySelector("select#language");
             item.options.length = 0;
