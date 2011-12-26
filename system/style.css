@@ -142,3 +142,7 @@ div.partition:hover {
     border-width: 1px;
     border-style: solid;
 }
+
+div.partition_selected {
+    background-color: #101010;
+}

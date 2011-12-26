@@ -1,9 +1,14 @@
 var currentSlide = 0;
 var totalSlide = 3
 var width = window.innerWidth;
-var language="en";
-var stepActiveColor="";
-var stepInactiveColor="";
+var language ="en";
+var stepActiveColor ="";
+var stepInactiveColor ="";
+var selectedPartition = "";
+var selectedPartitionColor = "";
+var normalPartitionColor = "";
+var minimumPartitionSize = 1000;
+var nextSlideValidators = {};
 
 function update_slide_visibility() {
     var items = document.querySelectorAll("div.steps_long");
@@ -22,10 +27,23 @@ function update_slide_visibility() {
 
 }
 
+function update_slide_next_navigation() {
+    if (nextSlideValidators[currentSlide]) {
+        eval("var canContinue = " + nextSlideValidators[currentSlide]);
+       
+        if (canContinue) {
+            document.getElementById("next").removeAttribute("disabled");
+        } else {
+            document.getElementById("next").setAttribute("disabled", "disabled");
+        }
+    }
+}
+
 function slide() {
     var pos = currentSlide * width * -1;
     document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
     update_slide_visibility();
+    update_slide_next_navigation();
 }
 
 function nextSlide() {
@@ -61,6 +79,10 @@ function setup() {
                     stepInactiveColor = rules.style.color;
                 } else if (rules.selectorText == "div.steps_long") {
                     stepActiveColor = rules.style.color;
+                } else if (rules.selectorText == "div.partition") {
+                    normalPartitionColor = rules.style.backgroundColor;
+                } else if (rules.selectorText == "div.partition_selected") {
+                    selectedPartitionColor = rules.style.backgroundColor;
                 }
             }
         }
@@ -71,13 +93,16 @@ function setup() {
     for (var i = 0; i < columns.length; i++){
         columns[i].style.width = (width - parseInt(padding_left) - parseInt(padding_right))+ "px"; 
         columns[i].style.left = (i * width) + "px"; 
+        nextSlideValidators[i] = columns[i].getAttribute("nextSlideValidator");
     }
     totalSlide = columns.length;
     get_languages();
     get_regions();
     get_keyboards();
+    get_partitions();
     retranslate();
     update_slide_visibility();
+    update_slide_next_navigation();
 }
 
 function update_language() {
@@ -97,7 +122,7 @@ function retranslate() {
         var success = false;
         if (ajax.readyState==4 && ajax.responseText) {
             var translations = eval("(" + ajax.responseText + ")")
-                var items = document.querySelectorAll("span");
+            var items = document.querySelectorAll("span");
             for (var i = 0; i < items.length; i++){
                 if (translations[items[i].id] != undefined) {
                     items[i].innerHTML = translations[items[i].id];
@@ -120,9 +145,8 @@ function get_languages() {
 
     ajax.onreadystatechange = function() {
         if (ajax.readyState == 4 && ajax.responseText) {
-            console.log(ajax.responseText);
             var languages = eval("(" + ajax.responseText + ")")
-                var item = document.querySelector("select#language");
+            var item = document.querySelector("select#language");
             item.options.length = 0;
             for (var lang in languages) {
                 var option = document.createElement("option");
@@ -134,8 +158,7 @@ function get_languages() {
             }
         } 
     }
-    //ajax.open("GET", "languages.json");
-    ajax.open("GET", "http://parted/get_devices");
+    ajax.open("GET", "languages.json");
     ajax.send(null);
 }
 
@@ -169,7 +192,7 @@ function get_keyboards() {
     ajax.onreadystatechange = function() {
         if (ajax.readyState == 4 && ajax.responseText) {
             var keyboards = eval("(" + ajax.responseText + ")")
-                var item = document.querySelector("select#keyboard");
+            var item = document.querySelector("select#keyboard");
             item.options.length = 0;
             for (var keyboard in keyboards) {
                 var option = document.createElement("option");
@@ -185,4 +208,83 @@ function get_keyboards() {
     ajax.send(null);
 }
 
+function get_partitions() {
 
+    var ajax = new XMLHttpRequest();
+
+    ajax.onreadystatechange = function() {
+        if (ajax.readyState == 4 && ajax.responseText) {
+                console.log("->" + ajax.responseText + "<-");
+            var devices = eval("(" + ajax.responseText + ")")
+            
+            var item = document.getElementById("device_list");
+            item.innerHTML = "";
+            for (var i = 0;i < devices.length; i ++){
+                var device = document.createElement("div");
+                device.setAttribute("class", "device");
+                var desc = "<b>" + devices[i].model + "</b> (" + devices[i].controller + ":" + devices[i].path + ")  <i>" + devices[i].size + "MB</i>" ;
+                var txt = document.createTextNode(desc);
+                item.appendChild(device);
+                device.innerHTML = desc;
+                for (var j = 0; j < devices[i].partitions.length; j ++) {
+                    var p = devices[i].partitions[j];
+                    if (p.size <= 0) {
+                        continue;
+                    }
+
+                    var partition = document.createElement("div");
+                    partition.setAttribute("class", "partition");
+                    var id = devices[i].path + j;
+                    if (p.filesystem == "free") {
+                        id += "_free";
+                    }
+                    partition.setAttribute("id", id);
+                    if (p.size > minimumPartitionSize) {
+                        partition.setAttribute("onclick", "select_partition('" + id + "')");
+                    }
+                    var txt = "";
+                    if (p.description) {
+                        txt += "<b>" + p.description + "</b><br/>";
+                    }
+                    txt += devices[i].path + p.id + ": " + p.size + " MB";
+                    partition.innerHTML = txt;
+                    device.appendChild(partition);
+                    if (p.parent != "0") {
+                        var parent_item = document.getElementById(devices[i].path + p.parent);
+                        if (parent_item != undefined) {
+                            parent_item.style.display = "none";
+                        }
+                    }
+                }
+            }
+            console.log(item.innerHTML);
+        } 
+    }
+    ajax.open("GET", "http://parted/get_devices");
+    ajax.send(null);
+}
+
+function select_partition(partition) {
+    var items = document.querySelectorAll("div.partition");
+    for (var i = 0; i < items.length; i++){
+        console.log(items[i].id);
+        if (items[i].id == partition) {
+            items[i].style.backgroundColor = selectedPartitionColor;
+            continue;
+        }
+        items[i].style.backgroundColor = normalPartitionColor;
+    }
+    selectedPartition = partition;
+    update_slide_next_navigation ();
+}
+
+function canContinueLocale() {
+    return true;
+}
+
+function canContinueTarget() {
+    if (selectedPartition != "")
+        return true;
+
+    return false;
+}

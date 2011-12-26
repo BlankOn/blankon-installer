@@ -1,6 +1,5 @@
 using Gee;
 
-
 public class Partition : Object {
     public enum MSDosType {
         PRIMARY,
@@ -8,22 +7,91 @@ public class Partition : Object {
         EXTENDED
     }
 
+    const string tmp_mount = "/tmp/tmp-mount";
+    const string[] supported_fs = { "ext3", "ext2", "ext4", "reiserfs", "xfs", "btrfs" };
+    const string[] releases = { "/etc/lsb-release" };
+
     public int number { get; set construct; }
     public long start { get; set construct; }
     public long end { get; set construct; }
     public long size { get; set construct; }
     public string filesystem { get; set construct; }
     public string flag { get; set construct; }
+    public int parent { get; set construct; }
+    public string description { get; set construct; }
+
+    string peek_description_from_release (string release_file) {
+        var result = "";
+        var file = File.new_for_path (tmp_mount + release_file);
+
+        if (!file.query_exists ()) {
+            stderr.printf ("File '%s' doesn't exist.\n", file.get_path ());
+            return "";
+        }
+
+        try {
+            var dis = new DataInputStream (file.read ());
+            string line;
+            // Read lines until end of file (null) is reached
+            while ((line = dis.read_line (null)) != null) {
+                if (line.has_prefix ("DISTRIB_DESCRIPTION")) {
+                    var split = line.split("=");
+                    if (split.length > 1) {
+                        result = split [1].replace("\"", "").replace("'", "");
+                        return result;
+                    }
+                }
+                result = line;
+            }
+        } catch (Error e) {
+            error ("%s", e.message);
+        }
+        return result;
+    }
+
+    string peek_description () {
+        var result = "";
+        foreach (var file in releases) {
+            result = peek_description_from_release (file);
+            if (result != "");
+                return result;
+        }
+        return result;
+    }
 
     // Sample: 1:32,3kB:1045MB:1045MB:ext4::boot
-    public Partition.from_parted_string(string line) {
+    public Partition.from_parted_string(string line, string device, int last_partition, long last_start, long last_end) {
         var fields  = line.split(":");
         number      = int.parse(fields [0]);
         start       = int.parse(fields [1]);
         end         = int.parse(fields [2]);
         size        = int.parse(fields [3]);
         filesystem  = fields [4];
-        flag        = fields [6];
+        if (fields.length > 5) {
+            flag    = fields [6];
+        } else {
+            flag    = "";
+        }
+
+        if (start >= last_start && end <= last_end) {
+            parent = last_partition;
+        } else {
+            parent = 0;
+        }
+
+        if (filesystem.has_prefix ("linux-swap")) {
+            description = "Swap";
+        } else {
+            Posix.mkdir (tmp_mount, 0700);
+            if (filesystem in supported_fs) {
+                stdout.printf("Mounting %s\n", (device + fields[0]));
+                if (Linux.mount (device + fields [0], tmp_mount, filesystem) == 0) {
+                    description = peek_description ();
+                    Linux.umount (tmp_mount); 
+                }
+            }
+        }
+        Posix.rmdir (tmp_mount);
     }
 }
 
@@ -39,6 +107,9 @@ public class InstallDevice : Object {
 
     public InstallDevice.from_parted_string(string lines) {
         int step = 0;
+        int last_partition = 0;
+        long last_parent_start = 0;
+        long last_parent_end = 0;
         foreach (var line in lines.split(";\n")) {
             if (line.length == 0)
                 continue;
@@ -64,22 +135,45 @@ public class InstallDevice : Object {
             }
 
             if (step == 2) {  // Get partition info
-                var partition = new Partition.from_parted_string (line);
+                var partition = new Partition.from_parted_string (line, path, last_partition, last_parent_start, last_parent_end);
                 partitions.add(partition);
+                if (partition.parent == 0) {
+                    last_partition = partition.number;
+                    last_parent_start = partition.start;
+                    last_parent_end = partition.end;
+                }
             }
         }
     }
 }
 
 public class Parted {
-    static string send_command (string command) {
+
+    static string probe () {
         string stdout;
         string stderr;
         int status;
-        string[] args = { "/sbin/parted", "-m", "-s", "-l", "unit MB", command };
+        string[] args = { "/sbin/partprobe", "-s" };
+        string[] env = { "LC_ALL=C" };
 
         try {
-    		Process.spawn_sync ("/tmp", args, null,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out stdout, out stderr, out status);
+    		Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out stdout, out stderr, out status);
+        } catch (GLib.Error e) {
+            throw e;
+        }
+
+        return stdout;
+    }
+
+    static string send_command (string device, string command) {
+        string stdout;
+        string stderr;
+        int status;
+        string[] args = { "/sbin/parted", "-m", "-s", device, "unit MB", command };
+        string[] env = { "LC_ALL=C" };
+
+        try {
+    		Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out stdout, out stderr, out status);
         } catch (GLib.Error e) {
             throw e;
         }
@@ -88,14 +182,30 @@ public class Parted {
     }
 
     public static ArrayList<InstallDevice> get_devices () {
-        var retval = new ArrayList<InstallDevice> ();
-        var output = send_command ("print");
-
-        foreach (var line in output.split("\n\n")) {
+        ArrayList<string> devices = new ArrayList<string>();
+        devices.add("/tmp/a.img");
+        devices.add("/tmp/b.img");
+        var output = "";
+        /*
+        var output = probe ();
+        foreach (var line in output.split("\n")) {
             if (line.length == 0)
                 continue;
-            var device = new InstallDevice.from_parted_string (line);
-            retval.add (device);
+
+            devices.add (line.split(": ")[0]);
+        }*/
+
+        var retval = new ArrayList<InstallDevice> ();
+
+        foreach (var device in devices) {
+            output = send_command (device, "print free");
+
+            stdout.printf("%s\n", output);
+            if (output.length == 0)
+                continue;
+
+            var d = new InstallDevice.from_parted_string (output);
+            retval.add (d);
         }
 
         return retval;
@@ -105,32 +215,34 @@ public class Parted {
         string retval = "";
         var list = get_devices ();
         bool need_comma = false;
+        retval += "[\n";
         foreach (var device in list) {
             if (need_comma) retval += ",\n";
-            retval += "{\n";
-            retval += "'" + device.path + "': {\n";
+            retval += " { 'path' : '" + device.path + "',\n";
             retval += " 'size' : " + device.size.to_string() + ",\n";
             retval += " 'controller' : '" + device.controller + "',\n";
             retval += " 'model' : '" + device.model + "',\n";
             retval += " 'label' : '" + device.label + "',\n";
-            retval += " 'partitions' : {\n";
+            retval += " 'partitions' : [\n";
             need_comma = false;
             foreach (var partition in device.partitions) {
                 if (need_comma) retval += ",\n";
-                retval += "     '" + partition.number.to_string() + "': \n";
                 retval += "     {\n";
+                retval += "     'id': " + partition.number.to_string() + ",\n";
+                retval += "     'parent': " + partition.parent.to_string() + ",\n";
                 retval += "     'start': " + partition.start.to_string() + ",\n";
                 retval += "     'end': " + partition.end.to_string() + ",\n";
                 retval += "     'size': " + partition.size.to_string() + ",\n";
                 retval += "     'filesystem': '" + partition.filesystem + "',\n";
+                retval += "     'description': '" + partition.description + "',\n";
                 retval += "     }\n";
                 need_comma = true;
             }
-            retval += "} \n";
-            retval += " }\n";
+            retval += " ]\n";
             retval += "}\n";
             need_comma = true;
         }
+        retval += "]";
         return retval;
     }
 
