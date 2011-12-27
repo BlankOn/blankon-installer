@@ -32,7 +32,6 @@ public class Partition : Object {
         try {
             var dis = new DataInputStream (file.read ());
             string line;
-            // Read lines until end of file (null) is reached
             while ((line = dis.read_line (null)) != null) {
                 if (line.has_prefix ("DISTRIB_DESCRIPTION")) {
                     var split = line.split("=");
@@ -93,6 +92,12 @@ public class Partition : Object {
         }
         Posix.rmdir (tmp_mount);
     }
+
+    public Partition.from_unallocated_space(string device, long size) {
+        number = 1;
+        filesystem = "free";
+        this.size = size;
+    }
 }
 
 public class InstallDevice : Object {
@@ -104,6 +109,16 @@ public class InstallDevice : Object {
     public long sector_size_physical { get; set construct; }
     public string label { get; set construct; }
     public ArrayList<Partition> partitions { get; set construct; }
+
+
+    public InstallDevice.from_unallocated_space(string device, long size) {
+        path = device;
+        this.size = size;
+        model = "Unknown";
+        controller = "unknown";
+        partitions = new ArrayList<Partition>();
+        partitions.add (new Partition.from_unallocated_space(device, size));
+    }
 
     public InstallDevice.from_parted_string(string lines) {
         int step = 0;
@@ -149,6 +164,8 @@ public class InstallDevice : Object {
 
 public class Parted {
 
+    const string[] invalid_devices = { "loop", "dm" };
+
     static string probe () {
         string stdout;
         string stderr;
@@ -166,7 +183,7 @@ public class Parted {
     }
 
     static string send_command (string device, string command) {
-        string stdout;
+        string stdout = "";
         string stderr;
         int status;
         string[] args = { "/sbin/parted", "-m", "-s", device, "unit MB", command };
@@ -182,29 +199,105 @@ public class Parted {
     }
 
     public static ArrayList<InstallDevice> get_devices () {
-        ArrayList<string> devices = new ArrayList<string>();
-        devices.add("/tmp/a.img");
-        devices.add("/tmp/b.img");
-        var output = "";
-        /*
+        var retval = new ArrayList<InstallDevice> ();
+        HashMap<string,long> devices = new HashMap<string,long>();
+        //devices.set ("/tmp/a.img", 4000000);
+        //devices.add("/tmp/b.img");
+        //var output = "";
+        
         var output = probe ();
         foreach (var line in output.split("\n")) {
             if (line.length == 0)
                 continue;
 
-            devices.add (line.split(": ")[0]);
-        }*/
+            devices.set (line.split(": ")[0], 0);
+        }
 
-        var retval = new ArrayList<InstallDevice> ();
+        // Traverse again in /proc/partitions in case no disk reported by partprobe 
+        if (devices.size == 0) {
+            var file = File.new_for_path ("/proc/partitions");
 
-        foreach (var device in devices) {
+            if (!file.query_exists ()) {
+                stderr.printf ("File '%s' doesn't exist.\n", file.get_path ());
+                return retval;
+            }
+
+            try {
+                var dis = new DataInputStream (file.read ());
+                string line;
+                int i = 0;
+                while ((line = dis.read_line (null)) != null) {
+                    if (i < 2) { // Data starts at line 3
+                        i ++;
+                        continue;
+                    }
+
+                    var data = "";
+                    var column = 0;
+                    long block_size = 0;
+                    var device_name = "";
+                    for (var j = 0; j < line.length; j ++) {
+                        if (line [j] == ' ') { 
+                            if (data != "") { // data already contain something
+                                if (column == 2) { // interesting data starts at column #3
+                                    block_size = long.parse (data);
+                                    data = "";
+                                } else if (column == 3) {
+                                    device_name = data;
+                                    data = "";
+                                }
+                                data = "";
+                                column ++;
+                            }
+                            continue; // skip space
+                        } else {
+                            if (column == 3 && line[j].isdigit()) {
+                                data = "";
+                                device_name = "";
+                                break;
+                            }
+                            data += line [j].to_string();
+                        }
+                    }
+                    if (data != "") {
+                        device_name = data;
+                    }
+                    bool insert = false;
+                    foreach (var d in invalid_devices) {
+                        if (device_name.has_prefix (d)) {
+                            break;
+                        } else {
+                            insert = true;
+                        }
+                    }
+                    if (int.parse (device_name) > 0)
+                        insert = false;
+
+                    if (insert && device_name.length > 0) {
+                        devices.set ("/dev/" + device_name, block_size);
+                    }
+                }
+            } catch (Error e) {
+                error ("%s", e.message);
+            }
+
+        }
+
+
+        foreach (var device in devices.keys) {
             output = send_command (device, "print free");
 
-            stdout.printf("%s\n", output);
-            if (output.length == 0)
-                continue;
+            stdout.printf("->%s<-: %d\n", output, output.length);
 
-            var d = new InstallDevice.from_parted_string (output);
+            InstallDevice d;
+            if (output.length == 0 || output.has_prefix("Error")) {
+                if (devices [device] == 0L)
+                    continue;
+                d = new InstallDevice.from_unallocated_space (device, devices [device]);
+            } else {
+                d = new InstallDevice.from_parted_string (output);
+            }
+
             retval.add (d);
         }
 
