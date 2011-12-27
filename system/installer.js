@@ -234,9 +234,11 @@ function get_partitions() {
 
                     var partition = document.createElement("div");
                     partition.setAttribute("class", "partition");
-                    var id = devices[i].path + j;
+                    var id = "";
                     if (p.filesystem == "free") {
-                        id += "_free";
+                        id = devices[i].path + "_free";
+                    } else {
+                        id = devices[i].path + p.id;
                     }
                     partition.setAttribute("id", id);
                     if (p.size > minimumPartitionSize) {
@@ -246,7 +248,7 @@ function get_partitions() {
                     if (p.description) {
                         txt += "<b>" + p.description + "</b><br/>";
                     }
-                    txt += devices[i].path + p.id + ": " + p.size + " MB";
+                    txt += id + ": " + p.size + " MB";
                     partition.innerHTML = txt;
                     device.appendChild(partition);
                     if (p.parent != "0") {
