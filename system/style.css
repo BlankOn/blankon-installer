@@ -146,3 +146,13 @@ div.partition:hover {
 div.partition_selected {
     background-color: #101010;
 }
+
+input.fields {
+    left: 350px;
+    font-size: 16px;
+    height: 30px;
+    background-color: #eeeeee;
+    color: #000000;
+    border-radius: 5px;
+}
+
