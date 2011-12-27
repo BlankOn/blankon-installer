@@ -1,5 +1,6 @@
 using Gee;
 
+
 public class Partition : Object {
     public enum MSDosType {
         PRIMARY,
@@ -11,6 +12,8 @@ public class Partition : Object {
     const string[] supported_fs = { "ext3", "ext2", "ext4", "reiserfs", "xfs", "btrfs" };
     const string[] releases = { "/etc/lsb-release" };
 
+
+    static HashMap <string,string> probed_os = new HashMap<string,string>();
     public int number { get; set construct; }
     public long start { get; set construct; }
     public long end { get; set construct; }
@@ -20,41 +23,34 @@ public class Partition : Object {
     public int parent { get; set construct; }
     public string description { get; set construct; }
 
-    string peek_description_from_release (string release_file) {
+    string peek_description (string device) {
         var result = "";
-        var file = File.new_for_path (tmp_mount + release_file);
+        if (probed_os.size == 0) {
+            string normal_output;
+            string error_output;
+            int status;
 
-        if (!file.query_exists ()) {
-            stderr.printf ("File '%s' doesn't exist.\n", file.get_path ());
-            return "";
-        }
+            
+            string[] args = { "/usr/bin/os-prober" };
+            string[] env = { "LC_ALL=C" };
 
-        try {
-            var dis = new DataInputStream (file.read ());
-            string line;
-            while ((line = dis.read_line (null)) != null) {
-                if (line.has_prefix ("DISTRIB_DESCRIPTION")) {
-                    var split = line.split("=");
-                    if (split.length > 1) {
-                        result = split [1].replace("\"", "").replace("'", "");
-                        return result;
-                    }
-                }
-                result = line;
+            try {
+    		    Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+            } catch (GLib.Error e) {
             }
-        } catch (Error e) {
-            error ("%s", e.message);
-        }
-        return result;
-    }
 
-    string peek_description () {
-        var result = "";
-        foreach (var file in releases) {
-            result = peek_description_from_release (file);
-            if (result != "");
-                return result;
+            stdout.printf("------>%s<", normal_output);
+            foreach (var line in normal_output.split("\n")) {
+                var fields = line.split(":");
+                if (fields.length > 1) {
+                    probed_os.set (fields[0], fields[1]);
+                }
+            }
+
         }
+
+        result = probed_os [device];
+
         return result;
     }
 
@@ -81,16 +77,8 @@ public class Partition : Object {
         if (filesystem.has_prefix ("linux-swap")) {
             description = "Swap";
         } else {
-            Posix.mkdir (tmp_mount, 0700);
-            if (filesystem in supported_fs) {
-                stdout.printf("Mounting %s\n", (device + fields[0]));
-                if (Linux.mount (device + fields [0], tmp_mount, filesystem) == 0) {
-                    description = peek_description ();
-                    Linux.umount (tmp_mount); 
-                }
-            }
+            description = peek_description (device);
         }
-        Posix.rmdir (tmp_mount);
     }
 
     public Partition.from_unallocated_space(string device, long size) {
