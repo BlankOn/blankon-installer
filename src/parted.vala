@@ -225,18 +225,20 @@ public class Parted {
             retval += " 'label' : '" + device.label + "',\n";
             retval += " 'partitions' : [\n";
             need_comma = false;
-            foreach (var partition in device.partitions) {
-                if (need_comma) retval += ",\n";
-                retval += "     {\n";
-                retval += "     'id': " + partition.number.to_string() + ",\n";
-                retval += "     'parent': " + partition.parent.to_string() + ",\n";
-                retval += "     'start': " + partition.start.to_string() + ",\n";
-                retval += "     'end': " + partition.end.to_string() + ",\n";
-                retval += "     'size': " + partition.size.to_string() + ",\n";
-                retval += "     'filesystem': '" + partition.filesystem + "',\n";
-                retval += "     'description': '" + partition.description + "',\n";
-                retval += "     }\n";
-                need_comma = true;
+            if (device.partitions != null) {
+                foreach (var partition in device.partitions) {
+                    if (need_comma) retval += ",\n";
+                    retval += "     {\n";
+                    retval += "     'id': " + partition.number.to_string() + ",\n";
+                    retval += "     'parent': " + partition.parent.to_string() + ",\n";
+                    retval += "     'start': " + partition.start.to_string() + ",\n";
+                    retval += "     'end': " + partition.end.to_string() + ",\n";
+                    retval += "     'size': " + partition.size.to_string() + ",\n";
+                    retval += "     'filesystem': '" + partition.filesystem + "',\n";
+                    retval += "     'description': '" + partition.description + "',\n";
+                    retval += "     }\n";
+                    need_comma = true;
+                }
             }
             retval += " ]\n";
             retval += "}\n";
