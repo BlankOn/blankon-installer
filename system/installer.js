@@ -10,6 +10,15 @@ var normalPartitionColor = "";
 var minimumPartitionSize = 1000;
 var nextSlideValidators = {};
 
+var onchangeUpdaterList = [
+    "language",
+    "computer_name",
+    "full_name",
+    "user_name",
+    "password1",
+    "password2"
+];
+
 function update_slide_visibility() {
     var items = document.querySelectorAll("div.steps_long");
     for (var i = 0; i < items.length; i++){
@@ -101,6 +110,7 @@ function setup() {
     get_keyboards();
     get_partitions();
     retranslate();
+    setup_updater();
     update_slide_visibility();
     update_slide_next_navigation();
 }
@@ -290,3 +300,15 @@ function canContinueTarget() {
 
     return false;
 }
+
+function setup_updater() {
+    for (var i = 0; i < onchangeUpdaterList.length; i ++) {
+        var id = onchangeUpdaterList [i];
+        var item = document.getElementById(id);
+        if (item != undefined) {
+            item.setAttribute("onchange", "update_" + id + "()");
+        }
+    }
+}
+
+
