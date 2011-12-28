@@ -19,7 +19,7 @@
             <p><span id="txt_welcome_description">Welcome to BlankOn installation program. Please choose your language and region below continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the <b>Settings</b> application.</span></p>
             <p>
             <label><span id="txt_language">Language</span></label>
-            <select id="language" onchange="update_language()">
+            <select id="language">
             <option></option>
             </select>
             </p>
@@ -65,26 +65,31 @@
             <p>
             <label><span id="txt_computer_name">Computer Name</span></label>
             <input type="text" name="computer_name" size=30 class="fields" value="blankon"/>
+            <div class="hint" id="hint_computer_name"><span id="txt_hint_computer_name">Computer name must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii.</span></div>
             </p>
 
             <p>
             <label><span id="txt_your_name">Your Name</span></label>
             <input type="text" name="full_name" size=50 class="fields"/>
+            <div class="hint" id="hint_full_name"><span id="txt_hint_full_name"></span></div>
             </p>
 
             <p>
             <label><span id="txt_username">User Name</span></label>
             <input type="text" name="user_name" size=15/ class="fields">
+            <div class="hint" id="hint_user_name"><span id="txt_hint_user_name">Username must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii.</span></div>
             </p>
 
             <p>
             <label><span id="txt_password">Password</span></label>
             <input type="password" name="password1" value="" size=15/ class="fields">
+            <div class="hint" id="hint_password"><span id="txt_hint_password">Password must be at least 8 character long with number and alphabet combination.</span></div>
             </p>
 
             <p>
             <label><span id="txt_password2">Password (once again)</span></label>
             <input type="password" name="password2" value="" size=15/ class="fields">
+            <div class="hint" id="hint_password2"><span id="txt_hint_password2">You must use exactly the same password as typed above.</span></div>
             </p>
 
         </div>

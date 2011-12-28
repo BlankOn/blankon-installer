@@ -156,3 +156,8 @@ input.fields {
     border-radius: 5px;
 }
 
+div.hint {
+    color: red; 
+    padding-left: 50px;
+    display: none;
+}
