@@ -19,6 +19,11 @@ var onchangeUpdaterList = [
     "password2"
 ];
 
+var alpha_start = ("a").charCodeAt(0);
+var alpha_end = ("z").charCodeAt(0);
+var digit_start = ("0").charCodeAt(0);
+var digit_end = ("9").charCodeAt(0);
+
 function update_slide_visibility() {
     var items = document.querySelectorAll("div.steps_long");
     for (var i = 0; i < items.length; i++){
@@ -306,9 +311,70 @@ function setup_updater() {
         var id = onchangeUpdaterList [i];
         var item = document.getElementById(id);
         if (item != undefined) {
-            item.setAttribute("onchange", "update_" + id + "()");
+            item.setAttribute("onchange", "update_" + id + "(this)");
         }
     }
 }
 
+function validate_lowercase_alphanumeric(string) {
+    var result = true;
+    for (var i = 0; i < string.length; i ++) {
+        var isAlpha = (string.charCodeAt(i) >= alpha_start && string.charCodeAt(i) <= alpha_end);
+        var isDigit = (string.charCodeAt(i) >= digit_start && string.charCodeAt(i) <= digit_end);
+        if (i == 0) {
+            if (!isAlpha) {
+                result = false;
+                break;
+            }
+        }
 
+        if (!(isAlpha || isDigit)) {
+            result = false;
+            break;
+        }
+    }
+    return result;
+}
+
+function update_computer_name(item) {
+    var result = false;
+
+    if (item.value.length > 0) {
+        result = true;
+    }
+
+    var lowercase = item.value.toLowerCase();
+    result = result & validate_lowercase_alphanumeric (lowercase);
+   
+    item.value = lowercase;
+    display_hint (item, !result);
+    return result;
+}
+
+function update_user_name(item) {
+    var result = false;
+
+    if (item.value.length > 0) {
+        result = true;
+    }
+
+    var lowercase = item.value.toLowerCase();
+    result = result & validate_lowercase_alphanumeric (lowercase);
+   
+    item.value = lowercase;
+    display_hint (item, !result);
+    return result;
+}
+
+
+function display_hint(object, display) {
+    var id = object.id;
+    var item = document.getElementById("hint_" + id);
+    if (item != undefined) {
+        if (display) {
+            item.style.display = "inherit";
+        } else {
+            item.style.display = "none";
+        }
+    }
+}
