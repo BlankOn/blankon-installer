@@ -15,12 +15,15 @@ var onchangeUpdaterList = [
     "computer_name",
     "full_name",
     "user_name",
-    "password1",
+    "password",
     "password2"
 ];
 
 var alpha_start = ("a").charCodeAt(0);
 var alpha_end = ("z").charCodeAt(0);
+
+var ALPHA_start = ("A").charCodeAt(0);
+var ALPHA_end = ("Z").charCodeAt(0);
 var digit_start = ("0").charCodeAt(0);
 var digit_end = ("9").charCodeAt(0);
 
@@ -229,7 +232,6 @@ function get_partitions() {
 
     ajax.onreadystatechange = function() {
         if (ajax.readyState == 4 && ajax.responseText) {
-                console.log("->" + ajax.responseText + "<-");
             var devices = eval("(" + ajax.responseText + ")")
             
             var item = document.getElementById("device_list");
@@ -274,7 +276,6 @@ function get_partitions() {
                     }
                 }
             }
-            console.log(item.innerHTML);
         } 
     }
     ajax.open("GET", "http://parted/get_devices");
@@ -284,7 +285,6 @@ function get_partitions() {
 function select_partition(partition) {
     var items = document.querySelectorAll("div.partition");
     for (var i = 0; i < items.length; i++){
-        console.log(items[i].id);
         if (items[i].id == partition) {
             items[i].style.backgroundColor = selectedPartitionColor;
             continue;
@@ -336,6 +336,12 @@ function validate_lowercase_alphanumeric(string) {
     return result;
 }
 
+function give_focus_if_invalid(result, item) {
+    if (!result) {
+        item.focus();
+    }
+}
+
 function update_computer_name(item) {
     var result = false;
 
@@ -348,24 +354,67 @@ function update_computer_name(item) {
    
     item.value = lowercase;
     display_hint (item, !result);
+    give_focus_if_invalid(item);
     return result;
 }
 
 function update_user_name(item) {
+    // same validation with computer_name
+    return update_computer_name(item);
+}
+
+function update_password(item) {
     var result = false;
 
-    if (item.value.length > 0) {
+    if (item.value.length > 7) {
         result = true;
     }
 
-    var lowercase = item.value.toLowerCase();
-    result = result & validate_lowercase_alphanumeric (lowercase);
-   
-    item.value = lowercase;
+    var string = item.value;
+    var hasAlpha = false;
+    var hasDigit = false;
+    var hasALPHA = false;
+    if (result) {
+        result = false;
+        for (var i = 0; i < string.length; i ++) {
+            var isAlpha = (string.charCodeAt(i) >= alpha_start && string.charCodeAt(i) <= alpha_end);
+            var isALPHA = (string.charCodeAt(i) >= ALPHA_start && string.charCodeAt(i) <= ALPHA_end);
+            var isDigit = (string.charCodeAt(i) >= digit_start && string.charCodeAt(i) <= digit_end);
+            if (isAlpha) {
+                hasAlpha = true;
+            }
+
+            if (isALPHA) {
+                hasALPHA = true;
+            }
+
+            if (isDigit) {
+                hasDigit = true;
+            }
+
+            if (hasALPHA && hasAlpha && hasDigit) {
+                result = true
+                break;
+            }
+        }
+    }
+
     display_hint (item, !result);
-    return result;
+    give_focus_if_invalid(item);
+    return true;
 }
 
+function update_password2(item) {
+    var result = false;
+    var p = document.getElementById("password");
+    if (p != undefined) {
+        result = (p.value == item.value);    
+    }
+
+    display_hint (item, !result);
+    give_focus_if_invalid(item);
+    return result;
+}
 
 function display_hint(object, display) {
     var id = object.id;
