@@ -19,15 +19,35 @@ var onchangeUpdaterList = [
     "password2"
 ];
 
-var alpha_start = ("a").charCodeAt(0);
-var alpha_end = ("z").charCodeAt(0);
+var alphaStart = ("a").charCodeAt(0);
+var alphaEnd = ("z").charCodeAt(0);
 
-var ALPHA_start = ("A").charCodeAt(0);
-var ALPHA_end = ("Z").charCodeAt(0);
-var digit_start = ("0").charCodeAt(0);
-var digit_end = ("9").charCodeAt(0);
+var ALPHAStart = ("A").charCodeAt(0);
+var ALPHAEnd = ("Z").charCodeAt(0);
+var digitStart = ("0").charCodeAt(0);
+var digitEnd = ("9").charCodeAt(0);
 
-function update_slide_visibility() {
+function camelize(string) {
+    var result = "";
+    var capitalize = false;
+    for (var i = 0; i < string.length; i++){
+        var c = string.charAt(i);
+        if (c == '_') {
+            capitalize = true;
+            continue;
+        } else {
+            if (capitalize) {
+                result += c.toUpperCase();
+                capitalize = false;
+            } else {
+                result += c;
+            }
+        }
+    }
+    return result;
+}
+
+function updateSlideVisibitily() {
     var items = document.querySelectorAll("div.steps_long");
     for (var i = 0; i < items.length; i++){
         if (i == currentSlide)
@@ -44,7 +64,7 @@ function update_slide_visibility() {
 
 }
 
-function validate_current_slide() {
+function validateCurrentSlide() {
     if (nextSlideValidators[currentSlide]) {
         eval("var canContinue = " + nextSlideValidators[currentSlide]);
       
@@ -59,8 +79,8 @@ function validate_current_slide() {
 function slide() {
     var pos = currentSlide * width * -1;
     document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
-    update_slide_visibility();
-    validate_current_slide();
+    updateSlideVisibitily();
+    validateCurrentSlide();
 }
 
 function nextSlide() {
@@ -80,8 +100,8 @@ function previousSlide() {
 }
 
 function setup() {
-    var padding_left  = 0;
-    var padding_right = 0;
+    var paddingLeft  = 0;
+    var paddingRight = 0;
 
     // Get padding from CSS
     if (document.styleSheets) {
@@ -90,8 +110,8 @@ function setup() {
             for (var j = 0; j < sheet.cssRules.length; j ++) {
                 rules = sheet.cssRules[j];
                 if (rules.selectorText == "div.column") {
-                    padding_left  = rules.style.paddingLeft;
-                    padding_right = rules.style.paddingRight;
+                    paddingLeft  = rules.style.paddingLeft;
+                    paddingRight = rules.style.paddingRight;
                 } else if (rules.selectorText == "div.steps") {
                     stepInactiveColor = rules.style.color;
                 } else if (rules.selectorText == "div.steps_long") {
@@ -108,7 +128,7 @@ function setup() {
     width = window.innerWidth;
     var columns = document.querySelectorAll("div.column");
     for (var i = 0; i < columns.length; i++){
-        columns[i].style.width = (width - parseInt(padding_left) - parseInt(padding_right))+ "px"; 
+        columns[i].style.width = (width - parseInt(paddingLeft) - parseInt(paddingRight))+ "px"; 
         columns[i].style.left = (i * width) + "px"; 
 
         var id = columns[i].id;
@@ -116,17 +136,17 @@ function setup() {
         nextSlideValidators[i] = "canContinue" + id.charAt(0).toUpperCase() + id.substring(1, id.length) + "()";
     }
     totalSlide = columns.length;
-    get_languages();
-    get_regions();
-    get_keyboards();
-    get_partitions();
+    getLanguages();
+    getRegions();
+    getKeyboards();
+    getPartitions();
     retranslate();
-    setup_updater();
-    update_slide_visibility();
-    validate_current_slide();
+    setupUpdater();
+    updateSlideVisibitily();
+    validateCurrentSlide();
 }
 
-function update_language() {
+function updateLanguage() {
     var item = document.querySelector("select#language");
     language = item.options[item.selectedIndex].value; 
     retranslate();
@@ -160,7 +180,7 @@ function retranslate() {
     ajax.send(null);
 }
 
-function get_languages() {
+function getLanguages() {
 
     var ajax = new XMLHttpRequest();
 
@@ -183,7 +203,7 @@ function get_languages() {
     ajax.send(null);
 }
 
-function get_regions() {
+function getRegions() {
 
     var ajax = new XMLHttpRequest();
 
@@ -206,7 +226,7 @@ function get_regions() {
     ajax.send(null);
 }
 
-function get_keyboards() {
+function getKeyboards() {
 
     var ajax = new XMLHttpRequest();
 
@@ -229,7 +249,7 @@ function get_keyboards() {
     ajax.send(null);
 }
 
-function get_partitions() {
+function getPartitions() {
 
     var ajax = new XMLHttpRequest();
 
@@ -262,7 +282,7 @@ function get_partitions() {
                     }
                     partition.setAttribute("id", id);
                     if (p.size > minimumPartitionSize) {
-                        partition.setAttribute("onclick", "select_partition('" + id + "')");
+                        partition.setAttribute("onclick", "selectPartition('" + id + "')");
                     }
                     var txt = "";
                     if (p.description) {
@@ -272,9 +292,9 @@ function get_partitions() {
                     partition.innerHTML = txt;
                     device.appendChild(partition);
                     if (p.parent != "0") {
-                        var parent_item = document.getElementById(devices[i].path + p.parent);
-                        if (parent_item != undefined) {
-                            parent_item.style.display = "none";
+                        var parentItem = document.getElementById(devices[i].path + p.parent);
+                        if (parentItem != undefined) {
+                            parentItem.style.display = "none";
                         }
                     }
                 }
@@ -285,7 +305,7 @@ function get_partitions() {
     ajax.send(null);
 }
 
-function select_partition(partition) {
+function selectPartition(partition) {
     var items = document.querySelectorAll("div.partition");
     for (var i = 0; i < items.length; i++){
         if (items[i].id == partition) {
@@ -295,7 +315,7 @@ function select_partition(partition) {
         items[i].style.backgroundColor = normalPartitionColor;
     }
     selectedPartition = partition;
-    validate_current_slide ();
+    validateCurrentSlide ();
 }
 
 function canContinueLocale() {
@@ -309,21 +329,21 @@ function canContinueTarget() {
     return false;
 }
 
-function setup_updater() {
+function setupUpdater() {
     for (var i = 0; i < onchangeUpdaterList.length; i ++) {
         var id = onchangeUpdaterList [i];
         var item = document.getElementById(id);
         if (item != undefined) {
-            item.setAttribute("onchange", "update_" + id + "(this)");
+            item.setAttribute("onchange", camelize("update_" + id) + "(this)");
         }
     }
 }
 
-function validate_lowercase_alphanumeric(string) {
+function validateLowerCaseAlphanumeric(string) {
     var result = true;
     for (var i = 0; i < string.length; i ++) {
-        var isAlpha = (string.charCodeAt(i) >= alpha_start && string.charCodeAt(i) <= alpha_end);
-        var isDigit = (string.charCodeAt(i) >= digit_start && string.charCodeAt(i) <= digit_end);
+        var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
+        var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
         if (i == 0) {
             if (!isAlpha) {
                 result = false;
@@ -339,13 +359,13 @@ function validate_lowercase_alphanumeric(string) {
     return result;
 }
 
-function give_focus_if_invalid(result, item) {
+function giveFocusIfInvalid(result, item) {
     if (!result) {
         item.focus();
     }
 }
 
-function update_computer_name(item) {
+function updateComputerName(item) {
     var result = false;
 
     if (item.value.length > 0) {
@@ -353,20 +373,20 @@ function update_computer_name(item) {
     }
 
     var lowercase = item.value.toLowerCase();
-    result = result & validate_lowercase_alphanumeric (lowercase);
+    result = result & validateLowerCaseAlphanumeric (lowercase);
    
     item.value = lowercase;
-    display_hint (item, !result);
-    give_focus_if_invalid(item);
+    displayHint (item, !result);
+    giveFocusIfInvalid(item);
     return result;
 }
 
-function update_user_name(item) {
+function updateUserName(item) {
     // same validation with computer_name
-    return update_computer_name(item);
+    return updateComputerName(item);
 }
 
-function update_password(item) {
+function updatePassword(item) {
     var result = false;
 
     if (item.value.length > 7) {
@@ -380,9 +400,9 @@ function update_password(item) {
     if (result) {
         result = false;
         for (var i = 0; i < string.length; i ++) {
-            var isAlpha = (string.charCodeAt(i) >= alpha_start && string.charCodeAt(i) <= alpha_end);
-            var isALPHA = (string.charCodeAt(i) >= ALPHA_start && string.charCodeAt(i) <= ALPHA_end);
-            var isDigit = (string.charCodeAt(i) >= digit_start && string.charCodeAt(i) <= digit_end);
+            var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
+            var isALPHA = (string.charCodeAt(i) >= ALPHAStart && string.charCodeAt(i) <= ALPHAEnd);
+            var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
             if (isAlpha) {
                 hasAlpha = true;
             }
@@ -402,24 +422,24 @@ function update_password(item) {
         }
     }
 
-    display_hint (item, !result);
-    give_focus_if_invalid(item);
+    displayHint (item, !result);
+    giveFocusIfInvalid(item);
     return true;
 }
 
-function update_password2(item) {
+function updatePassword2(item) {
     var result = false;
     var p = document.getElementById("password");
     if (p != undefined) {
         result = (p.value == item.value);    
     }
 
-    display_hint (item, !result);
-    give_focus_if_invalid(item);
+    displayHint (item, !result);
+    giveFocusIfInvalid(item);
     return result;
 }
 
-function display_hint(object, display) {
+function displayHint(object, display) {
     var id = object.id;
     var item = document.getElementById("hint_" + id);
     if (item != undefined) {
