@@ -14,6 +14,7 @@ int main (string[] args) {
     w.move(0, 0);
     var screen = Gdk.Screen.get_default();
     w.resize(screen.width(), screen.height());
+    i.start();
     Gtk.main ();
     return 0;
 }

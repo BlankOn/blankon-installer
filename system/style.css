@@ -38,12 +38,11 @@ nav.toolbar {
     max-height: 60px;
 }
 
-div.viewport {
+div#viewport {
     background-color: #e0e0e0;
     overflow: hidden;
     bottom: 10px;
     top: 10px;
-    left: 0px;
     position: fixed;
 }
 
@@ -165,3 +164,12 @@ div.hint {
 button.button {
     font-size: 16px;
 }
+
+div#base {
+    position: fixed;
+    top: 0px;
+    opacity: 0;
+    -webkit-transition: opacity 1s ease-out;
+}
+
+

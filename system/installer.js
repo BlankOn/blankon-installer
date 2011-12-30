@@ -83,11 +83,11 @@ function setup() {
         nextSlideValidators[i] = camelize("canContinue_" + id) + "()";
     }
     totalSlide = columns.length;
+    retranslate();
     getLanguages();
     getRegions();
     getKeyboards();
     getPartitions();
-    retranslate();
     setupUpdater();
     updateSlideVisibility();
     validateCurrentSlide();
@@ -213,6 +213,8 @@ function getPartitions() {
                     }
                 }
             }
+
+            baseIsReady();
         } 
     }
     ajax.open("GET", "http://parted/get_devices");
@@ -500,4 +502,8 @@ function shutdown() {
 
     ajax.open("GET", "http://shutdown");
     ajax.send(null);
+}
+
+function baseIsReady() {
+    document.getElementById("base").style.opacity = "1";
 }

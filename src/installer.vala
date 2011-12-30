@@ -46,6 +46,9 @@ public class Installer : WebView {
             }
         });
 
+    }
+
+    public void start() {
         load_uri ("http://system/index.html");
     }
 }
