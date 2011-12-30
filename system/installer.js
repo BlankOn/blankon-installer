@@ -19,6 +19,14 @@ var onchangeUpdaterList = [
     "password2"
 ];
 
+// Table to hold the validity of the mandatory inputs
+var personalizationValidation = {
+    computerName : false,
+        userName : false,
+        password : false,
+       password2 : false,
+};
+
 var alphaStart = ("a").charCodeAt(0);
 var alphaEnd = ("z").charCodeAt(0);
 
@@ -72,7 +80,7 @@ function setup() {
 
         var id = columns[i].id;
 
-        nextSlideValidators[i] = "canContinue" + id.charAt(0).toUpperCase() + id.substring(1, id.length) + "()";
+        nextSlideValidators[i] = camelize("canContinue_" + id) + "()";
     }
     totalSlide = columns.length;
     getLanguages();
@@ -235,6 +243,16 @@ function canContinueTarget() {
     return false;
 }
 
+function canContinuePersonalization() {
+    var result = true;
+    result = result && personalizationValidation.computerName;
+    result = result && personalizationValidation.userName;
+    result = result && personalizationValidation.password;
+    result = result && personalizationValidation.password2;
+
+    return result;
+}
+
 /* EVENTS */
 function onComputerNameChanged(item) {
     var result = false;
@@ -244,17 +262,24 @@ function onComputerNameChanged(item) {
     }
 
     var lowercase = item.value.toLowerCase();
-    result = result & validateLowerCaseAlphanumeric (lowercase);
+    result = result && validateLowerCaseAlphanumeric (lowercase);
    
     item.value = lowercase;
     displayHint (item, !result);
     giveFocusIfInvalid(item);
+    personalizationValidation.computerName = result;
+
+    validateCurrentSlide();
     return result;
 }
 
 function onUserNameChanged(item) {
     // same validation with computer_name
-    return onComputerNameChanged(item);
+    var result = onComputerNameChanged(item);
+    personalizationValidation.userName = result;
+
+    validateCurrentSlide();
+    return result;
 }
 
 function onPasswordChanged(item) {
@@ -295,6 +320,9 @@ function onPasswordChanged(item) {
 
     displayHint (item, !result);
     giveFocusIfInvalid(item);
+    personalizationValidation.password = result;
+
+    validateCurrentSlide();
     return true;
 }
 
@@ -307,6 +335,9 @@ function onPassword2Changed(item) {
 
     displayHint (item, !result);
     giveFocusIfInvalid(item);
+    personalizationValidation.password2 = result;
+
+    validateCurrentSlide();
     return result;
 }
 
