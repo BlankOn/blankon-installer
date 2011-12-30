@@ -27,76 +27,15 @@ var ALPHAEnd = ("Z").charCodeAt(0);
 var digitStart = ("0").charCodeAt(0);
 var digitEnd = ("9").charCodeAt(0);
 
-function camelize(string) {
-    var result = "";
-    var capitalize = false;
-    for (var i = 0; i < string.length; i++){
-        var c = string.charAt(i);
-        if (c == '_') {
-            capitalize = true;
-            continue;
-        } else {
-            if (capitalize) {
-                result += c.toUpperCase();
-                capitalize = false;
-            } else {
-                result += c;
-            }
+/* SETUP */
+function setupUpdater() {
+    for (var i = 0; i < onchangeUpdaterList.length; i ++) {
+        var id = onchangeUpdaterList [i];
+        var item = document.getElementById(id);
+        if (item != undefined) {
+            item.setAttribute("onchange", camelize("on_" + id + "Changed") + "(this)");
         }
     }
-    return result;
-}
-
-function onSlideVisibitilyChanged() {
-    var items = document.querySelectorAll("div.steps_long");
-    for (var i = 0; i < items.length; i++){
-        if (i == currentSlide)
-            continue;
-        items[i].style.maxWidth = "0px";
-    }
-    items[currentSlide].style.maxWidth = "500px";
-
-    items = document.querySelectorAll("div.steps");
-    for (var i = 0; i < items.length; i++){
-        items[i].style.color = stepInactiveColor;
-    }
-    items[currentSlide].style.color = stepActiveColor;
-
-}
-
-function validateCurrentSlide() {
-    if (nextSlideValidators[currentSlide]) {
-        eval("var canContinue = " + nextSlideValidators[currentSlide]);
-      
-        if (canContinue) {
-            document.getElementById("next").removeAttribute("disabled");
-        } else {
-            document.getElementById("next").setAttribute("disabled", "disabled");
-        }
-    }
-}
-
-function slide() {
-    var pos = currentSlide * width * -1;
-    document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
-    onSlideVisibitilyChanged();
-    validateCurrentSlide();
-}
-
-function nextSlide() {
-    if (currentSlide + 1 >= totalSlide)
-        return;
-
-    currentSlide ++;
-    slide();
-}
-
-function previousSlide() {
-    if (currentSlide - 1 < 0)
-        return;
-
-    currentSlide --;
-    slide();
 }
 
 function setup() {
@@ -142,43 +81,10 @@ function setup() {
     getPartitions();
     retranslate();
     setupUpdater();
-    onSlideVisibitilyChanged();
+    updateSlideVisibility();
     validateCurrentSlide();
 }
 
-function onLanguageChanged() {
-    var item = document.querySelector("select#language");
-    language = item.options[item.selectedIndex].value; 
-    retranslate();
-}
-
-function retranslate() {
-    if (language == "C") {
-        return;
-    }
-
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        var success = false;
-        if (ajax.readyState==4 && ajax.responseText) {
-            var translations = eval("(" + ajax.responseText + ")")
-            var items = document.querySelectorAll("span");
-            for (var i = 0; i < items.length; i++){
-                if (translations[items[i].id] != undefined) {
-                    items[i].innerHTML = translations[items[i].id];
-                }
-            }
-            success = true;
-        } 
-
-        if (success) {
-            language = "C";
-        } 
-    }
-    ajax.open("GET", "translations." + language + ".json");
-    ajax.send(null);
-}
 
 function getLanguages() {
 
@@ -329,42 +235,7 @@ function canContinueTarget() {
     return false;
 }
 
-function setupUpdater() {
-    for (var i = 0; i < onchangeUpdaterList.length; i ++) {
-        var id = onchangeUpdaterList [i];
-        var item = document.getElementById(id);
-        if (item != undefined) {
-            item.setAttribute("onchange", camelize("on_" + id + "Changed") + "(this)");
-        }
-    }
-}
-
-function validateLowerCaseAlphanumeric(string) {
-    var result = true;
-    for (var i = 0; i < string.length; i ++) {
-        var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
-        var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
-        if (i == 0) {
-            if (!isAlpha) {
-                result = false;
-                break;
-            }
-        }
-
-        if (!(isAlpha || isDigit)) {
-            result = false;
-            break;
-        }
-    }
-    return result;
-}
-
-function giveFocusIfInvalid(result, item) {
-    if (!result) {
-        item.focus();
-    }
-}
-
+/* EVENTS */
 function onComputerNameChanged(item) {
     var result = false;
 
@@ -439,6 +310,43 @@ function onPassword2Changed(item) {
     return result;
 }
 
+function onLanguageChanged() {
+    var item = document.querySelector("select#language");
+    language = item.options[item.selectedIndex].value; 
+    retranslate();
+}
+
+/* UTILITIES */
+
+function retranslate() {
+    if (language == "C") {
+        return;
+    }
+
+    var ajax = new XMLHttpRequest();
+
+    ajax.onreadystatechange = function() {
+        var success = false;
+        if (ajax.readyState==4 && ajax.responseText) {
+            var translations = eval("(" + ajax.responseText + ")")
+            var items = document.querySelectorAll("span");
+            for (var i = 0; i < items.length; i++){
+                if (translations[items[i].id] != undefined) {
+                    items[i].innerHTML = translations[items[i].id];
+                }
+            }
+            success = true;
+        } 
+
+        if (success) {
+            language = "C";
+        } 
+    }
+    ajax.open("GET", "translations." + language + ".json");
+    ajax.send(null);
+}
+
+
 function displayHint(object, display) {
     var id = object.id;
     var item = document.getElementById("hint_" + id);
@@ -450,3 +358,103 @@ function displayHint(object, display) {
         }
     }
 }
+
+function validateLowerCaseAlphanumeric(string) {
+    var result = true;
+    for (var i = 0; i < string.length; i ++) {
+        var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
+        var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
+        if (i == 0) {
+            if (!isAlpha) {
+                result = false;
+                break;
+            }
+        }
+
+        if (!(isAlpha || isDigit)) {
+            result = false;
+            break;
+        }
+    }
+    return result;
+}
+
+function giveFocusIfInvalid(result, item) {
+    if (!result) {
+        item.focus();
+    }
+}
+
+function camelize(string) {
+    var result = "";
+    var capitalize = false;
+    for (var i = 0; i < string.length; i++){
+        var c = string.charAt(i);
+        if (c == '_') {
+            capitalize = true;
+            continue;
+        } else {
+            if (capitalize) {
+                result += c.toUpperCase();
+                capitalize = false;
+            } else {
+                result += c;
+            }
+        }
+    }
+    return result;
+}
+
+function updateSlideVisibility() {
+    var items = document.querySelectorAll("div.steps_long");
+    for (var i = 0; i < items.length; i++){
+        if (i == currentSlide)
+            continue;
+        items[i].style.maxWidth = "0px";
+    }
+    items[currentSlide].style.maxWidth = "500px";
+
+    items = document.querySelectorAll("div.steps");
+    for (var i = 0; i < items.length; i++){
+        items[i].style.color = stepInactiveColor;
+    }
+    items[currentSlide].style.color = stepActiveColor;
+
+}
+
+function validateCurrentSlide() {
+    if (nextSlideValidators[currentSlide]) {
+        eval("var canContinue = " + nextSlideValidators[currentSlide]);
+      
+        if (canContinue) {
+            document.getElementById("next").removeAttribute("disabled");
+        } else {
+            document.getElementById("next").setAttribute("disabled", "disabled");
+        }
+    }
+}
+
+function slide() {
+    var pos = currentSlide * width * -1;
+    document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
+    updateSlideVisibility();
+    validateCurrentSlide();
+}
+
+function nextSlide() {
+    if (currentSlide + 1 >= totalSlide)
+        return;
+
+    currentSlide ++;
+    slide();
+}
+
+function previousSlide() {
+    if (currentSlide - 1 < 0)
+        return;
+
+    currentSlide --;
+    slide();
+}
+
+
