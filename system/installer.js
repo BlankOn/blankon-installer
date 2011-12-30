@@ -451,6 +451,13 @@ function updateSlideVisibility() {
     }
     items[currentSlide].style.color = stepActiveColor;
 
+    if (currentSlide == 0) {
+        document.getElementById("next").style.display = "none";
+        document.getElementById("prev").style.display = "none";
+    } else {
+        document.getElementById("next").style.display = "inherit";
+        document.getElementById("prev").style.display = "inherit";
+    }
 }
 
 function validateCurrentSlide() {
@@ -488,4 +495,9 @@ function previousSlide() {
     slide();
 }
 
+function shutdown() {
+    var ajax = new XMLHttpRequest();
 
+    ajax.open("GET", "http://shutdown");
+    ajax.send(null);
+}

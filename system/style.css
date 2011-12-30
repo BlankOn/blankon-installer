@@ -161,3 +161,7 @@ div.hint {
     padding-left: 50px;
     display: none;
 }
+
+button.button {
+    font-size: 16px;
+}

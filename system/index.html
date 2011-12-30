@@ -14,6 +14,7 @@
 
 <div class="viewport" id="viewport">
     <div class="main" id="slider">
+
        <div class="column" id="locale">
             <h1><span id="txt_welcome">Welcome to BlankOn</span></h1>
             <p><span id="txt_welcome_description">Welcome to BlankOn installation program. Please choose your language and region below continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the <b>Settings</b> application.</span></p>
@@ -36,6 +37,10 @@
             </select>
             </p>
 
+            <p><span id="txt_welcome_choices">You can choose whether want to continue using the Live CD or to install into your computer</span></p>
+
+            <button class="button" onclick="shutdown()"/><span id="txt_continue_live">Continue using Live CD</span></button>
+            <button class="button" onclick="nextSlide()"/><span id="txt_install">Install BlankOn</span></button>
         </div>
 
        <div class="column" id="target">

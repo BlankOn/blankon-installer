@@ -33,10 +33,12 @@ public class Installer : WebView {
         set_settings(settings);
 
         resource_request_starting.connect((frame, resource, request, response) => {
+            stdout.printf("R:|%s|\n", request.uri) ;
             if (request.uri.has_prefix("http://parted")) {
                 var uri = translate_parted (resource.uri);
-                stdout.printf("R:|%s|\n", uri) ;
                 request.set_uri(uri);
+            } else if (request.uri.has_prefix("http://shutdown")) {
+                Gtk.main_quit();
             } else {
                 var uri = translate_uri (resource.uri);
                 stdout.printf("|%s|\n", uri);
