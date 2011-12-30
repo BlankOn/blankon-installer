@@ -44,10 +44,10 @@ function update_slide_visibility() {
 
 }
 
-function update_slide_next_navigation() {
+function validate_current_slide() {
     if (nextSlideValidators[currentSlide]) {
         eval("var canContinue = " + nextSlideValidators[currentSlide]);
-       
+      
         if (canContinue) {
             document.getElementById("next").removeAttribute("disabled");
         } else {
@@ -60,7 +60,7 @@ function slide() {
     var pos = currentSlide * width * -1;
     document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
     update_slide_visibility();
-    update_slide_next_navigation();
+    validate_current_slide();
 }
 
 function nextSlide() {
@@ -110,7 +110,10 @@ function setup() {
     for (var i = 0; i < columns.length; i++){
         columns[i].style.width = (width - parseInt(padding_left) - parseInt(padding_right))+ "px"; 
         columns[i].style.left = (i * width) + "px"; 
-        nextSlideValidators[i] = columns[i].getAttribute("nextSlideValidator");
+
+        var id = columns[i].id;
+
+        nextSlideValidators[i] = "canContinue" + id.charAt(0).toUpperCase() + id.substring(1, id.length) + "()";
     }
     totalSlide = columns.length;
     get_languages();
@@ -120,7 +123,7 @@ function setup() {
     retranslate();
     setup_updater();
     update_slide_visibility();
-    update_slide_next_navigation();
+    validate_current_slide();
 }
 
 function update_language() {
@@ -292,7 +295,7 @@ function select_partition(partition) {
         items[i].style.backgroundColor = normalPartitionColor;
     }
     selectedPartition = partition;
-    update_slide_next_navigation ();
+    validate_current_slide ();
 }
 
 function canContinueLocale() {
