@@ -47,7 +47,7 @@ function camelize(string) {
     return result;
 }
 
-function updateSlideVisibitily() {
+function onSlideVisibitilyChanged() {
     var items = document.querySelectorAll("div.steps_long");
     for (var i = 0; i < items.length; i++){
         if (i == currentSlide)
@@ -79,7 +79,7 @@ function validateCurrentSlide() {
 function slide() {
     var pos = currentSlide * width * -1;
     document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
-    updateSlideVisibitily();
+    onSlideVisibitilyChanged();
     validateCurrentSlide();
 }
 
@@ -142,11 +142,11 @@ function setup() {
     getPartitions();
     retranslate();
     setupUpdater();
-    updateSlideVisibitily();
+    onSlideVisibitilyChanged();
     validateCurrentSlide();
 }
 
-function updateLanguage() {
+function onLanguageChanged() {
     var item = document.querySelector("select#language");
     language = item.options[item.selectedIndex].value; 
     retranslate();
@@ -334,7 +334,7 @@ function setupUpdater() {
         var id = onchangeUpdaterList [i];
         var item = document.getElementById(id);
         if (item != undefined) {
-            item.setAttribute("onchange", camelize("update_" + id) + "(this)");
+            item.setAttribute("onchange", camelize("on_" + id + "Changed") + "(this)");
         }
     }
 }
@@ -365,7 +365,7 @@ function giveFocusIfInvalid(result, item) {
     }
 }
 
-function updateComputerName(item) {
+function onComputerNameChanged(item) {
     var result = false;
 
     if (item.value.length > 0) {
@@ -381,12 +381,12 @@ function updateComputerName(item) {
     return result;
 }
 
-function updateUserName(item) {
+function onUserNameChanged(item) {
     // same validation with computer_name
-    return updateComputerName(item);
+    return onComputerNameChanged(item);
 }
 
-function updatePassword(item) {
+function onPasswordChanged(item) {
     var result = false;
 
     if (item.value.length > 7) {
@@ -427,7 +427,7 @@ function updatePassword(item) {
     return true;
 }
 
-function updatePassword2(item) {
+function onPassword2Changed(item) {
     var result = false;
     var p = document.getElementById("password");
     if (p != undefined) {
