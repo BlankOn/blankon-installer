@@ -4,11 +4,14 @@ var width = window.innerWidth;
 var language ="en";
 var stepActiveColor ="";
 var stepInactiveColor ="";
-var selectedPartition = "";
+var targetPartition = "";
 var selectedPartitionColor = "";
 var normalPartitionColor = "";
 var minimumPartitionSize = 1000;
 var nextSlideValidators = {};
+
+var targetDevice = "";
+var targetPartitionSize = 0;
 
 var onchangeUpdaterList = [
     "language",
@@ -196,7 +199,7 @@ function getPartitions() {
                     }
                     partition.setAttribute("id", id);
                     if (p.size > minimumPartitionSize) {
-                        partition.setAttribute("onclick", "selectPartition('" + id + "')");
+                        partition.setAttribute("onclick", "selectPartition('" + devices[i].model + "', '" + id + "', " + p.size + ")");
                     }
                     var txt = "";
                     if (p.description) {
@@ -221,7 +224,7 @@ function getPartitions() {
     ajax.send(null);
 }
 
-function selectPartition(partition) {
+function selectPartition(device, partition, size) {
     var items = document.querySelectorAll("div.partition");
     for (var i = 0; i < items.length; i++){
         if (items[i].id == partition) {
@@ -230,7 +233,9 @@ function selectPartition(partition) {
         }
         items[i].style.backgroundColor = normalPartitionColor;
     }
-    selectedPartition = partition;
+    targetPartition = partition;
+    targetPartitionSize = size;
+    targetDevice = device;
     validateCurrentSlide ();
 }
 
@@ -239,7 +244,7 @@ function canContinueLocale() {
 }
 
 function canContinueTarget() {
-    if (selectedPartition != "")
+    if (targetPartition != "")
         return true;
 
     return false;
@@ -253,6 +258,15 @@ function canContinuePersonalization() {
     result = result && personalizationValidation.password2;
 
     return result;
+}
+
+function canContinueSummary() {
+   
+    document.getElementById("summary_target_device").innerHTML = targetDevice;
+    document.getElementById("summary_target_partition").innerHTML = targetPartition + " (" + targetPartitionSize + "MB)";
+    document.getElementById("summary_target_hostname").innerHTML = document.getElementById("computer_name").value;
+    document.getElementById("summary_target_username").innerHTML = document.getElementById("user_name").value;
+    return true;
 }
 
 /* EVENTS */
