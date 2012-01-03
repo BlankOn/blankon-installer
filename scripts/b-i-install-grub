@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "$1" ];then
+    echo "No device given"
+    exit 1
+fi
+
+/bin/mount --bind /dev /target/dev
+/usr/sbin/grub-install --recheck --root-directory=/target $1
+/bin/umount /target/dev

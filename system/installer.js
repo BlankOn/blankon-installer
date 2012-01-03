@@ -13,6 +13,8 @@ var nextSlideValidators = {};
 var targetDevice = "";
 var targetPartitionSize = 0;
 
+var statusUpdater = -1;
+
 var onchangeUpdaterList = [
     "language",
     "computer_name",
@@ -286,6 +288,18 @@ function canContinueSummary() {
     return true;
 }
 
+function canContinueInstallation() {
+    sendInstallationData();
+    document.getElementById("prev").style.display = "none";
+    document.getElementById("next").style.display = "none";
+    return false;
+}
+
+
+function canContinueDone() {
+    return false;
+}
+
 /* EVENTS */
 function onComputerNameChanged(item) {
     var result = false;
@@ -528,13 +542,54 @@ function previousSlide() {
     slide();
 }
 
+function sendInstallationData() {
+    var ajax = new XMLHttpRequest();
+    var params = ""
+    params += "&partition=" + targetPartition;
+    params += "&hostname=" + document.getElementById("computer_name").value; 
+    params += "&username=" + document.getElementById("user_name").value;
+    params += "&fullname=" + document.getElementById("full_name").value;
+    params += "&password=" + document.getElementById("password").value;
+    params += "&language=" + language;
+    params += "&region=" + document.getElementById("region").value;
+    params += "&keyboard=" + document.getElementById("keyboard").value;
+    ajax.open("GET", "http://install/start?" + params);
+
+    ajax.send(null);
+
+    statusUpdater = setInterval("updateStatus()", 5000);
+}
+
 function shutdown() {
     var ajax = new XMLHttpRequest();
 
+    
     ajax.open("GET", "http://shutdown");
     ajax.send(null);
 }
 
 function baseIsReady() {
     document.getElementById("base").style.opacity = "1";
+}
+
+function updateStatus() {
+    var ajax = new XMLHttpRequest();
+
+    ajax.onreadystatechange = function() {
+        if (ajax.readyState==4 && ajax.responseText) {
+            var status = eval("(" + ajax.responseText + ")")
+            console.log(ajax.responseText);
+            console.log(status.status + ":" + status.description);
+            document.getElementById("current_step").innerHTML = status.description;
+
+            if (status.status > 1) {
+                clearInterval (statusUpdater);
+                nextSlide();
+            }
+        } 
+
+    }
+    ajax.open("GET", "http://install/status?");
+    ajax.send(null);
+
 }
