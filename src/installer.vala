@@ -329,7 +329,7 @@ public class Installation : Object {
 }
 
 public class Utils {
-    static void write_simple_file (string uri, string content) {
+    public static void write_simple_file (string uri, string content) {
         try {
             var file = File.new_for_uri (uri);
             if (file.query_exists ()) {
