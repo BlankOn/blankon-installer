@@ -336,21 +336,24 @@ public class Installer : WebView {
         return uri;
     }
 
-    string translate_parted (string old) {
-        var result = Parted.process_request (old);
-        // Kludge!
-        var uri = old.replace("http://parted/", "file:///tmp/parted_");
+    void write_simple_file (string uri, string content) {
         try {
             var file = File.new_for_uri (uri);
             if (file.query_exists ()) {
                 file.delete ();
             }
             var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
-            dos.put_string (result);
+            dos.put_string (content);
             dos.close ();
         } catch (Error e) {
             stderr.printf ("%s\n", e.message);
         }
+    }
+
+    string translate_parted (string old) {
+        var result = Parted.process_request (old);
+        var uri = old.replace("http://parted/", "file:///tmp/parted_");
+        write_simple_file (uri, result);
         return uri;
     }
 
@@ -365,25 +368,14 @@ public class Installer : WebView {
         } else if (path.has_prefix("status?")) {
             // Kludge!
             var location = "file:///tmp/install_status";
-            try {
-                var file = File.new_for_uri (location);
-                if (file.query_exists ()) {
-                    file.delete ();
-                }
-                var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
-                var result = "{ 'status': %d, 'description': '%s' }";
-                dos.put_string (result.printf(installation.state, installation.description));
-                dos.close ();
-            } catch (Error e) {
-                stderr.printf ("%s\n", e.message);
-            }
+            var result = "{ 'status': %d, 'description': '%s' }";
+            write_simple_file (location, result.printf(installation.state, installation.description));
             return location;
         }
         return "about:blank";
     }
 
     public Installer () {
-        started = false;
         var settings = new WebSettings();
         settings.enable_file_access_from_file_uris = true;
         settings.enable_universal_access_from_file_uris = true;
