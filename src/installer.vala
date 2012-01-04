@@ -18,10 +18,13 @@ public class Log : Object {
         }
     }
 
+    public void log_without_newline (string string) {
+        stream.put_string (string);
+    }
+
     public void log (string string) {
         stream.put_string (string);
         stream.put_string ("\n");
-        stdout.printf("%s", string);
     }
 
     public static Log instance() {
@@ -69,6 +72,9 @@ public class Installation : Object {
     Step last_step = Step.IDLE;
 
     signal void installation_started();
+
+    IOChannel io_err;
+    IOChannel io_out;
 
     public Installation.from_string(string uri) {
         state = State.NOT_STARTED;
@@ -242,6 +248,7 @@ public class Installation : Object {
     }
 
     bool watch_stderr (IOChannel gio, IOCondition condition) {
+        stdout.printf ("--->xxxxx\n");
         return watch_gio (gio, condition, "STDERR: ");
     }
 
@@ -254,13 +261,16 @@ public class Installation : Object {
         IOStatus ret;
         string msg;
         size_t len;
+        var result = true;
 
         if ((condition & IOCondition.HUP) == IOCondition.HUP) {
-            return false;
+            result = false;
         }
 
         try {
-            ret = gio.read_line(out msg, out len, null);
+            while (gio.read_line(out msg, out len, null) == IOStatus.NORMAL) {
+                Log.instance().log_without_newline (prefix + msg);
+            }
         }
         catch(IOChannelError e) {
             Log.instance().log (prefix + "Error reading: " + e.message);
@@ -269,9 +279,8 @@ public class Installation : Object {
             Log.instance().log (prefix + "Error reading: " + e.message);
         }
 
-        Log.instance().log (prefix + msg);
 
-        return true;
+        return result;
 
     }
 
@@ -297,8 +306,8 @@ public class Installation : Object {
         var w = ChildWatch.add (child_pid, child_watch);
         Log.instance().log ("Child is spawn with PID: " + child_pid.to_string() + " and watched as " + w.to_string()); 
 
-        var io_out = new IOChannel.unix_new(fd_out);
-        var io_err = new IOChannel.unix_new(fd_err);
+        io_out = new IOChannel.unix_new(fd_out);
+        io_err = new IOChannel.unix_new(fd_err);
 
         if(!(io_out.add_watch(IOCondition.IN | IOCondition.HUP, watch_stdout) != 0)) {
             Log.instance().log ("Error watching stdout for cmd_log");

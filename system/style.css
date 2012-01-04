@@ -44,6 +44,7 @@ div#viewport {
     bottom: 10px;
     top: 10px;
     position: fixed;
+    -webkit-transition: opacity 1s ease-out;
 }
 
 div.main {

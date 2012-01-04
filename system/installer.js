@@ -78,6 +78,7 @@ function setup() {
     }
 
     width = window.innerWidth;
+    document.getElementById("error_frame").style.marginTop = window.innerHeight;
     var columns = document.querySelectorAll("div.column");
     var navigationBar = document.getElementById("toolbar");
     for (var i = 0; i < columns.length; i++){
@@ -610,7 +611,7 @@ function showError() {
     ajax.send(null);
 
     document.getElementById("error_frame").style.marginTop = "0px";
-    document.getElementById("viewport").style.display = "none";
+    document.getElementById("viewport").style.opacity = "0";
     document.getElementById("toolbar").style.display = "none";
 
 }
