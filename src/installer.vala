@@ -172,18 +172,24 @@ public class Installation : Object {
     }
 
     void child_watch (Pid pid, int status) {
-        stdout.printf ("here %d %d\n", (int) Process.if_exited(status), Process.exit_status(status));
         if (Process.if_exited (status) && Process.exit_status (status) == 0) {
-            Log.instance().log("Child " + ((int) pid).to_string () + " has finished it's task successfuly.");
-            last_step = step;
-            step = Step.IDLE;
-            do_next_job ();
+            if (Process.exit_status (status) == 0) {
+                Log.instance().log("Child " + ((int) pid).to_string () + " has finished it's task successfuly.");
+                last_step = step;
+                step = Step.IDLE;
+            } else {
+                Log.instance().log("Child " + ((int) pid).to_string () + " has ended and return with " + Process.exit_status (status).to_string());
+                state = State.ERROR;
+                step = Step.DONE;
+                last_step = Step.DONE;
+            }
         } else {
             Log.instance().log("Child " + ((int) pid).to_string () + " has ended and failed.");
             state = State.ERROR;
             step = Step.DONE;
             last_step = Step.DONE;
         }
+        do_next_job ();
     }
 
 
@@ -248,7 +254,6 @@ public class Installation : Object {
     }
 
     bool watch_stderr (IOChannel gio, IOCondition condition) {
-        stdout.printf ("--->xxxxx\n");
         return watch_gio (gio, condition, "STDERR: ");
     }
 
@@ -376,6 +381,7 @@ public class Installer : WebView {
     }
 
     public Installer () {
+        started = false;
         var settings = new WebSettings();
         settings.enable_file_access_from_file_uris = true;
         settings.enable_universal_access_from_file_uris = true;
