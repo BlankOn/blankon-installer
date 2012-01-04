@@ -8,7 +8,7 @@ public class Log : Object {
 
     public Log () {
         try {
-            var file = File.new_for_path ("/tmp/blankon-installer.log");
+            var file = File.new_for_path ("/var/log/blankon-installer.log");
             if (file.query_exists ()) {
                 file.delete ();
             }
@@ -118,49 +118,65 @@ public class Installation : Object {
     }
 
     void real_start() {
+        Log.instance().log ("START");
         state = State.ON_GOING;
         do_next_job ();
     }
 
     void do_next_job () {
-        Log.instance().log ("Go to next job");
         switch (last_step) {
         case Step.IDLE:
+            Log.instance().log ("PARTITION");
             do_partition ();
             break;
         case Step.PARTITION:
+            Log.instance().log ("FS");
             do_fs ();
             break;
         case Step.FS:
+            Log.instance().log ("MOUNT");
             do_mount ();
             break;
         case Step.MOUNT:
+            Log.instance().log ("COPY");
             do_copy ();
             break;
         case Step.COPY:
+            Log.instance().log ("SETUP");
             do_setup ();
             break;
         case Step.SETUP:
+            Log.instance().log ("GRUB");
             do_grub ();
             break;
         case Step.GRUB:
+            Log.instance().log ("DONE");
             do_done ();
             break;
         case Step.DONE:
             if (state != State.ERROR) {
+                Log.instance().log ("ERROR");
                 description = "Done";
+            } else {
+                Log.instance().log ("DONE");
             }
+
             break;
         }
     }
 
     void child_watch (Pid pid, int status) {
         stdout.printf ("here %d %d\n", (int) Process.if_exited(status), Process.exit_status(status));
-        Log.instance().log("Child " + ((int) pid).to_string () + "has ended");
         if (Process.if_exited (status) && Process.exit_status (status) == 0) {
+            Log.instance().log("Child " + ((int) pid).to_string () + " has finished it's task successfuly.");
             last_step = step;
             step = Step.IDLE;
             do_next_job ();
+        } else {
+            Log.instance().log("Child " + ((int) pid).to_string () + " has ended and failed.");
+            state = State.ERROR;
+            step = Step.DONE;
+            last_step = Step.DONE;
         }
     }
 
@@ -184,6 +200,7 @@ public class Installation : Object {
             string [] c = { "partition", partition };
             do_simple_command_with_args (c, Step.PARTITION, "Partitioning", "Unable to partition device");
         } else {
+            last_step = Step.PARTITION;
             do_next_job ();
         }
     }
@@ -224,13 +241,21 @@ public class Installation : Object {
         do_next_job ();
     }
 
-    bool gio_in(IOChannel gio, IOCondition condition) {
+    bool watch_stderr (IOChannel gio, IOCondition condition) {
+        return watch_gio (gio, condition, "STDERR: ");
+    }
+
+
+    bool watch_stdout (IOChannel gio, IOCondition condition) {
+        return watch_gio (gio, condition, "STDOUT: ");
+    }
+
+    bool watch_gio (IOChannel gio, IOCondition condition, string prefix) {
         IOStatus ret;
         string msg;
         size_t len;
 
         if ((condition & IOCondition.HUP) == IOCondition.HUP) {
-            Log.instance().log("Read end of pipe is stopped.");
             return false;
         }
 
@@ -238,30 +263,32 @@ public class Installation : Object {
             ret = gio.read_line(out msg, out len, null);
         }
         catch(IOChannelError e) {
-            Log.instance().log ("Error reading: " + e.message);
+            Log.instance().log (prefix + "Error reading: " + e.message);
         }
         catch(ConvertError e) {
-            Log.instance().log ("Error reading: " + e.message);
+            Log.instance().log (prefix + "Error reading: " + e.message);
         }
 
-        Log.instance().log (msg);
+        Log.instance().log (prefix + msg);
 
         return true;
+
     }
 
     int run (string[] command) {
         string[] env = { "LC_ALL=C" };
 
-        var cmd_log = "";
+        var cmd_log = "Running command: '";
         foreach (var c in command) {
             cmd_log += c + " ";
         }
+        cmd_log += "'";
 
         int fd_out, fd_err, child_pid;
         Log.instance().log (cmd_log);
 
         try {
-            Process.spawn_async_with_pipes ("/tmp/", command, env, SpawnFlags.LEAVE_DESCRIPTORS_OPEN | SpawnFlags.DO_NOT_REAP_CHILD, null, out child_pid, null, out fd_out, out fd_err); 
+            Process.spawn_async_with_pipes ("/tmp/", command, env, SpawnFlags.DO_NOT_REAP_CHILD, null, out child_pid, null, out fd_out, out fd_err); 
         } catch (GLib.Error e) {
             Log.instance().log ("Error running: " + e.message);
             return -1;
@@ -273,12 +300,12 @@ public class Installation : Object {
         var io_out = new IOChannel.unix_new(fd_out);
         var io_err = new IOChannel.unix_new(fd_err);
 
-        if(!(io_out.add_watch(IOCondition.IN | IOCondition.HUP, gio_in) != 0)) {
+        if(!(io_out.add_watch(IOCondition.IN | IOCondition.HUP, watch_stdout) != 0)) {
             Log.instance().log ("Error watching stdout for cmd_log");
             return -1;
         }
 
-        if(!(io_err.add_watch(IOCondition.IN | IOCondition.HUP, gio_in) != 0)) {
+        if(!(io_err.add_watch(IOCondition.IN | IOCondition.HUP, watch_stderr) != 0)) {
             Log.instance().log ("Error watching stderr for cmd_log");
             return -1;
         }
@@ -314,7 +341,10 @@ public class Installer : WebView {
 
     string translate_install(string uri) {
         var path = uri.replace("http://install/", "");
-        if (path.has_prefix("start?")) {
+        if (path.has_prefix("show_log?")) {
+            uri = "file:///var/log/blankon-installer.log";
+            return uri;
+        } else if (path.has_prefix("start?")) {
             installation = new Installation.from_string(path.replace("start?", ""));
             installation.start ();
         } else if (path.has_prefix("status?")) {

@@ -172,4 +172,16 @@ div#base {
     -webkit-transition: opacity 1s ease-out;
 }
 
+div#error_frame {
+    z-index: 10000;
+    padding: 80px; 
+    background: #030303;
+    color: #efefef;
+    height: 800px;
+    margin-top: 9200px;
+    -webkit-transition: margin-top 1s ease-out;
+}
 
+textarea.log {
+    font-size: 16px;
+}

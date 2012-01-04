@@ -189,11 +189,12 @@ public class Parted {
     public static ArrayList<InstallDevice> get_devices () {
         var retval = new ArrayList<InstallDevice> ();
         HashMap<string,long> devices = new HashMap<string,long>();
-        //devices.set ("/tmp/a.img", 4000000);
+        devices.set ("/tmp/a.img", 4000000);
         //devices.add("/tmp/b.img");
         //var output = "";
         
-        var output = probe ();
+        //var output = probe ();
+        var output = ""; 
         foreach (var line in output.split("\n")) {
             if (line.length == 0)
                 continue;

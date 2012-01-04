@@ -127,6 +127,14 @@
 <button class="toolbar" id="prev" onclick="previousSlide()"><span id="txt_previous">Previous</span></button>
 </nav>
 
+<div id="error_frame">
+<h1><span id="txt_error">Error during installation</span></h1>
+<p><span id="txt_error_description">There is an error during installation. Please see the log below, you can capture this or just send the /var/log/blankon-installer.log file to blankon-dev@googlegroups.com</span></p>
+            <button class="button" onclick="shutdown()"/><span id="txt_exit">Exit installation</span></button>
+            <p>
+<textarea rows="20" cols="90" id="log">Please wait while loading the log...</textarea>
 </div>
+</div>
+
 </body>
 </html>

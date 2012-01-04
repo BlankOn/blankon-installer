@@ -584,12 +584,33 @@ function updateStatus() {
 
             if (status.status > 1) {
                 clearInterval (statusUpdater);
-                nextSlide();
+                if (status.status == 2) {
+                    showError();
+                } else {
+                    nextSlide();
+                }
             }
         } 
 
     }
     ajax.open("GET", "http://install/status?");
     ajax.send(null);
+
+}
+
+function showError() {
+    var ajax = new XMLHttpRequest();
+
+    ajax.onreadystatechange = function() {
+        if (ajax.readyState==4 && ajax.responseText) {
+            document.getElementById("log").innerHTML = ajax.responseText; 
+        } 
+    }
+    ajax.open("GET", "http://install/show_log?");
+    ajax.send(null);
+
+    document.getElementById("error_frame").style.marginTop = "0px";
+    document.getElementById("viewport").style.display = "none";
+    document.getElementById("toolbar").style.display = "none";
 
 }
