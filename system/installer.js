@@ -32,6 +32,15 @@ var personalizationValidation = {
        password2 : false,
 };
 
+// Table to hold the readyness of each data source
+var dataReady = {
+    partitions : false,
+     languages : false,
+       regions : false,
+     keyboards : false,
+
+};
+
 var alphaStart = ("a").charCodeAt(0);
 var alphaEnd = ("z").charCodeAt(0);
 
@@ -134,6 +143,8 @@ function getLanguages() {
                 option.value = lang;
                 item.add(option);
             }
+            dataReady.languages = true;
+            baseIsReady();
         } 
     }
     ajax.open("GET", "languages.json");
@@ -157,6 +168,8 @@ function getRegions() {
                 option.value = region;
                 item.add(option);
             }
+            dataReady.regions = true;
+            baseIsReady();
         } 
     }
     ajax.open("GET", "regions.json");
@@ -180,6 +193,8 @@ function getKeyboards() {
                 option.value = keyboard;
                 item.add(option);
             }
+            dataReady.keyboards = true;
+            baseIsReady();
         } 
     }
     ajax.open("GET", "keyboards.json");
@@ -237,6 +252,7 @@ function getPartitions() {
                 }
             }
 
+            dataReady.partitions = true;
             baseIsReady();
         } 
     }
@@ -570,7 +586,12 @@ function shutdown() {
 }
 
 function baseIsReady() {
-    document.getElementById("base").style.opacity = "1";
+    if (dataReady.partitions &&
+        dataReady.languages &&
+        dataReady.regions &&
+        dataReady.keyboards) {
+        document.getElementById("base").style.opacity = "1";
+    }
 }
 
 function updateStatus() {
