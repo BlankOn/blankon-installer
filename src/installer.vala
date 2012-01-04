@@ -347,6 +347,7 @@ public class Installer : WebView {
             }
             var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
             dos.put_string (result);
+            dos.close ();
         } catch (Error e) {
             stderr.printf ("%s\n", e.message);
         }
@@ -372,6 +373,7 @@ public class Installer : WebView {
                 var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
                 var result = "{ 'status': %d, 'description': '%s' }";
                 dos.put_string (result.printf(installation.state, installation.description));
+                dos.close ();
             } catch (Error e) {
                 stderr.printf ("%s\n", e.message);
             }
