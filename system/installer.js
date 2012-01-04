@@ -580,6 +580,7 @@ function sendInstallationData() {
 
     ajax.send(null);
 
+    updateStatus();
     statusUpdater = setInterval("updateStatus()", 5000);
 }
 
