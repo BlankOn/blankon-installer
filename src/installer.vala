@@ -328,15 +328,8 @@ public class Installation : Object {
     }
 }
 
-public class Installer : WebView {
-    Installation installation = null;
-
-    string translate_uri (string old) {
-        var uri = old.replace("http://system", "file://" + Config.SYSTEM_PATH + "/");
-        return uri;
-    }
-
-    void write_simple_file (string uri, string content) {
+public class Utils {
+    static void write_simple_file (string uri, string content) {
         try {
             var file = File.new_for_uri (uri);
             if (file.query_exists ()) {
@@ -350,10 +343,21 @@ public class Installer : WebView {
         }
     }
 
+
+}
+
+public class Installer : WebView {
+    Installation installation = null;
+
+    string translate_uri (string old) {
+        var uri = old.replace("http://system", "file://" + Config.SYSTEM_PATH + "/");
+        return uri;
+    }
+
     string translate_parted (string old) {
         var result = Parted.process_request (old);
         var uri = old.replace("http://parted/", "file:///tmp/parted_");
-        write_simple_file (uri, result);
+        Utils.write_simple_file (uri, result);
         return uri;
     }
 
@@ -369,7 +373,7 @@ public class Installer : WebView {
             // Kludge!
             var location = "file:///tmp/install_status";
             var result = "{ 'status': %d, 'description': '%s' }";
-            write_simple_file (location, result.printf(installation.state, installation.description));
+            Utils.write_simple_file (location, result.printf(installation.state, installation.description));
             return location;
         }
         return "about:blank";
