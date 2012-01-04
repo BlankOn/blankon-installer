@@ -2,4 +2,6 @@
 
 set -e
 
+mkdir /rofs
+mount -o loop /live/image/live/filesystem.squashfs /rofs
 cp -a /rofs/* /target
