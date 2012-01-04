@@ -60,7 +60,7 @@ function setupUpdater() {
     }
 }
 
-function setup() {
+function setup(resizing) {
     var paddingLeft  = 0;
     var paddingRight = 0;
 
@@ -94,26 +94,32 @@ function setup() {
         columns[i].style.width = (width - parseInt(paddingLeft) - parseInt(paddingRight))+ "px"; 
         columns[i].style.left = (i * width) + "px"; 
 
-        var id = columns[i].id;
+        if (resizing == false) {
+            var id = columns[i].id;
 
-        nextSlideValidators[i] = camelize("canContinue_" + id) + "()";
+            nextSlideValidators[i] = camelize("canContinue_" + id) + "()";
 
-        var toolbarStep = document.createElement("div");
-        toolbarStep.setAttribute("class", "steps");
-        toolbarStep.setAttribute("id", "step" + (i + 1));
-        toolbarStep.innerHTML = (i + 1);
-        var toolbarDescription = document.createElement("div");
-        toolbarDescription.setAttribute("class", "steps_long");
-        toolbarDescription.setAttribute("id", "step" + (i + 1) + "_long");
+            var toolbarStep = document.createElement("div");
+            toolbarStep.setAttribute("class", "steps");
+            toolbarStep.setAttribute("id", "step" + (i + 1));
+            toolbarStep.innerHTML = (i + 1);
+            var toolbarDescription = document.createElement("div");
+            toolbarDescription.setAttribute("class", "steps_long");
+            toolbarDescription.setAttribute("id", "step" + (i + 1) + "_long");
 
-        var h1 = columns[i].getElementsByTagName("h1");
-        for (var j = 0; j < h1.length; j ++) {
-            toolbarDescription.innerHTML = h1[j].innerHTML;
-            break;
+            var h1 = columns[i].getElementsByTagName("h1");
+            for (var j = 0; j < h1.length; j ++) {
+                toolbarDescription.innerHTML = h1[j].innerHTML;
+                break;
+            }
+            navigationBar.appendChild(toolbarStep);
+            navigationBar.appendChild(toolbarDescription);
         }
-        navigationBar.appendChild(toolbarStep);
-        navigationBar.appendChild(toolbarDescription);
     }
+
+    if (resizing)
+        return;
+
     totalSlide = columns.length;
     retranslate();
     getLanguages();
