@@ -57,9 +57,9 @@ public class Installation : Object {
     }
 
     public string user_name { get; set construct; }
+    public string password { get; set construct; }
     public string host_name { get; set construct; }
     public string full_name { get; set construct; }
-    public string computer_name { get; set construct; }
     public string partition { get; set construct; }
     public string grub_device { get; set construct; }
     public string language { get; set construct; }
@@ -86,14 +86,14 @@ public class Installation : Object {
                 case "username":
                     user_name = entry[1];
                     break;
+                case "password":
+                    password = entry[1];
+                    break;
                 case  "hostname":
                     host_name = entry[1];
                     break;
                 case  "fullname":
                     full_name = entry[1];
-                    break;
-                case  "computername":
-                    computer_name = entry[1];
                     break;
                 case  "partition":
                     partition = entry[1];
@@ -238,6 +238,15 @@ public class Installation : Object {
     }
 
     void do_setup () {
+        var content = ("%s:%s\n").printf(user_name, password);
+        Utils.write_simple_file ("file:///target/tmp/user-pass", content);
+
+        content = ("%s %s\n").printf(user_name, full_name);
+        Utils.write_simple_file ("file:///tmp/user-setup", content);
+
+        content = ("%s\n").printf(host_name);
+        Utils.write_simple_file ("file:///tmp/hostname", content);
+
         do_simple_command ("/sbin/b-i-setup-fs", Step.SETUP, "Setting up", "Unable to setup installation");
     }
 
@@ -342,8 +351,6 @@ public class Utils {
             stderr.printf ("%s\n", e.message);
         }
     }
-
-
 }
 
 public class Installer : WebView {
