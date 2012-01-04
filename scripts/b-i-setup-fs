@@ -2,3 +2,16 @@
 
 set -e
 
+P=""
+if [ -f /live/image/live/packages-to-remove ];then
+    for i in `cat /live/image/live/packages-to-remove`;do
+        P="$P $i"
+    done
+fi
+
+if [ "x$P" != "x" ];then
+    chroot /target apt-get --yes purge $P
+fi
+
+chroot /target update-initramfs -k all -u
+chroot /target apt-get --yes autoremove
