@@ -53,6 +53,7 @@ public class Installation : Object {
         COPY,
         SETUP,
         GRUB,
+        CLEANUP,
         DONE 
     }
 
@@ -156,6 +157,10 @@ public class Installation : Object {
             do_grub ();
             break;
         case Step.GRUB:
+            Log.instance().log ("CLEANUP");
+            do_cleanup ();
+            break;
+        case Step.CLEANUP:
             Log.instance().log ("DONE");
             do_done ();
             break;
@@ -262,6 +267,10 @@ public class Installation : Object {
         }
         string [] c = { "/sbin/b-i-install-grub", device };
         do_simple_command_with_args (c, Step.GRUB, "Installing GRUB", "Unable to install GRUB");
+    }
+
+    void do_cleanup() {
+        do_simple_command ("/sbin/b-i-cleanup", Step.CLEANUP, "Cleaning up", "Unable to properly clean up");
     }
 
     void do_done () {
