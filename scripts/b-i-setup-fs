@@ -46,3 +46,10 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 @@EOF
 
+
+###### OpenSSH server
+if [ -e /target/var/lib/dpkg/info/openssh-server.postinst ]; then
+    if ! ls /target/etc/ssh/ssh_host_*_key > /dev/null 2>&1; then
+        chroot /target /usr/sbin/dpkg-reconfigure --no-reload openssh-server
+    fi
+fi
