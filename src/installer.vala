@@ -251,7 +251,16 @@ public class Installation : Object {
     }
 
     void do_grub () {
-        string [] c = { "/sbin/b-i-install-grub", grub_device };
+        var device = grub_device;
+        if (device == "") {
+            for (var i = 0; i < partition.length; i ++) {
+                if (partition.get(i).isdigit()) {
+                    break;
+                }
+                device += ("%c").printf(partition.get(i));
+            }
+        }
+        string [] c = { "/sbin/b-i-install-grub", device };
         do_simple_command_with_args (c, Step.GRUB, "Installing GRUB", "Unable to install GRUB");
     }
 
