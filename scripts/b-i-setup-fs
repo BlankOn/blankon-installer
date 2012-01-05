@@ -19,6 +19,7 @@ fi
 
 chroot /target /usr/sbin/update-initramfs -k all -u
 chroot /target /usr/bin/apt-get --yes autoremove
+chroot /target /usr/bin/apt-get --yes clean 
 
 ###### USER
 
