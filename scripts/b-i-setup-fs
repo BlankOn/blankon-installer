@@ -14,24 +14,24 @@ if [ -f /live/image/live/packages-to-remove ];then
 fi
 
 if [ "x$P" != "x" ];then
-    chroot /target apt-get --yes purge $P
+    chroot /target /usr/bin/apt-get --yes purge $P
 fi
 
-chroot /target update-initramfs -k all -u
-chroot /target apt-get --yes autoremove
+chroot /target /usr/sbin/update-initramfs -k all -u
+chroot /target /usr/bin/apt-get --yes autoremove
 
 ###### USER
 
 read USERNAME FULLNAME < /tmp/user-setup
 rm -f /tmp/user-setup
-chroot /target useradd -c "$FULLNAME" -m $USERNAME
+chroot /target /usr/sbin/useradd -c "$FULLNAME" -m $USERNAME -s /bin/bash
 
-chroot chpasswd < /tmp/user-pass
+chroot /target /usr/sbin/chpasswd < /tmp/user-pass
 rm -f /target/tmp/user-pass
 
 ###### HOSTNAME
 
-read HOSTNAME /tmp/hostname
+read HOSTNAME < /tmp/hostname
 mv /tmp/hostname /target/etc/
     cat << @@EOF > /target/etc/hosts 
 127.0.0.1   localhost
