@@ -2,11 +2,13 @@
 
 set -e
 
-if [ -z "$1" ];then
+DEVICE=$1
+if [ -z "$DEVICE" ];then
     echo "No device given"
     exit 1
 fi
 
 /bin/mount --bind /dev /target/dev
-/usr/sbin/grub-install --recheck --root-directory=/target $1
+/usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
+sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
 /bin/umount /target/dev
