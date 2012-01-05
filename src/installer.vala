@@ -239,7 +239,7 @@ public class Installation : Object {
 
     void do_setup () {
         var content = ("%s:%s\n").printf(user_name, password);
-        Utils.write_simple_file ("file:///target/tmp/user-pass", content);
+        Utils.write_simple_file ("file:///tmp/user-pass", content);
 
         content = ("%s %s\n").printf(user_name, full_name);
         Utils.write_simple_file ("file:///tmp/user-setup", content);
