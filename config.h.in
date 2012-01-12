@@ -1,3 +1,5 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 
@@ -80,7 +82,8 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* Location of the JS scripts */
+#undef SYSTEM_PATH
+
 /* Version number of package */
 #undef VERSION
-
-#define SYSTEM_PATH "system"
