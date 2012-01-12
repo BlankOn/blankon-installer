@@ -54,6 +54,8 @@ AC_SUBST(VALA_PACKAGES)
 
 AC_CONFIG_FILES([Makefile
 	src/Makefile
+    scripts/Makefile
+    system/Makefile
 	])
 
 AC_OUTPUT

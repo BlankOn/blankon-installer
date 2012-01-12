@@ -4,6 +4,8 @@ NULL =
 
 SUBDIRS = \
 	src \
+    scripts \
+    system \
 	$(NULL)
 
 
