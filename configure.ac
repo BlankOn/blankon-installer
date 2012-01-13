@@ -56,6 +56,7 @@ AC_CONFIG_FILES([Makefile
 	src/Makefile
     scripts/Makefile
     system/Makefile
+    po/Makefile.in
 	])
 
 AC_OUTPUT
