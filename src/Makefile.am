@@ -26,6 +26,9 @@ blankon_installer_LDADD = \
 	$(INSTALLER_LIBS) \
 	$(NULL)
 
+desktopdir = $(prefix)/share/applications
+dist_desktop_DATA = blankon-installer.desktop
+
 EXTRA_DIST = \
 	$(NULL)
 
