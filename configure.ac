@@ -42,12 +42,12 @@ WEBKIT_REQUIRED=1.3.0
 SOUP_REQUIRED=2.3.4
 
 
-PKG_CHECK_MODULES(INSTALLER, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gtk+-3.0 >= $GTK_REQUIRED atk >= $ATK_REQUIRED gee-1.0 >= $GEE_REQUIRED webkitgtk-3.0 >= $WEBKIT_REQUIRED libsoup-2.4 >= $SOUP_REQUIRED)
+PKG_CHECK_MODULES(INSTALLER, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED gtk+-3.0 >= $GTK_REQUIRED atk >= $ATK_REQUIRED gee-1.0 >= $GEE_REQUIRED webkitgtk-3.0 >= $WEBKIT_REQUIRED libsoup-2.4 >= $SOUP_REQUIRED libparted >= 2.3)
 
 AC_SUBST(INSTALLER_CFLAGS)
 AC_SUBST(INSTALLER_LIBS)
 
-VALA_PACKAGES="--pkg atk --pkg gdk-x11-3.0 --pkg gee-1.0 --pkg gtk+-3.0 --pkg gio-unix-2.0 --pkg gdk-3.0 --pkg webkit-1.0 --pkg libsoup-2.4"
+VALA_PACKAGES="--pkg atk --pkg gdk-x11-3.0 --pkg gee-1.0 --pkg gtk+-3.0 --pkg gio-unix-2.0 --pkg gdk-3.0 --pkg webkit-1.0 --pkg libsoup-2.4 --pkg parted"
 
 AC_SUBST(VALA_PACKAGES)
 
