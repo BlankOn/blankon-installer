@@ -11,16 +11,16 @@ public class Partition : Object {
     }
 
     public int number { get; set construct; }
-    public long start { get; set construct; }
-    public long end { get; set construct; }
-    public long size { get; set construct; }
+    public uint64 start { get; set construct; }
+    public uint64 end { get; set construct; }
+    public uint64 size { get; set construct; }
     public string filesystem { get; set construct; }
     public string flag { get; set construct; }
     public int parent { get; set construct; }
     public string description { get; set construct; }
     public PartitionType ptype { get; set construct; }
 
-    public Partition (int number, long start, long end, long size, string filesystem, string flag, string description, PartitionType type) {
+    public Partition (int number, uint64 start, uint64 end, uint64 size, string filesystem, string flag, string description, PartitionType type) {
         this.number = number;
         this.start = start;
         this.end = end;
@@ -35,6 +35,7 @@ public class Partition : Object {
 
 
 public class Device : Object {
+    uint64 unit_size = 1;
     static bool need_free = false;
     Ped.Device? device;
     public Ped.Disk? disk;
@@ -78,6 +79,8 @@ public class Device : Object {
         } else {
             return;
         } 
+
+        unit_size = Ped.Utils.get_unit_size(device, Ped.Unit.SECTOR);
         disk = new Ped.Disk.from_device (device);
         if (disk != null) {
             Ped.Partition? p = disk.part_list;
@@ -118,9 +121,9 @@ public class Device : Object {
                 }
 
                 Partition new_p = new Partition (p.num, 
-                                                (long) p.geom.start,
-                                                (long) p.geom.end,
-                                                (long) p.geom.length,
+                                                (uint64) p.geom.start * unit_size,
+                                                (uint64) p.geom.end * unit_size,
+                                                (uint64) p.geom.length * unit_size,
                                                 fs,
                                                 flag,
                                                 description,
@@ -145,11 +148,11 @@ public class Device : Object {
         return device.model;
     }
     
-    public long get_size () {
+    public uint64 get_size () {
         if (!valid)
             return 0;
 
-        return (long) device.length;
+        return (uint64) device.length * unit_size;
     }
 
     public string get_label () { 
@@ -166,6 +169,9 @@ public class Device : Object {
         return disk.get_last_partition_num ();
     }
 
+    public uint64 get_unit_size () {
+        return unit_size;
+    }
 }
 
 public class Parted {
@@ -174,7 +180,6 @@ public class Parted {
         HashMap<string,long> devices = new HashMap<string,long>();
         ////devices.set ("/tmp/a.img", 4000000);
         //devices.add("/tmp/b.img");
-        Ped.Utils.set_default_unit(Ped.Unit.BYTE);
         Device? d = null;
         while (true) {
             d = new Device.from_list (d);

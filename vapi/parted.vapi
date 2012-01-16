@@ -132,7 +132,7 @@ namespace Ped {
     }
 
     public class Utils {
-        [CCode (cname="ped_unit_set_default")]
-        public static void set_default_unit (Unit unit);
+        [CCode (cname="ped_unit_get_size")]
+        public static uint64 get_unit_size (Device device, Unit unit);
     }
 }
