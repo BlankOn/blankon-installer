@@ -144,7 +144,6 @@ public class Device : Object {
         if (!valid)
             return "";
 
-        stdout.printf ("->%s\n", device.model);
         return device.model;
     }
     
@@ -157,6 +156,9 @@ public class Device : Object {
 
     public string get_label () { 
         if (!valid)
+            return "";
+
+        if (disk == null)
             return "";
 
         return disk.type.name;
@@ -178,7 +180,7 @@ public class Parted {
     public static ArrayList<Device> get_devices () {
         var retval = new ArrayList<Device> ();
         HashMap<string,long> devices = new HashMap<string,long>();
-        ////devices.set ("/tmp/a.img", 4000000);
+        //devices.set ("/tmp/a.img", 4000000);
         //devices.add("/tmp/b.img");
         Device? d = null;
         while (true) {
@@ -187,6 +189,13 @@ public class Parted {
                 break;
             }
             retval.add (d);
+        }
+
+        foreach (var device in devices.keys) {
+            d = new Device.from_name (device);
+            if (d.is_valid ()) {
+                retval.add (d);
+            }
         }
 
         return retval;
