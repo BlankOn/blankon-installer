@@ -6,7 +6,7 @@ namespace Ped {
                 public Constraint.any(Device device);
         }
 
-    [CCode (unref_function = "")]
+    [CCode (ref_function = "", unref_function = "")]
         public class Device {
             public string model;
             public string path;
@@ -17,9 +17,14 @@ namespace Ped {
             public Sector length;
 
             [CCode (cname = "ped_device_get")]
-            public Device (string name);
+            public Device.from_name (string name);
+            [CCode (cname = "ped_device_get_next")]
+            public Device.from_list (Device start);
+            public static void probe_all ();
+            public static void free_all ();
             public void open ();
             public void close ();
+
         }
 
     [CCode (unref_function = "ped_disk_destroy")]

@@ -35,6 +35,7 @@ public class Partition : Object {
 
 
 public class Device : Object {
+    static bool need_free = false;
     Ped.Device? device;
     public Ped.Disk? disk;
     bool valid;
@@ -44,12 +45,39 @@ public class Device : Object {
         return valid;
     }
 
-    public Device (string s) {
+    ~Device () {
+        if (need_free) {
+        }
+    }
+
+    public Device () {
+    }
+
+    public Device.from_list (Device? start) {
+        if (need_free == false) {
+            Ped.Device.probe_all ();
+            need_free = true;
+        }
+        Ped.Device? d = null;
+        if (start != null) {
+            d = start.device;
+        }
+        device = new Ped.Device.from_list (d) ;
+        init ();
+    }
+
+    public Device.from_name (string s) {
+        device = new Ped.Device.from_name (s);
+        init ();
+    }
+
+    void init () {
         partitions = new ArrayList<Partition>();
-        device = new Ped.Device (s);
         if (device != null) {
             valid = true;
-        }
+        } else {
+            return;
+        } 
         disk = new Ped.Disk.from_device (device);
         if (disk != null) {
             Ped.Partition? p = disk.part_list;
@@ -113,6 +141,7 @@ public class Device : Object {
         if (!valid)
             return "";
 
+        stdout.printf ("->%s\n", device.model);
         return device.model;
     }
     
@@ -140,131 +169,18 @@ public class Device : Object {
 }
 
 public class Parted {
-
-    const string[] invalid_devices = { "loop", "dm" };
-
-    static string probe () {
-        string stdout;
-        string stderr;
-        int status;
-        string[] args = { "/sbin/partprobe", "-s" };
-        string[] env = { "LC_ALL=C" };
-
-        try {
-    		Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out stdout, out stderr, out status);
-        } catch (GLib.Error e) {
-            throw e;
-        }
-
-        return stdout;
-    }
-
-    static string send_command (string device, string command) {
-        string stdout = "";
-        string stderr;
-        int status;
-        string[] args = { "/sbin/parted", "-m", "-s", device, "unit MB", command };
-        string[] env = { "LC_ALL=C" };
-
-        try {
-    		Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out stdout, out stderr, out status);
-        } catch (GLib.Error e) {
-            throw e;
-        }
-
-        return stdout;
-    }
-
     public static ArrayList<Device> get_devices () {
         var retval = new ArrayList<Device> ();
         HashMap<string,long> devices = new HashMap<string,long>();
         ////devices.set ("/tmp/a.img", 4000000);
         //devices.add("/tmp/b.img");
-        //var output = "";
-        
-        var output = probe ();
-        //var output = ""; 
-        foreach (var line in output.split("\n")) {
-            if (line.length == 0)
-                continue;
-
-            devices.set (line.split(": ")[0], 0);
-        }
-
-        // Traverse again in /proc/partitions in case no disk reported by partprobe 
-        if (devices.size == 0) {
-            var file = File.new_for_path ("/proc/partitions");
-
-            if (!file.query_exists ()) {
-                stderr.printf ("File '%s' doesn't exist.\n", file.get_path ());
-                return retval;
-            }
-
-            try {
-                var dis = new DataInputStream (file.read ());
-                string line;
-                int i = 0;
-                while ((line = dis.read_line (null)) != null) {
-                    if (i < 2) { // Data starts at line 3
-                        i ++;
-                        continue;
-                    }
-
-                    var data = "";
-                    var column = 0;
-                    long block_size = 0;
-                    var device_name = "";
-                    for (var j = 0; j < line.length; j ++) {
-                        if (line [j] == ' ') { 
-                            if (data != "") { // data already contain something
-                                if (column == 2) { // interesting data starts at column #3
-                                    block_size = long.parse (data);
-                                    data = "";
-                                } else if (column == 3) {
-                                    device_name = data;
-                                    data = "";
-                                }
-                                data = "";
-                                column ++;
-                            }
-                            continue; // skip space
-                        } else {
-                            if (column == 3 && line[j].isdigit()) {
-                                data = "";
-                                device_name = "";
-                                break;
-                            }
-                            data += line [j].to_string();
-                        }
-                    }
-                    if (data != "") {
-                        device_name = data;
-                    }
-                    bool insert = false;
-                    foreach (var d in invalid_devices) {
-                        if (device_name.has_prefix (d)) {
-                            break;
-                        } else {
-                            insert = true;
-                        }
-                    }
-                    if (int.parse (device_name) > 0)
-                        insert = false;
-
-                    if (insert && device_name.length > 0) {
-                        devices.set ("/dev/" + device_name, block_size);
-                    }
-                }
-            } catch (Error e) {
-                error ("%s", e.message);
-            }
-
-        }
-
-
         Ped.Utils.set_default_unit(Ped.Unit.BYTE);
-        foreach (var device in devices.keys) {
-            Device d = new Device (device);
+        Device? d = null;
+        while (true) {
+            d = new Device.from_list (d);
+            if (d.is_valid () == false) {
+                break;
+            }
             retval.add (d);
         }
 
