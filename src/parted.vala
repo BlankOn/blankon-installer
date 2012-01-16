@@ -238,15 +238,4 @@ public class Parted {
 
 }
 
-/*
-int main (string[] args) {
-    var xp = new Parted();
-    var o = xp.get_devices();
-    foreach (var i in o) {
-        stdout.printf("> %s %ld\n\n", i.model, i.size);
-        foreach (var p in i.partitions) {
-            stdout.printf(">%d %ld\n", p.number, p.size);
-        }
-    }
-    return 0;
-}*/
+
