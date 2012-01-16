@@ -9,9 +9,6 @@ int main (string[] args) {
 
     w.add (i);
 
-    var p = Parted.get_devices_json(); 
-    stdout.printf("->%s\n", p);
-
     w.show_all ();
     w.fullscreen();
     w.move(0, 0);

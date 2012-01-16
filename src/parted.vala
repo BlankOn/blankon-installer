@@ -1,157 +1,5 @@
 using Gee;
 
-
-public class ZPartition : Object {
-    public enum MSDosType {
-        PRIMARY,
-        LOGICAL,
-        EXTENDED
-    }
-
-    const string tmp_mount = "/tmp/tmp-mount";
-    const string[] supported_fs = { "ext3", "ext2", "ext4", "reiserfs", "xfs", "btrfs" };
-    const string[] releases = { "/etc/lsb-release" };
-
-
-    static HashMap <string,string> probed_os = new HashMap<string,string>();
-    public int number { get; set construct; }
-    public long start { get; set construct; }
-    public long end { get; set construct; }
-    public long size { get; set construct; }
-    public string filesystem { get; set construct; }
-    public string flag { get; set construct; }
-    public int parent { get; set construct; }
-    public string description { get; set construct; }
-
-    string peek_description (string device) {
-        var result = "";
-        if (probed_os.size == 0) {
-            string normal_output;
-            string error_output;
-            int status;
-
-            
-            string[] args = { "/usr/bin/os-prober" };
-            string[] env = { "LC_ALL=C" };
-
-            try {
-    		    Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
-            } catch (GLib.Error e) {
-            }
-
-            stdout.printf("------>%s<", normal_output);
-            foreach (var line in normal_output.split("\n")) {
-                var fields = line.split(":");
-                if (fields.length > 1) {
-                    probed_os.set (fields[0], fields[1]);
-                }
-            }
-
-        }
-
-        result = probed_os [device];
-
-        return result;
-    }
-
-    // Sample: 1:32,3kB:1045MB:1045MB:ext4::boot
-    public ZPartition.from_parted_string(string line, string device, int last_partition, long last_start, long last_end) {
-        var fields  = line.split(":");
-        number      = int.parse(fields [0]);
-        start       = int.parse(fields [1]);
-        end         = int.parse(fields [2]);
-        size        = int.parse(fields [3]);
-        filesystem  = fields [4];
-        if (fields.length > 5) {
-            flag    = fields [6];
-        } else {
-            flag    = "";
-        }
-
-        if (start >= last_start && end <= last_end) {
-            parent = last_partition;
-        } else {
-            parent = 0;
-        }
-
-        if (filesystem.has_prefix ("linux-swap")) {
-            description = "Swap";
-        } else {
-            description = peek_description (device);
-        }
-    }
-
-    public ZPartition.from_unallocated_space(string device, long size) {
-        number = 1;
-        filesystem = "free";
-        this.size = size;
-    }
-}
-
-public class InstallDevice : Object {
-    public string path { get; set construct; }
-    public string model { get; set construct; }
-    public long size { get; set construct; }
-    public string controller { get; set construct; }
-    public long sector_size_logical { get; set construct; }
-    public long sector_size_physical { get; set construct; }
-    public string label { get; set construct; }
-    public ArrayList<Partition> partitions { get; set construct; }
-
-
-    public InstallDevice.from_unallocated_space(string device, long size) {
-        path = device;
-        this.size = size;
-        model = "Unknown";
-        controller = "unknown";
-        partitions = new ArrayList<Partition>();
-        //partitions.add (new Partition.from_unallocated_space(device, size));
-    }
-
-    public InstallDevice.from_parted_string(string lines) {
-        int step = 0;
-        int last_partition = 0;
-        long last_parent_start = 0;
-        long last_parent_end = 0;
-        foreach (var line in lines.split(";\n")) {
-            if (line.length == 0)
-                continue;
-
-            if (line == "BYT") {
-                step = 1;
-                continue;
-            }
-          
-            // /dev/sda:1000GB:scsi:512:512:msdos:ATA WDC WD10EADS-00L;
-            if (step == 1) {  // Get device info
-                var fields = line.split(":");
-                path = fields [0];
-                size = long.parse(fields [1]);
-                controller = fields [2];
-                sector_size_logical = long.parse(fields [3]);
-                sector_size_physical = long.parse(fields [4]);
-                label = fields [5];
-                model = fields [6];
-                partitions = new ArrayList<Partition>();
-                step ++;
-                continue;
-            }
-
-            /* if (step == 2) {  // Get partition info
-
-                //var partition = new Partition.from_parted_string (line, path, last_partition, last_parent_start, last_parent_end);
-                partitions.add(partition);
-                if (partition.parent == 0) {
-                    last_partition = partition.number;
-                    last_parent_start = partition.start;
-                    last_parent_end = partition.end;
-                }
-            }
-            */
-        }
-    }
-}
-
 public class Partition : Object {
     public enum PartitionType {
         NORMAL,
@@ -418,22 +266,6 @@ public class Parted {
         foreach (var device in devices.keys) {
             Device d = new Device (device);
             retval.add (d);
-            /*
-            output = send_command (device, "print free");
-
-            stdout.printf("->%s<-: %d\n", output, output.length);
-
-            InstallDevice d;
-            if (output.length == 0 || output.has_prefix("Error")) {
-                if (devices [device] == 0L)
-                    continue;
-                d = new InstallDevice.from_unallocated_space (device, devices [device]);
-            } else {
-                d = new InstallDevice.from_parted_string (output);
-            }
-
-            retval.add (d);
-            */
         }
 
         return retval;
@@ -480,7 +312,6 @@ public class Parted {
     public static string process_request (string uri) {
         var reqs = uri.split("parted/");
         if (reqs [1] == "get_devices") {
-        stdout.printf("%s\n", reqs[1]);
             return get_devices_json();
         }
         return "{}";
