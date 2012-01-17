@@ -126,6 +126,13 @@ public class Device : Object {
                                                 type); 
                 partitions.add (new_p);
             }
+            if (partitions.is_empty) {
+                Partition new_p = new Partition (-1, 0, get_size (), get_size (), "", "", "", Partition.PartitionType.FREESPACE);
+                partitions.add (new_p);
+            }
+        } else {
+            Partition new_p = new Partition (-1, 0, get_size (), get_size (), "", "", "", Partition.PartitionType.FREESPACE);
+            partitions.add (new_p);
         }
     }
 
