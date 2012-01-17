@@ -225,6 +225,7 @@ public class Parted {
                     retval += "     'start': " + partition.start.to_string() + ",\n";
                     retval += "     'end': " + partition.end.to_string() + ",\n";
                     retval += "     'size': " + partition.size.to_string() + ",\n";
+                    retval += "     'type': '" + partition.ptype.to_string() + "',\n";
                     retval += "     'filesystem': '" + partition.filesystem + "',\n";
                     retval += "     'description': '" + partition.description + "',\n";
                     retval += "     }\n";
