@@ -14,6 +14,7 @@ var targetDevice = "";
 var targetPartitionSize = 0;
 
 var statusUpdater = -1;
+var translations = {};
 
 var onchangeUpdaterList = [
     "language",
@@ -419,6 +420,17 @@ function onLanguageChanged() {
 
 /* UTILITIES */
 
+function translate(string) {
+    if (language == "C") {
+        return string;
+    }
+
+    if (translations[string] == undefined) {
+        return string;
+    }
+    return translations[string];
+}
+
 function retranslate() {
     if (language == "C") {
         return;
@@ -429,7 +441,7 @@ function retranslate() {
     ajax.onreadystatechange = function() {
         var success = false;
         if (ajax.readyState==4 && ajax.responseText) {
-            var translations = eval("(" + ajax.responseText + ")")
+            translations = eval("(" + ajax.responseText + ")")
             var items = document.querySelectorAll("span");
             for (var i = 0; i < items.length; i++){
                 if (translations[items[i].id] != undefined) {
