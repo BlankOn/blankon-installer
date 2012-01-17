@@ -13,6 +13,9 @@ var nextSlideValidators = {};
 var targetDevice = "";
 var targetPartitionSize = 0;
 
+var targetDeviceId = -1;
+var targetPartitionId = -1;
+
 var statusUpdater = -1;
 var translations = {};
 var devices = [];
@@ -288,6 +291,8 @@ function selectPartition(deviceId, partitionId) {
     }
     targetPartitionSize = getPartitionData(deviceId, partitionId).size;
     targetDevice = devices[deviceId].model;
+    targetDeviceId = deviceId;
+    targetPartitionId = partitionId;
     validateCurrentSlide ();
 }
 
@@ -589,7 +594,8 @@ function previousSlide() {
 function sendInstallationData() {
     var ajax = new XMLHttpRequest();
     var params = ""
-    params += "&partition=" + targetPartition;
+    params += "&partition=" + targetPartitionId;
+    params += "&device=" + targetDeviceId;
     params += "&hostname=" + document.getElementById("computer_name").value; 
     params += "&username=" + document.getElementById("user_name").value;
     params += "&fullname=" + document.getElementById("full_name").value;
