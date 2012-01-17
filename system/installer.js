@@ -15,6 +15,7 @@ var targetPartitionSize = 0;
 
 var statusUpdater = -1;
 var translations = {};
+var devices = [];
 
 var onchangeUpdaterList = [
     "language",
@@ -214,7 +215,7 @@ function getPartitions() {
 
     ajax.onreadystatechange = function() {
         if (ajax.readyState == 4 && ajax.responseText) {
-            var devices = eval("(" + ajax.responseText + ")")
+            devices = eval("(" + ajax.responseText + ")")
             
             var item = document.getElementById("device_list");
             item.innerHTML = "";
@@ -234,14 +235,14 @@ function getPartitions() {
                     var partition = document.createElement("div");
                     partition.setAttribute("class", "partition");
                     var id = "";
-                    if (p.filesystem == "free") {
+                    if (p.type.indexOf("FREESPACE") > 0) {
                         id = devices[i].path + "_free";
                     } else {
                         id = devices[i].path + p.id;
                     }
-                    partition.setAttribute("id", id);
+                    partition.setAttribute("id", i + ":" + j);
                     if (p.size > minimumPartitionSize) {
-                        partition.setAttribute("onclick", "selectPartition('" + devices[i].model + "', '" + id + "', " + p.size + ")");
+                        partition.setAttribute("onclick", "selectPartition('" + i + "', '" + j + "')");
                     }
                     var txt = "";
                     if (p.description) {
@@ -267,18 +268,26 @@ function getPartitions() {
     ajax.send(null);
 }
 
-function selectPartition(device, partition, size) {
+function getPartitionData(deviceId, partitionId) {
+    return devices[deviceId].partitions[partitionId]; 
+}
+
+function selectPartition(deviceId, partitionId) {
     var items = document.querySelectorAll("div.partition");
     for (var i = 0; i < items.length; i++){
-        if (items[i].id == partition) {
+        if (items[i].id == deviceId + ":" + partitionId) {
             items[i].style.backgroundColor = selectedPartitionColor;
             continue;
         }
         items[i].style.backgroundColor = normalPartitionColor;
     }
-    targetPartition = partition;
-    targetPartitionSize = size;
-    targetDevice = device;
+    targetPartition = getPartitionData(deviceId, partitionId).id;
+
+    if (getPartitionData(deviceId, partitionId).type.indexOf("FREESPACE") > 0) {
+        targetPartition = translate("Free partition");
+    }
+    targetPartitionSize = getPartitionData(deviceId, partitionId).size;
+    targetDevice = devices[deviceId].model;
     validateCurrentSlide ();
 }
 
