@@ -85,10 +85,6 @@ public class Device : Object {
         if (disk != null) {
             Ped.Partition? p = disk.part_list;
             while ((p = disk.next_partition (p)) != null) {
-                if (p.num < 1)
-                    continue;
-    
-                stdout.printf("%d\n", p.num);
                 var fs = "";
                 if (p.fs_type != null) {
                     fs = p.fs_type.name;
