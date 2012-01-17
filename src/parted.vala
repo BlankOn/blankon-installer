@@ -140,7 +140,11 @@ public class Device : Object {
         if (!valid)
             return "";
 
-        return device.model;
+        if (device.model.length > 0) {
+            return device.model;
+        } else {
+            return "Unknown model";
+        }
     }
     
     public uint64 get_size () {
