@@ -1,4 +1,5 @@
 using Gtk;
+using Gee;
 using GLib;
 using WebKit;
 
@@ -57,17 +58,20 @@ public class Installation : Object {
         DONE 
     }
 
+    public int partition { get; set construct; }
+    public int device { get; set construct; }
     public string user_name { get; set construct; }
     public string password { get; set construct; }
     public string host_name { get; set construct; }
     public string full_name { get; set construct; }
-    public string partition { get; set construct; }
     public string grub_device { get; set construct; }
     public string language { get; set construct; }
     public string region { get; set construct; }
     public string keyboard { get; set construct; }
     public int state { get; set construct; }
     public string description { get; set construct; }
+
+    string partition_path;
 
     Step step = Step.IDLE;
     Step last_step = Step.IDLE;
@@ -84,6 +88,12 @@ public class Installation : Object {
             var entry = param.split("=");
             if (entry.length == 2) { // handle only valid key-value entry
                 switch (entry [0]) {
+                case "device":
+                    device = int.parse (entry[1]);
+                    break;
+                case "partition":
+                    partition = int.parse (entry[1]);
+                    break;
                 case "username":
                     user_name = entry[1];
                     break;
@@ -95,9 +105,6 @@ public class Installation : Object {
                     break;
                 case  "fullname":
                     full_name = entry[1];
-                    break;
-                case  "partition":
-                    partition = entry[1];
                     break;
                 case  "grubdevice":
                     grub_device = entry[1];
@@ -213,23 +220,76 @@ public class Installation : Object {
     }
     
     void do_partition() {
-        if (partition.contains ("free")) {
-            string [] c = { "partition", partition };
-            do_simple_command_with_args (c, Step.PARTITION, "Partitioning", "Unable to partition device");
+        var d = Parted.get_devices (true); // Only read from cache to have a identical list with 
+                                           // the data obtained previously
+
+        var inconsistent = false;
+
+        if (d != null && device > d.size) {
+            inconsistent = true;
         } else {
-            last_step = Step.PARTITION;
-            do_next_job ();
+            if (d.get (device).partitions != null 
+                && partition > d.get (device).partitions.size) {
+                inconsistent = true;
+            }
         }
+
+        if (inconsistent) {
+            step = Step.DONE;
+            last_step = Step.DONE;
+            state = State.ERROR;
+            description = "Inconsistent partition record";
+            return;
+        }
+
+        var partitions = d.get (device).partitions;
+
+        if (partitions.get (partition).ptype == Partition.PartitionType.FREESPACE) {
+            var device_path = d.get (device).get_path ();
+            description = "Partitioning";
+            step = Step.PARTITION; 
+
+            Device device = new Device.from_name (device_path);
+            var can_continue = false;
+            var new_partition = -1;
+            try {
+                new_partition = device.create_partition (partitions.get (partition).start,
+                                                         partitions.get (partition).end,
+                                                         "ext4");
+
+                Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
+                if (new_partition != -1) {
+                    can_continue = true;
+                }
+            } catch (DeviceError e) {
+                Log.instance().log_without_newline (e.message);
+            }
+          
+
+            if (can_continue == false) {
+                step = Step.DONE;
+                last_step = Step.DONE;
+                state = State.ERROR;
+                description = "Error while doing partition";
+                return;
+            } 
+            Parted.get_devices (false); // re-read devices and partitions
+            partition_path = device_path + new_partition.to_string ();
+        } else {
+            partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
+        }
+        last_step = Step.PARTITION;
+        do_next_job ();
     }
 
     void do_fs() {
-        string [] c = { "/sbin/mkfs.ext4", partition };
+        string [] c = { "/sbin/mkfs.ext4", partition_path };
         do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
     }
 
     void do_mount () {
         DirUtils.create ("/target", 0700);
-        string [] c = { "/bin/mount", partition, "/target" };
+        string [] c = { "/bin/mount", partition_path, "/target" };
         do_simple_command_with_args (c, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
     }
 
@@ -258,11 +318,11 @@ public class Installation : Object {
     void do_grub () {
         var device = grub_device;
         if (device == "") {
-            for (var i = 0; i < partition.length; i ++) {
-                if (partition.get(i).isdigit()) {
+            for (var i = 0; i < partition_path.length; i ++) {
+                if (partition_path.get(i).isdigit()) {
                     break;
                 }
-                device += ("%c").printf(partition.get(i));
+                device += ("%c").printf(partition_path.get(i));
             }
         }
         string [] c = { "/sbin/b-i-install-grub", device };

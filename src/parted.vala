@@ -1,5 +1,9 @@
 using Gee;
 
+public errordomain DeviceError {
+    CANT_CREATE_PARTITION
+}
+
 public class Partition : Object {
     public enum PartitionType {
         NORMAL,
@@ -38,7 +42,7 @@ public class Device : Object {
     uint64 unit_size = 1;
     static bool need_free = false;
     Ped.Device? device;
-    public Ped.Disk? disk;
+    Ped.Disk? disk;
     bool valid;
     public ArrayList<Partition> partitions { get; set construct; }  
 
@@ -112,7 +116,11 @@ public class Device : Object {
                     type = Partition.PartitionType.PROTECTED;
                     break;
                 default:
-                    type = Partition.PartitionType.NORMAL;
+                    if (p.num == -1) {
+                        type = Partition.PartitionType.FREESPACE;
+                    } else {
+                        type = Partition.PartitionType.NORMAL;
+                    }
                     break;
                 }
 
@@ -127,11 +135,11 @@ public class Device : Object {
                 partitions.add (new_p);
             }
             if (partitions.is_empty) {
-                Partition new_p = new Partition (-1, 0, get_size (), get_size (), "", "", "", Partition.PartitionType.FREESPACE);
+                Partition new_p = new Partition (-1, 0, get_size () - 1, get_size () -1, "", "", "", Partition.PartitionType.FREESPACE);
                 partitions.add (new_p);
             }
         } else {
-            Partition new_p = new Partition (-1, 0, get_size (), get_size (), "", "", "", Partition.PartitionType.FREESPACE);
+            Partition new_p = new Partition (-1, 0, get_size () -1 , get_size () -1, "", "", "", Partition.PartitionType.FREESPACE);
             partitions.add (new_p);
         }
     }
@@ -181,11 +189,146 @@ public class Device : Object {
     public uint64 get_unit_size () {
         return unit_size;
     }
+
+
+    public void commit_changes () {
+        if (!valid)
+            return;
+
+        if (disk != null) {
+            stdout.printf ("Label committed\n");
+            disk.commit_to_dev ();
+            stdout.printf ("Label committed\n");
+            disk.commit_to_os ();
+            stdout.printf ("Label committed\n");
+        }
+    }
+
+    // \brief Create a partition 
+    //
+    // Partition is created either inside a new extended partition
+    // or as a new logical partition. The partition list will be
+    // rebuilt.
+    public int create_partition (uint64 byte_start, uint64 byte_end, string fs) throws DeviceError {
+        if (device == null) {
+            throw new DeviceError.CANT_CREATE_PARTITION ("Invalid device"); 
+        }
+
+        if (byte_end <= byte_start) {
+            throw new DeviceError.CANT_CREATE_PARTITION ("byte_end <= byte_start: %ld < %ld\n", (long) byte_end, (long)byte_start);
+        }
+
+        bool create_extended = false;
+        bool create_logical = false; // Logical partition only created whenever
+                                     // extended partition is also created or 
+                                     // the candidate partition is inside an extended partition,
+                                     // otherwise we create primary partition
+                                     // which is limited to 4 partitions per device
+
+        bool has_extended = false;
+        foreach (var p in partitions) {
+            if (p.ptype == Partition.PartitionType.EXTENDED) {
+                has_extended = true;
+            } 
+
+            if (byte_start < p.start) {
+                // partitions are already sorted so
+                // if byte_start is less than this partition's start,
+                // it means that it should be realigned to the partition's
+                // start offset
+                byte_start = p.start;
+            }
+
+            if (byte_start >= p.start && byte_end <= p.end) {
+                // it means the candidate partition is within
+                // this partition. 
+                // This partition must be EXTENDED or FREESPACE
+                // in order to be successful
+                if (!(p.ptype == Partition.PartitionType.EXTENDED ||
+                      p.ptype == Partition.PartitionType.FREESPACE)) {
+                    throw new DeviceError.CANT_CREATE_PARTITION ("Partition to be created is inside another partition which is not an EXTENDED nor a FREE partition. %d\n", (int) p.ptype);
+                }
+
+                if (p.ptype == Partition.PartitionType.FREESPACE) {
+                    if (has_extended == false) {
+                        create_extended = true;
+                    }
+                    create_logical  = true;
+                } else if (p.ptype == Partition.PartitionType.EXTENDED) {
+                    create_logical = true;
+                }
+                break; // skip other partitions
+            } 
+                
+
+            // If it's ourside the iterating partition, then continue
+        }
+
+        if (has_extended && create_extended) {
+            // EXTENDED partition already exist somewhere outside candidate's boundary
+            if (partitions.size > 3) {
+                // We can't make any more partitions
+                throw new DeviceError.CANT_CREATE_PARTITION ("No more partitions can be created\n");
+            }
+            create_extended = false;
+        }
+
+        // At this point we will reset the partition list;
+        // This will recreate the disk if the device is totally empty
+        if (disk == null) {
+            disk = new Ped.Disk (device, new Ped.DiskType("msdos"));
+            stdout.printf ("Label created\n");
+            if (disk != null) {
+                disk.commit_to_dev ();
+            }
+        }
+
+
+        Ped.Partition new_partition = null;
+        Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
+        Ped.Sector start = (Ped.Sector) (byte_start / get_unit_size ());
+        Ped.Sector end  = (Ped.Sector) (byte_end / get_unit_size ());
+
+        if (create_logical) {
+            if (create_extended) {
+                stdout.printf ("Creating extended partition\n");
+                var ext_fs = new Ped.FileSystemType("ext3");
+                var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
+                stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
+                disk.add_partition (ext, new Ped.Constraint.any (device));
+                disk.commit_to_dev ();
+                if (ext == null) {
+                    throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
+                }
+            }
+            new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, fs_type, start, end);
+        } else {
+            new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, fs_type, start, end);
+        }
+        if (new_partition != null) {
+            var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
+            if (part_num == 0) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
+            }
+            new Ped.FileSystem.create (new_partition.geom, fs_type, null);
+
+            disk.commit_to_dev ();
+            disk.commit_to_os ();
+            return new_partition.num;
+        } else {
+            throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
+        }
+    }
 }
 
 public class Parted {
-    public static ArrayList<Device> get_devices () {
-        var retval = new ArrayList<Device> ();
+    static ArrayList<Device> device_list;
+    public static ArrayList<Device> get_devices (bool from_cache) {
+        if (from_cache == true) {
+            return device_list;
+        }
+
+        device_list = new ArrayList<Device> ();
         HashMap<string,long> devices = new HashMap<string,long>();
         //devices.set ("/tmp/a.img", 4000000);
         //devices.add("/tmp/b.img");
@@ -201,16 +344,16 @@ public class Parted {
         foreach (var device in devices.keys) {
             d = new Device.from_name (device);
             if (d.is_valid ()) {
-                retval.add (d);
+                device_list.add (d);
             }
         }
 
-        return retval;
+        return device_list;
     }
 
     public static string get_devices_json() {
         string retval = "";
-        var list = get_devices ();
+        var list = get_devices (false);
         bool need_comma = false;
         retval += "[\n";
         foreach (var device in list) {
