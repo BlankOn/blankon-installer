@@ -9,6 +9,10 @@ if [ -z "$DEVICE" ];then
 fi
 
 /bin/mount --bind /dev /target/dev
+/bin/mount --bind /proc /target/proc
+/bin/mount --bind /sys /target/sys
 /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
 /bin/umount /target/dev
+/bin/umount /target/proc
+/bin/umount /target/sys
