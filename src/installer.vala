@@ -317,7 +317,7 @@ public class Installation : Object {
     }
 
     void do_grub () {
-        var device = grub_device;
+        var device = device_path; // TODO
         if (device == "") {
             device = device_path;
         }
