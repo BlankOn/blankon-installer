@@ -338,7 +338,7 @@ public class Parted {
             if (d.is_valid () == false) {
                 break;
             }
-            retval.add (d);
+            device_list.add (d);
         }
 
         foreach (var device in devices.keys) {
