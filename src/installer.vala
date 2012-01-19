@@ -72,6 +72,7 @@ public class Installation : Object {
     public string description { get; set construct; }
 
     string partition_path;
+    string device_path;
 
     Step step = Step.IDLE;
     Step last_step = Step.IDLE;
@@ -243,9 +244,9 @@ public class Installation : Object {
         }
 
         var partitions = d.get (device).partitions;
+        device_path = d.get (device).get_path ();
 
         if (partitions.get (partition).ptype == Partition.PartitionType.FREESPACE) {
-            var device_path = d.get (device).get_path ();
             description = "Partitioning";
             step = Step.PARTITION; 
 
@@ -318,12 +319,7 @@ public class Installation : Object {
     void do_grub () {
         var device = grub_device;
         if (device == "") {
-            for (var i = 0; i < partition_path.length; i ++) {
-                if (partition_path.get(i).isdigit()) {
-                    break;
-                }
-                device += ("%c").printf(partition_path.get(i));
-            }
+            device = device_path;
         }
         string [] c = { "/sbin/b-i-install-grub", device };
         do_simple_command_with_args (c, Step.GRUB, "Installing GRUB", "Unable to install GRUB");
