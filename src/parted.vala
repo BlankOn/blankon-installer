@@ -1,5 +1,46 @@
 using Gee;
 
+public class OsProber {
+    static HashMap<string,string> probes;
+
+    static void reget () {
+
+        probes = new HashMap<string,string> ();
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/usr/bin/os-prober" };
+        string[] env = { "LC_ALL=C" };
+
+
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+
+        foreach (var line in normal_output.split("\n")) {
+            var fields = line.split(":");
+            if (fields.length > 1) {
+                probes.set (fields[0], fields[1]);
+            }
+        }
+    }
+
+    public static string get_description (string partition) {
+        if (probes == null)
+            reget ();
+        var s = probes.get (partition);
+        if (s == null) {
+            reget ();
+            s = probes.get (partition);
+        }
+        if (s == null) {
+            s = "";
+        }
+        return s;
+    }
+}
+
 public errordomain DeviceError {
     CANT_CREATE_PARTITION
 }
@@ -95,6 +136,9 @@ public class Device : Object {
                 }
                 var flag = "";
                 var description = "";
+                if (p.num > 0) {
+                    description = OsProber.get_description (device.path + p.num.to_string());
+                }
                 Partition.PartitionType type = Partition.PartitionType.NORMAL;
                 switch (p.type) {
                 case Ped.PartitionType.NORMAL:
