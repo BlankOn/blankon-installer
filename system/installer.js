@@ -5,9 +5,6 @@ var language ="en";
 var stepActiveColor ="";
 var stepInactiveColor ="";
 var targetPartition = "";
-var selectedPartitionColor = "";
-var normalPartitionColor = "";
-var minimumPartitionSize = 1000;
 var nextSlideValidators = {};
 
 var targetDevice = "";
@@ -19,6 +16,8 @@ var targetPartitionId = -1;
 var statusUpdater = -1;
 var translations = {};
 var devices = [];
+var gbSize = 1073741824;
+var minimumPartitionSize = 4 * gbSize;
 
 var onchangeUpdaterList = [
     "language",
@@ -82,10 +81,6 @@ function setup(resizing) {
                     stepInactiveColor = rules.style.color;
                 } else if (rules.selectorText == "div.steps_long") {
                     stepActiveColor = rules.style.color;
-                } else if (rules.selectorText == "div.partition") {
-                    normalPartitionColor = rules.style.backgroundColor;
-                } else if (rules.selectorText == "div.partition_selected") {
-                    selectedPartitionColor = rules.style.backgroundColor;
                 }
             }
         }
@@ -225,41 +220,32 @@ function getPartitions() {
             for (var i = 0;i < devices.length; i ++){
                 var device = document.createElement("div");
                 device.setAttribute("class", "device");
-                var desc = "<b>" + devices[i].model + "</b> (" + devices[i].controller + ":" + devices[i].path + ")  <i>" + devices[i].size + "MB</i>" ;
-                var txt = document.createTextNode(desc);
+                var txt = create_string("txt_device_info_line", "<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
                 item.appendChild(device);
-                device.innerHTML = desc;
+                device.appendChild(txt);
                 for (var j = 0; j < devices[i].partitions.length; j ++) {
                     var p = devices[i].partitions[j];
-                    if (p.size <= 0) {
+                    if (p.size <= (0.01*gbSize)) {
                         continue;
                     }
 
                     var partition = document.createElement("div");
-                    partition.setAttribute("class", "partition");
-                    var id = "";
-                    if (p.type.indexOf("FREESPACE") > 0) {
-                        id = devices[i].path + "_free";
-                    } else {
-                        id = devices[i].path + p.id;
-                    }
                     partition.setAttribute("id", i + ":" + j);
-                    if (p.size > minimumPartitionSize) {
+                    if (p.size > minimumPartitionSize
+                        && (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0)) {
                         partition.setAttribute("onclick", "selectPartition('" + i + "', '" + j + "')");
+                        partition.setAttribute("class", "partition");
+                    } else {
+                        partition.setAttribute("class", "partition_disabled");
                     }
-                    var txt = "";
-                    if (p.description) {
-                        txt += "<b>" + p.description + "</b><br/>";
+                    if (p.id > 0) {
+                        txt = create_string("txt_device_partition_line", "Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
+                        partition.appendChild(txt);
+                    } else if (p.type.indexOf("FREESPACE") > 0) {
+                        txt = create_string("txt_device_free_partition_line", "Free partition: {1} GB", (p.size/gbSize).toFixed(2));
+                        partition.appendChild(txt);
                     }
-                    txt += id + ": " + p.size + " MB";
-                    partition.innerHTML = txt;
                     device.appendChild(partition);
-                    if (p.parent != "0") {
-                        var parentItem = document.getElementById(devices[i].path + p.parent);
-                        if (parentItem != undefined) {
-                            parentItem.style.display = "none";
-                        }
-                    }
                 }
             }
 
@@ -279,10 +265,10 @@ function selectPartition(deviceId, partitionId) {
     var items = document.querySelectorAll("div.partition");
     for (var i = 0; i < items.length; i++){
         if (items[i].id == deviceId + ":" + partitionId) {
-            items[i].style.backgroundColor = selectedPartitionColor;
+            items[i].setAttribute("class", "partition_selected");
             continue;
         }
-        items[i].style.backgroundColor = normalPartitionColor;
+        items[i].setAttribute("class", "partition");
     }
     targetPartition = getPartitionData(deviceId, partitionId).id;
 
@@ -669,4 +655,16 @@ function showError() {
     document.getElementById("viewport").style.opacity = "0";
     document.getElementById("toolbar").style.display = "none";
 
+}
+
+function create_string(logical, string) {
+    var obj = document.createElement("span");
+    obj.setAttribute("id", logical);
+    if (arguments.length > 2) {
+        for (var i = 0; i < arguments.length - 2; i ++) {
+            string = string.replace("{"+ (i + 1) +"}", arguments[i+2]);
+        }
+    }
+    obj.innerHTML = string;
+    return obj;
 }

@@ -145,7 +145,25 @@ div.partition:hover {
 
 div.partition_selected {
     background-color: #101010;
+    color: #a0a0a0;
 }
+
+div.partition_disabled {
+    width: 100%;
+    background-color: #a0a0a0;
+    color: #c0c0c0;
+    border-color: #202020;
+    border-width: 1px;
+    border-style: solid;
+}
+
+div.partition_disabled:hover {
+    background-color: #e0e010;
+    border-color: #202020;
+    border-width: 1px;
+    border-style: solid;
+}
+
 
 input.fields {
     left: 350px;
