@@ -39,8 +39,7 @@ rm -f /target/tmp/user-pass
 read HOSTNAME < /tmp/hostname
 mv /tmp/hostname /target/etc/
     cat << @@EOF > /target/etc/hosts 
-127.0.0.1   localhost
-127.0.1.1   $HOSTNAME
+127.0.0.1   localhost $HOSTNAME
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     ip6-localhost ip6-loopback
