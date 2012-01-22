@@ -2,7 +2,11 @@
 
 set -e
 
-PATH=$PATH:/usr/sbin
+PATH=$PATH:/usr/sbin:/usr/bin
+
+function do_chroot() {
+    chroot /target /usr/bin/env PATH=$PATH $@ 
+}
 
 ###### REMOVE PACKAGES
 
@@ -14,20 +18,20 @@ if [ -f /live/image/live/packages-to-remove ];then
 fi
 
 if [ "x$P" != "x" ];then
-    chroot /target /usr/bin/apt-get --yes purge $P
+    do_chroot /usr/bin/apt-get --yes purge $P
 fi
 
-chroot /target /usr/sbin/update-initramfs -k all -u
-chroot /target /usr/bin/apt-get --yes autoremove
-chroot /target /usr/bin/apt-get --yes clean 
+do_chroot /usr/sbin/update-initramfs -k all -u
+do_chroot /usr/bin/apt-get --yes autoremove
+do_chroot /usr/bin/apt-get --yes clean 
 
 ###### USER
 
 read USERNAME FULLNAME < /tmp/user-setup
 rm -f /tmp/user-setup
-chroot /target /usr/sbin/useradd -c "$FULLNAME" -m $USERNAME -s /bin/bash
+do_chroot /usr/sbin/useradd -c "$FULLNAME" -m $USERNAME -s /bin/bash
 
-chroot /target /usr/sbin/chpasswd < /tmp/user-pass
+do_chroot /usr/sbin/chpasswd < /tmp/user-pass
 rm -f /target/tmp/user-pass
 
 ###### HOSTNAME
@@ -50,6 +54,6 @@ ff02::2 ip6-allrouters
 ###### OpenSSH server
 if [ -e /target/var/lib/dpkg/info/openssh-server.postinst ]; then
     if ! ls /target/etc/ssh/ssh_host_*_key > /dev/null 2>&1; then
-        chroot /target /usr/sbin/dpkg-reconfigure --no-reload openssh-server
+        do_chroot /usr/sbin/dpkg-reconfigure --no-reload openssh-server
     fi
 fi
