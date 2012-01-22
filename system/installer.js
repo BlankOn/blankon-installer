@@ -321,6 +321,8 @@ function canContinueInstallation() {
 
 
 function canContinueDone() {
+    document.getElementById("prev").style.display = "none";
+    document.getElementById("next").style.display = "none";
     return false;
 }
 
@@ -602,6 +604,14 @@ function shutdown() {
 
     
     ajax.open("GET", "http://shutdown");
+    ajax.send(null);
+}
+
+function reboot() {
+    var ajax = new XMLHttpRequest();
+
+    
+    ajax.open("GET", "http://reboot");
     ajax.send(null);
 }
 

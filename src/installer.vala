@@ -475,6 +475,10 @@ public class Installer : WebView {
                 request.set_uri(uri);
             } else if (request.uri.has_prefix("http://shutdown")) {
                 Gtk.main_quit();
+            } else if (request.uri.has_prefix("http://reboot")) {
+                var location = "file:///tmp/reboot";
+                Utils.write_simple_file (location, "/sbin/reboot\n");
+                Gtk.main_quit();
             } else {
                 var uri = translate_uri (resource.uri);
                 request.set_uri(uri);
