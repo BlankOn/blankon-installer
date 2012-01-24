@@ -382,7 +382,9 @@ public class Parted {
             if (d.is_valid () == false) {
                 break;
             }
-            device_list.add (d);
+            if (!d.get_path ().has_prefix ("/dev/sr")) {
+                device_list.add (d);
+            }
         }
 
         foreach (var device in devices.keys) {
