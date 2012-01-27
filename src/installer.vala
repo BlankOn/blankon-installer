@@ -2,8 +2,9 @@ using Gtk;
 using Gee;
 using GLib;
 using WebKit;
+using JSCore;
 
-public class Log : Object {
+public class Log : GLib.Object {
     DataOutputStream stream;
     static Log _instance = null;
 
@@ -38,7 +39,7 @@ public class Log : Object {
 }
 
 
-public class Installation : Object {
+public class Installation : GLib.Object {
     public enum State {
         NOT_STARTED,
         ON_GOING,
@@ -409,6 +410,70 @@ public class Installation : Object {
 
         return child_pid;
     }
+
+    public static JSCore.Value js_shutdown (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        Gtk.main_quit();
+
+        return new JSCore.Value.undefined (ctx);
+    }
+
+    public static JSCore.Value js_reboot (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        var location = "file:///tmp/reboot";
+        Utils.write_simple_file (location, "/sbin/reboot\n");
+        Gtk.main_quit();
+
+        return new JSCore.Value.undefined (ctx);
+    }
+
+    
+    static const JSCore.StaticFunction[] js_funcs = {
+        { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
+        { "reboot", js_reboot, PropertyAttribute.ReadOnly },
+        { null, null, 0 }
+    };
+
+    static const ClassDefinition js_class = {
+        0,
+        ClassAttribute.None,
+        "Installation",
+        null,
+
+        null,
+        js_funcs,
+
+        null,
+        null,
+
+        null,
+        null,
+        null,
+        null,
+
+        null,
+        null,
+        null,
+        null,
+        null
+    };
+
+    public static void setup_js_class (GlobalContext context) {
+        var c = new Class (js_class);
+        var o = new JSCore.Object (context, c, context);
+        var g = context.get_global_object ();
+        var s = new String.with_utf8_c_string ("Installation");
+        g.set_property (context, s, o, PropertyAttribute.None, null);
+    }
+
 }
 
 public class Utils {
@@ -463,12 +528,6 @@ public class Installer : WebView {
             if (request.uri.has_prefix("http://install/")) {
                 var uri = translate_install (resource.uri);
                 request.set_uri(uri);
-            } else if (request.uri.has_prefix("http://shutdown")) {
-                Gtk.main_quit();
-            } else if (request.uri.has_prefix("http://reboot")) {
-                var location = "file:///tmp/reboot";
-                Utils.write_simple_file (location, "/sbin/reboot\n");
-                Gtk.main_quit();
             } else {
                 var uri = translate_uri (resource.uri);
                 request.set_uri(uri);
@@ -477,6 +536,7 @@ public class Installer : WebView {
 
         window_object_cleared.connect ((frame, context) => {
             Parted.setup_js_class ((JSCore.GlobalContext) context);
+            Installation.setup_js_class ((JSCore.GlobalContext) context);
         });
     }
 

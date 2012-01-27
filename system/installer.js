@@ -590,19 +590,11 @@ function sendInstallationData() {
 }
 
 function shutdown() {
-    var ajax = new XMLHttpRequest();
-
-    
-    ajax.open("GET", "http://shutdown");
-    ajax.send(null);
+    Installation.shutdown();
 }
 
 function reboot() {
-    var ajax = new XMLHttpRequest();
-
-    
-    ajax.open("GET", "http://reboot");
-    ajax.send(null);
+    Installation.reboot();
 }
 
 function baseIsReady() {
