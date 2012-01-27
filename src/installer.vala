@@ -435,13 +435,6 @@ public class Installer : WebView {
         return uri;
     }
 
-    string translate_parted (string old) {
-        var result = Parted.process_request (old);
-        var uri = old.replace("http://parted/", "file:///tmp/parted_");
-        Utils.write_simple_file (uri, result);
-        return uri;
-    }
-
     string translate_install(string uri) {
         var path = uri.replace("http://install/", "");
         if (path.has_prefix("show_log?")) {
@@ -470,9 +463,6 @@ public class Installer : WebView {
             if (request.uri.has_prefix("http://install/")) {
                 var uri = translate_install (resource.uri);
                 request.set_uri(uri);
-            } else if (request.uri.has_prefix("http://parted")) {
-                var uri = translate_parted (resource.uri);
-                request.set_uri(uri);
             } else if (request.uri.has_prefix("http://shutdown")) {
                 Gtk.main_quit();
             } else if (request.uri.has_prefix("http://reboot")) {
@@ -485,6 +475,9 @@ public class Installer : WebView {
             }
         });
 
+        window_object_cleared.connect ((frame, context) => {
+            Parted.setup_js_class ((JSCore.GlobalContext) context);
+        });
     }
 
     public void start() {

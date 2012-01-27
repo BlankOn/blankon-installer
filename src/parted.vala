@@ -1,4 +1,5 @@
 using Gee;
+using JSCore;
 
 public class OsProber {
     static HashMap<string,string> probes;
@@ -45,7 +46,7 @@ public errordomain DeviceError {
     CANT_CREATE_PARTITION
 }
 
-public class Partition : Object {
+public class Partition : GLib.Object {
     public enum PartitionType {
         NORMAL,
         LOGICAL,
@@ -79,7 +80,7 @@ public class Partition : Object {
 }
 
 
-public class Device : Object {
+public class Device : GLib.Object {
     uint64 unit_size = 1;
     static bool need_free = false;
     Ped.Device? device;
@@ -367,6 +368,7 @@ public class Device : Object {
 
 public class Parted {
     static ArrayList<Device> device_list;
+
     public static ArrayList<Device> get_devices (bool from_cache) {
         if (from_cache == true) {
             return device_list;
@@ -447,6 +449,51 @@ public class Parted {
     public Parted () {
     }
 
-}
+    public static JSCore.Value js_get_devices (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
 
+        var s = new String.with_utf8_c_string (get_devices_json ());
+        return new JSCore.Value.string (ctx, s);
+    }
+    
+    static const JSCore.StaticFunction[] js_funcs = {
+        { "getDevices", js_get_devices, PropertyAttribute.ReadOnly },
+        { null, null, 0 }
+    };
+
+    static const ClassDefinition js_class = {
+        0,
+        ClassAttribute.None,
+        "Parted",
+        null,
+
+        null,
+        js_funcs,
+
+        null,
+        null,
+
+        null,
+        null,
+        null,
+        null,
+
+        null,
+        null,
+        null,
+        null,
+        null
+    };
+
+    public static void setup_js_class (GlobalContext context) {
+        var c = new Class (js_class);
+        var o = new JSCore.Object (context, c, context);
+        var g = context.get_global_object ();
+        var s = new String.with_utf8_c_string ("Parted");
+        g.set_property (context, s, o, PropertyAttribute.None, null);
+    }
+}
 

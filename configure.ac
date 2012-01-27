@@ -46,7 +46,7 @@ PKG_CHECK_MODULES(INSTALLER, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQ
 AC_SUBST(INSTALLER_CFLAGS)
 AC_SUBST(INSTALLER_LIBS)
 
-VALA_PACKAGES="--pkg atk --pkg gdk-x11-3.0 --pkg gee-1.0 --pkg gtk+-3.0 --pkg gio-unix-2.0 --pkg gdk-3.0 --pkg webkit-1.0 --pkg libsoup-2.4 --pkg parted"
+VALA_PACKAGES="--pkg atk --pkg gdk-x11-3.0 --pkg gee-1.0 --pkg gtk+-3.0 --pkg gio-unix-2.0 --pkg gdk-3.0 --pkg webkit-1.0 --pkg libsoup-2.4 --pkg parted --pkg javascriptcore"
 
 AC_SUBST(VALA_PACKAGES)
 

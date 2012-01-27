@@ -208,53 +208,43 @@ function getKeyboards() {
 }
 
 function getPartitions() {
-
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState == 4 && ajax.responseText) {
-            devices = eval("(" + ajax.responseText + ")")
-            
-            var item = document.getElementById("device_list");
-            item.innerHTML = "";
-            for (var i = 0;i < devices.length; i ++){
-                var device = document.createElement("div");
-                device.setAttribute("class", "device");
-                var txt = create_string("txt_device_info_line", "<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
-                item.appendChild(device);
-                device.appendChild(txt);
-                for (var j = 0; j < devices[i].partitions.length; j ++) {
-                    var p = devices[i].partitions[j];
-                    if (p.size <= (0.01*gbSize)) {
-                        continue;
-                    }
-
-                    var partition = document.createElement("div");
-                    partition.setAttribute("id", i + ":" + j);
-                    if (p.size > minimumPartitionSize
-                        && (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0)) {
-                        partition.setAttribute("onclick", "selectPartition('" + i + "', '" + j + "')");
-                        partition.setAttribute("class", "partition");
-                    } else {
-                        partition.setAttribute("class", "partition_disabled");
-                    }
-                    if (p.id > 0) {
-                        txt = create_string("txt_device_partition_line", "Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
-                        partition.appendChild(txt);
-                    } else if (p.type.indexOf("FREESPACE") > 0) {
-                        txt = create_string("txt_device_free_partition_line", "Free partition: {1} GB", (p.size/gbSize).toFixed(2));
-                        partition.appendChild(txt);
-                    }
-                    device.appendChild(partition);
-                }
+    devices = eval("(" + Parted.getDevices() + ")");
+    var item = document.getElementById("device_list");
+    item.innerHTML = "";
+    for (var i = 0;i < devices.length; i ++){
+        var device = document.createElement("div");
+        device.setAttribute("class", "device");
+        var txt = create_string("txt_device_info_line", "<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
+        item.appendChild(device);
+        device.appendChild(txt);
+        for (var j = 0; j < devices[i].partitions.length; j ++) {
+            var p = devices[i].partitions[j];
+            if (p.size <= (0.01*gbSize)) {
+                continue;
             }
 
-            dataReady.partitions = true;
-            baseIsReady();
-        } 
+            var partition = document.createElement("div");
+            partition.setAttribute("id", i + ":" + j);
+            if (p.size > minimumPartitionSize
+                    && (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0)) {
+                partition.setAttribute("onclick", "selectPartition('" + i + "', '" + j + "')");
+                partition.setAttribute("class", "partition");
+            } else {
+                partition.setAttribute("class", "partition_disabled");
+            }
+            if (p.id > 0) {
+                txt = create_string("txt_device_partition_line", "Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
+                partition.appendChild(txt);
+            } else if (p.type.indexOf("FREESPACE") > 0) {
+                txt = create_string("txt_device_free_partition_line", "Free partition: {1} GB", (p.size/gbSize).toFixed(2));
+                partition.appendChild(txt);
+            }
+            device.appendChild(partition);
+        }
     }
-    ajax.open("GET", "http://parted/get_devices");
-    ajax.send(null);
+
+    dataReady.partitions = true;
+    baseIsReady(); 
 }
 
 function getPartitionData(deviceId, partitionId) {
