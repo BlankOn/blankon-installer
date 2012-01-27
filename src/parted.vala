@@ -456,7 +456,7 @@ public class Parted {
             out JSCore.Value exception) {
 
         var s = new String.with_utf8_c_string (get_devices_json ());
-        return new JSCore.Value.string (ctx, s);
+        return ctx.evaluate_script (s, null, null, 0, null);
     }
     
     static const JSCore.StaticFunction[] js_funcs = {

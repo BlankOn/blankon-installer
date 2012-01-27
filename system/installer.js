@@ -208,7 +208,7 @@ function getKeyboards() {
 }
 
 function getPartitions() {
-    devices = eval("(" + Parted.getDevices() + ")");
+    devices = Parted.getDevices();
     var item = document.getElementById("device_list");
     item.innerHTML = "";
     for (var i = 0;i < devices.length; i ++){

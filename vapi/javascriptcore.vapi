@@ -41,7 +41,7 @@ namespace JSCore {
 	public class Context {
 		/* Script Evaluation */
 		[CCode (cname = "JSEvaluateScript")]
-		public unowned Value evaluate_script (String script,
+		public Value evaluate_script (String script,
 		                                      Object? thisObject,
 		                                      String? sourceURL,
 		                                      int startingLineNumber,
