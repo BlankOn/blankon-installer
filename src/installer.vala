@@ -4,6 +4,7 @@ using GLib;
 using WebKit;
 using JSCore;
 
+static Installation xxx;
 public class Log : GLib.Object {
     DataOutputStream stream;
     static Log _instance = null;
@@ -411,6 +412,59 @@ public class Installation : GLib.Object {
         return child_pid;
     }
 
+	public static JSCore.Object js_constructor (Context ctx,
+        JSCore.Object constructor, 
+        JSCore.Value[] arguments, 
+        out JSCore.Value exception) {
+
+        var c = new Class (js_class);
+        var o = new JSCore.Object (ctx, c, null);
+        var s = new String.with_utf8_c_string ("getStatus");
+        var f = new JSCore.Object.function_with_callback (ctx, s, js_get_status);  
+        o.set_property (ctx, s, f, 0, null);  
+
+        s = new String.with_utf8_c_string ("start");
+        f = new JSCore.Object.function_with_callback (ctx, s, js_start);  
+        o.set_property (ctx, s, f, 0, null);  
+        if (arguments.length == 1) {
+            s = arguments [0].to_string_copy (ctx, null);
+            char buffer[1024];
+            s.get_utf8_c_string (buffer, buffer.length);
+            Installation* i = new Installation.from_string((string)buffer);
+            o.set_private (i);
+        }
+        return o;
+    }
+
+    public static JSCore.Value js_get_status (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        var i = thisObject.get_private() as Installation;
+        if (i != null) {
+            var result = "({ 'status': %d, 'description': '%s' })".printf (i.state, i.description);
+            var s = new String.with_utf8_c_string (result);
+            return ctx.evaluate_script (s, null, null, 0, null);
+        }
+        return new JSCore.Value.undefined (ctx);
+    }
+
+    public static JSCore.Value js_start (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        var i = thisObject.get_private() as Installation;
+        if (i != null) {
+            i.start ();
+        }
+        return new JSCore.Value.undefined (ctx);
+    }
+
+
     public static JSCore.Value js_shutdown (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
@@ -461,7 +515,7 @@ public class Installation : GLib.Object {
 
         null,
         null,
-        null,
+        js_constructor,
         null,
         null
     };
@@ -505,16 +559,7 @@ public class Installer : WebView {
         if (path.has_prefix("show_log?")) {
             uri = "file:///var/log/blankon-installer.log";
             return uri;
-        } else if (path.has_prefix("start?")) {
-            installation = new Installation.from_string(path.replace("start?", ""));
-            installation.start ();
-        } else if (path.has_prefix("status?")) {
-            // Kludge!
-            var location = "file:///tmp/install_status";
-            var result = "{ 'status': %d, 'description': '%s' }";
-            Utils.write_simple_file (location, result.printf(installation.state, installation.description));
-            return location;
-        }
+        } 
         return "about:blank";
     }
 

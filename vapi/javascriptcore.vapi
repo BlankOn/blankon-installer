@@ -167,7 +167,7 @@ namespace JSCore {
 	[CCode (has_target = false)]
 	public delegate JSCore.Object ObjectCallAsConstructorCallback (Context ctx,
 	                                                                       JSCore.Object constructor,
-                                                                           [CCode (array_length_pos=3.9, array_length_type="size_t")]
+                                                                           [CCode (array_length_pos=2.9, array_length_type="size_t")]
 	                                                                       JSCore.Value[] arguments,
 	                                                                       out JSCore.Value exception);
 

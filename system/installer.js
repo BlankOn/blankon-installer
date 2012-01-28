@@ -18,6 +18,7 @@ var translations = {};
 var devices = [];
 var gbSize = 1073741824;
 var minimumPartitionSize = 4 * gbSize;
+var installation = undefined;
 
 var onchangeUpdaterList = [
     "language",
@@ -570,7 +571,6 @@ function previousSlide() {
 }
 
 function sendInstallationData() {
-    var ajax = new XMLHttpRequest();
     var params = ""
     params += "&partition=" + targetPartitionId;
     params += "&device=" + targetDeviceId;
@@ -581,9 +581,9 @@ function sendInstallationData() {
     params += "&language=" + language;
     params += "&region=" + document.getElementById("region").value;
     params += "&keyboard=" + document.getElementById("keyboard").value;
-    ajax.open("GET", "http://install/start?" + params);
-
-    ajax.send(null);
+    installation = new Installation(params);
+    console.log("xxx\n");
+    installation.start();
 
     updateStatus();
     statusUpdater = setInterval("updateStatus()", 5000);
@@ -607,29 +607,21 @@ function baseIsReady() {
 }
 
 function updateStatus() {
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState==4 && ajax.responseText) {
-            var status = eval("(" + ajax.responseText + ")")
-            console.log(ajax.responseText);
-            console.log(status.status + ":" + status.description);
-            document.getElementById("current_step").innerHTML = status.description;
-
-            if (status.status > 1) {
-                clearInterval (statusUpdater);
-                if (status.status == 2) {
-                    showError();
-                } else {
-                    nextSlide();
-                }
-            }
-        } 
-
+    if (installation === undefined) {
+        console.log("installation is undefined");
     }
-    ajax.open("GET", "http://install/status?");
-    ajax.send(null);
+    var status = installation.getStatus(); 
+    console.log(status.status + ":" + status.description);
+    document.getElementById("current_step").innerHTML = status.description;
 
+    if (status.status > 1) {
+        clearInterval (statusUpdater);
+        if (status.status == 2) {
+            showError();
+        } else {
+            nextSlide();
+        }
+    }
 }
 
 function showError() {
@@ -660,3 +652,4 @@ function create_string(logical, string) {
     obj.innerHTML = string;
     return obj;
 }
+
