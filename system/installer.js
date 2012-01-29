@@ -599,6 +599,7 @@ function sendInstallationData() {
     params += "&language=" + language;
     params += "&region=" + document.getElementById("region").value;
     params += "&keyboard=" + document.getElementById("keyboard").value;
+    params += "&encrypt=" + encryptHome;
     installation = new Installation(params);
     installation.start();
 
