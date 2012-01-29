@@ -306,7 +306,7 @@ function canContinueSummary() {
 }
 
 function canContinueInstallation() {
-    sendInstallationData();
+    setTimeout("sendInstallationData()", 1000);
     document.getElementById("prev").style.display = "none";
     document.getElementById("next").style.display = "none";
     return false;
