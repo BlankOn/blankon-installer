@@ -4,7 +4,6 @@ using GLib;
 using WebKit;
 using JSCore;
 
-static Installation xxx;
 public class Log : GLib.Object {
     DataOutputStream stream;
     static Log _instance = null;
