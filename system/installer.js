@@ -600,7 +600,6 @@ function sendInstallationData() {
     params += "&region=" + document.getElementById("region").value;
     params += "&keyboard=" + document.getElementById("keyboard").value;
     installation = new Installation(params);
-    console.log("xxx\n");
     installation.start();
 
     updateStatus();
@@ -687,5 +686,4 @@ function check_strong_password() {
 
 function check_encrypt_home() {
     encryptHome = (document.getElementById("encrypt_home").value == "on");
-    strongPassword = (document.getElementById("strong_password").value == "on");
 }
