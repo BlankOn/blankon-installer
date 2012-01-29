@@ -204,3 +204,26 @@ div#error_frame {
 textarea.log {
     font-size: 16px;
 }
+
+div.advanced_options_hidden {
+    height: 0px;
+    overflow: hidden;
+    display: none;
+}
+
+div.advanced_options_shown {
+    display: block;
+    overflow: hidden;
+    background-color: #d0d0d0;
+    border-radius: 6px;
+    -webkit-animation-name: show_advanced_frames;
+    -webkit-animation-timing-function: ease-in;
+    -webkit-animation-iteration-count: once;
+    -webkit-animation-duration: 250ms;
+}
+
+
+@-webkit-keyframes show_advanced_frames {
+    0% { height: 0px; }
+    100% { height: 100px; }
+}

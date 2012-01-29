@@ -58,6 +58,19 @@
        <div class="column" id="personalization">
             <h1><span id="txt_personalization">Personalization</span></h1>
             <p><span id="txt_personalization_description">Please enter your personalization preference below..</span></p>
+            <button id="show_advanced_options_button" class="button" onclick="show_advanced_options()"/><span id="txt_show_advanced_options">Show advanced options</span></button>
+            <div id="advanced_options" class="advanced_options_hidden">
+            <p>
+            <label><span id="txt_strong_password">Enforce strong password</span></label>
+            <input type="checkbox" id="strong_password" onchange="check_strong_password()"/>
+            </p>
+            <p>
+            <label><span id="txt_encrypt_home">Encrypt home directory</span></label>
+            <input type="checkbox" id="encrypt_home"/>
+            </p>
+
+            </div>
+
             <p>
             <label><span id="txt_computer_name">Computer Name</span></label>
             <input type="text" id="computer_name" size=30 class="fields" value="blankon"/>

@@ -6,6 +6,8 @@ var stepActiveColor ="";
 var stepInactiveColor ="";
 var targetPartition = "";
 var nextSlideValidators = {};
+var strongPassword = false;
+var encryptHome = false;
 
 var targetDevice = "";
 var targetPartitionSize = 0;
@@ -653,3 +655,21 @@ function create_string(logical, string) {
     return obj;
 }
 
+function show_advanced_options() {
+    document.getElementById("show_advanced_options_button").style.display = "none";
+    document.getElementById("advanced_options").setAttribute("class", "advanced_options_shown");
+}
+
+function check_strong_password() {
+    strongPassword = (document.getElementById("strong_password").value == "on");
+    document.getElementById("password").value = "";
+    document.getElementById("password2").value = "";
+    personalizationValidation.password = false;
+    personalizationValidation.password2 = false;
+
+}
+
+function check_encrypt_home() {
+    encryptHome = (document.getElementById("encrypt_home").value == "on");
+    strongPassword = (document.getElementById("strong_password").value == "on");
+}
