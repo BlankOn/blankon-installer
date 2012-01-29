@@ -351,16 +351,23 @@ function onUserNameChanged(item) {
 function onPasswordChanged(item) {
     var result = false;
 
-    if (item.value.length > 7) {
+    if (item.value.length > 0) {
         result = true;
     }
 
     var string = item.value;
+
     var hasAlpha = false;
     var hasDigit = false;
     var hasALPHA = false;
-    if (result) {
-        result = false;
+
+    var strongResult = false;
+    if (string.length > 7) {
+        strongResult = true;
+    }
+
+    if (strongResult) {
+        strongResult = false;
         for (var i = 0; i < string.length; i ++) {
             var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
             var isALPHA = (string.charCodeAt(i) >= ALPHAStart && string.charCodeAt(i) <= ALPHAEnd);
@@ -378,13 +385,20 @@ function onPasswordChanged(item) {
             }
 
             if (hasALPHA && hasAlpha && hasDigit) {
-                result = true
-                break;
+                strongResult = true
+                    break;
             }
         }
     }
 
-    displayHint (item, !result);
+    if (strongPassword) {
+        result = strongResult;
+        displayHint (item, !result, "password_strong");
+        displayHint (item, false, "password_warning");
+    } else {
+        displayHint (item, !strongResult, "password_warning");
+        displayHint (item, !result);
+    }
     giveFocusIfInvalid(item);
     personalizationValidation.password = result;
 
@@ -454,9 +468,11 @@ function retranslate() {
     ajax.send(null);
 }
 
-
 function displayHint(object, display) {
     var id = object.id;
+    if (arguments.length > 2) {
+        id = arguments[2];
+    }
     var item = document.getElementById("hint_" + id);
     if (item != undefined) {
         if (display) {

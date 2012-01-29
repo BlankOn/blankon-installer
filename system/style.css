@@ -180,6 +180,12 @@ div.hint {
     display: none;
 }
 
+div.hint_warning {
+    color: #C35617; 
+    padding-left: 50px;
+    display: none;
+}
+
 button.button {
     font-size: 16px;
 }
