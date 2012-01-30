@@ -546,8 +546,6 @@ public class Utils {
 }
 
 public class Installer : WebView {
-    Installation installation = null;
-
     string translate_uri (string old) {
         var uri = old.replace("http://system", "file://" + Config.SYSTEM_PATH + "/");
         return uri;

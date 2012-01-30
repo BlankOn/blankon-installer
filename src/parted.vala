@@ -257,11 +257,8 @@ public class Device : GLib.Object {
             return;
 
         if (disk != null) {
-            stdout.printf ("Label committed\n");
             disk.commit_to_dev ();
-            stdout.printf ("Label committed\n");
             disk.commit_to_os ();
-            stdout.printf ("Label committed\n");
         }
     }
 
