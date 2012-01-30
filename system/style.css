@@ -228,8 +228,27 @@ div.advanced_options_shown {
     -webkit-animation-duration: 250ms;
 }
 
+.spinner {
+    height: 5px;
+    width: 5px;
+    border: 3px solid #aaa;
+    border-radius: 10px;
+
+    -webkit-animation-name: spinner;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-duration: 2s;
+}
 
 @-webkit-keyframes show_advanced_frames {
     0% { height: 0px; }
     100% { height: 100px; }
+}
+
+@-webkit-keyframes spinner {
+    0% { border-top: 3px solid black; }
+    25% { border-right: 3px solid black; border-top: 3px solid #aaa }
+    50% { border-bottom: 3px solid black; }
+    75% { border-left: 3px solid black; }
+    100% { border-top: 3px solid black; }
 }
