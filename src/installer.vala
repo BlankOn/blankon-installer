@@ -247,7 +247,7 @@ public class Installation : GLib.Object {
         var partitions = d.get (device).partitions;
         device_path = d.get (device).get_path ();
 
-        if (partitions.get (partition).ptype == Partition.PartitionType.FREESPACE) {
+        if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
             description = "Partitioning";
             step = Step.PARTITION; 
 

@@ -46,39 +46,6 @@ public errordomain DeviceError {
     CANT_CREATE_PARTITION
 }
 
-public class Partition : GLib.Object {
-    public enum PartitionType {
-        NORMAL,
-        LOGICAL,
-        EXTENDED,
-        FREESPACE,
-        METADATA,
-        PROTECTED
-    }
-
-    public int number { get; set construct; }
-    public uint64 start { get; set construct; }
-    public uint64 end { get; set construct; }
-    public uint64 size { get; set construct; }
-    public string filesystem { get; set construct; }
-    public string flag { get; set construct; }
-    public int parent { get; set construct; }
-    public string description { get; set construct; }
-    public PartitionType ptype { get; set construct; }
-
-    public Partition (int number, uint64 start, uint64 end, uint64 size, string filesystem, string flag, string description, PartitionType type) {
-        this.number = number;
-        this.start = start;
-        this.end = end;
-        this.size = size;
-        this.filesystem = filesystem;
-        this.flag = flag;
-        this.description = description;
-        this.parent = parent;
-        this.ptype = type;
-    }
-}
-
 
 public class Device : GLib.Object {
     uint64 unit_size = 1;
@@ -87,6 +54,54 @@ public class Device : GLib.Object {
     Ped.Disk? disk;
     bool valid;
     public ArrayList<Partition> partitions { get; set construct; }  
+
+    public enum PartitionType {
+        NORMAL,
+        LOGICAL,
+        EXTENDED,
+        FREESPACE,
+        METADATA,
+        PROTECTED,
+        INVALID
+    }
+
+
+    public class Partition : GLib.Object {
+        public int number { get;  set; }
+        public uint64 start { get;  set; }
+        public uint64 end { get;  set; }
+        public uint64 size { get;  set; }
+        public string filesystem { get;  set; }
+        public string flag { get;  set; }
+        public int parent { get;  set; }
+        public string description { get;  set; }
+        public PartitionType ptype { get;  set; }
+
+        public Partition () {
+            number = -1;
+            start = -1;
+            end = -1;
+            size = -1;
+            filesystem = "";
+            flag = "";
+            description = "";
+            parent = -1;
+            ptype = PartitionType.INVALID;
+        }
+
+        public Partition.blank_with_size (uint64 size) {
+            this.number         = -1; 
+            this.start          = 0;
+            this.end            = size;
+            this.size           = size;
+            this.filesystem     = "";
+            this.flag           = "";
+            this.description    = "";
+            this.parent         = 0;
+            this.ptype          = PartitionType.FREESPACE;
+        }
+    }
+
 
     public bool is_valid () {
         return valid;
@@ -140,51 +155,52 @@ public class Device : GLib.Object {
                 if (p.num > 0) {
                     description = OsProber.get_description (device.path + p.num.to_string());
                 }
-                Partition.PartitionType type = Partition.PartitionType.NORMAL;
+                PartitionType type = PartitionType.NORMAL;
                 switch (p.type) {
                 case Ped.PartitionType.NORMAL:
-                    type = Partition.PartitionType.NORMAL;
+                    type = PartitionType.NORMAL;
                     break;
                 case Ped.PartitionType.LOGICAL:
-                    type = Partition.PartitionType.LOGICAL;
+                    type = PartitionType.LOGICAL;
                     break;
                 case Ped.PartitionType.EXTENDED:
-                    type = Partition.PartitionType.EXTENDED;
+                    type = PartitionType.EXTENDED;
                     break;
                 case Ped.PartitionType.FREESPACE:
-                    type = Partition.PartitionType.FREESPACE;
+                    type = PartitionType.FREESPACE;
                     break;
                 case Ped.PartitionType.METADATA:
-                    type = Partition.PartitionType.METADATA;
+                    type = PartitionType.METADATA;
                     break;
                 case Ped.PartitionType.PROTECTED:
-                    type = Partition.PartitionType.PROTECTED;
+                    type = PartitionType.PROTECTED;
                     break;
                 default:
                     if (p.num == -1) {
-                        type = Partition.PartitionType.FREESPACE;
+                        type = PartitionType.FREESPACE;
                     } else {
-                        type = Partition.PartitionType.NORMAL;
+                        type = PartitionType.NORMAL;
                     }
                     break;
                 }
 
-                Partition new_p = new Partition (p.num, 
-                                                (uint64) p.geom.start * unit_size,
-                                                (uint64) p.geom.end * unit_size,
-                                                (uint64) p.geom.length * unit_size,
-                                                fs,
-                                                flag,
-                                                description,
-                                                type); 
+                Partition new_p     = new Partition ();
+                new_p.number        = p.num;
+                new_p.start         = (uint64) p.geom.start * unit_size;
+                new_p.end           = (uint64) p.geom.end * unit_size;
+                new_p.size          = (uint64) p.geom.length * unit_size;
+                new_p.filesystem    = fs;
+                new_p.flag          = flag;
+                new_p.description   = description;
+                new_p.ptype         = type; 
                 partitions.add (new_p);
             }
             if (partitions.is_empty) {
-                Partition new_p = new Partition (-1, 0, get_size () - 1, get_size () -1, "", "", "", Partition.PartitionType.FREESPACE);
+                Partition new_p     = new Partition.blank_with_size (get_size () - 1);
                 partitions.add (new_p);
             }
         } else {
-            Partition new_p = new Partition (-1, 0, get_size () -1 , get_size () -1, "", "", "", Partition.PartitionType.FREESPACE);
+            Partition new_p     = new Partition.blank_with_size (get_size () - 1);
             partitions.add (new_p);
         }
     }
@@ -272,7 +288,7 @@ public class Device : GLib.Object {
 
         bool has_extended = false;
         foreach (var p in partitions) {
-            if (p.ptype == Partition.PartitionType.EXTENDED) {
+            if (p.ptype == PartitionType.EXTENDED) {
                 has_extended = true;
             } 
 
@@ -289,17 +305,17 @@ public class Device : GLib.Object {
                 // this partition. 
                 // This partition must be EXTENDED or FREESPACE
                 // in order to be successful
-                if (!(p.ptype == Partition.PartitionType.EXTENDED ||
-                      p.ptype == Partition.PartitionType.FREESPACE)) {
+                if (!(p.ptype == PartitionType.EXTENDED ||
+                      p.ptype == PartitionType.FREESPACE)) {
                     throw new DeviceError.CANT_CREATE_PARTITION ("Partition to be created is inside another partition which is not an EXTENDED nor a FREE partition. %d\n", (int) p.ptype);
                 }
 
-                if (p.ptype == Partition.PartitionType.FREESPACE) {
+                if (p.ptype == PartitionType.FREESPACE) {
                     if (has_extended == false) {
                         create_extended = true;
                     }
                     create_logical  = true;
-                } else if (p.ptype == Partition.PartitionType.EXTENDED) {
+                } else if (p.ptype == PartitionType.EXTENDED) {
                     create_logical = true;
                 }
                 break; // skip other partitions
