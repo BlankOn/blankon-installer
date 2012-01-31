@@ -29,7 +29,8 @@ do_chroot /usr/bin/apt-get --yes clean
 
 read USERNAME FULLNAME < /tmp/user-setup
 rm -f /tmp/user-setup
-do_chroot /usr/sbin/useradd -c "$FULLNAME" -m $USERNAME -s /bin/bash
+USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
+do_chroot /usr/sbin/useradd -G $USER_GROUPS -c "$FULLNAME" -m $USERNAME -s /bin/bash
 
 do_chroot /usr/sbin/chpasswd < /tmp/user-pass
 rm -f /target/tmp/user-pass
