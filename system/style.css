@@ -217,6 +217,22 @@ div.advanced_options_hidden {
     display: none;
 }
 
+div.progress_bar_enclosure {
+    height: 10px;
+    width: 400px;
+    background-color: #888;
+    border-radius: 5px;
+}
+
+div#progress_bar {
+    width: 1%;
+    height: 10px;
+    background-color: #aaa;
+    border-radius: 5px;
+    -webkit-transition: width 1s ease-out;
+}
+
+
 div.advanced_options_shown {
     display: block;
     overflow: hidden;

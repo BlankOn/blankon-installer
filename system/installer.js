@@ -626,12 +626,16 @@ function baseIsReady() {
 }
 
 function updateStatus() {
-    if (installation === undefined) {
+    if (typeof installation === "undefined") {
         console.log("installation is undefined");
     }
     var status = installation.getStatus(); 
     console.log(status.status + ":" + status.description);
     document.getElementById("current_step").innerHTML = status.description;
+    var progressBar = document.getElementById("progress_bar");
+    if (!(typeof progressBar === "undefined")) {
+        progressBar.style.width = status.progress + "%";
+    }
 
     if (status.status > 1) {
         clearInterval (statusUpdater);

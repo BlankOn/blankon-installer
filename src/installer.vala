@@ -72,6 +72,7 @@ public class Installation : GLib.Object {
     public string keyboard { get; set construct; }
     public bool autologin { get; set construct; }
     public int state { get; set construct; }
+    public int progress { get; private set; }
     public string description { get; set construct; }
 
     uint64 installation_size;
@@ -87,6 +88,7 @@ public class Installation : GLib.Object {
     IOChannel io_out;
 
     public Installation.from_string(string uri) {
+        progress = 0;
         state = State.NOT_STARTED;
         description = "";
         autologin = false;
@@ -169,10 +171,12 @@ public class Installation : GLib.Object {
     void do_next_job () {
         switch (last_step) {
         case Step.IDLE:
+            progress = 5;
             Log.instance().log ("PARTITION");
             do_partition ();
             break;
         case Step.PARTITION:
+            progress = 10;
             Log.instance().log ("FS");
             do_fs ();
             break;
@@ -181,14 +185,17 @@ public class Installation : GLib.Object {
             do_mount ();
             break;
         case Step.MOUNT:
+            progress = 15;
             Log.instance().log ("COPY");
             do_copy ();
             break;
         case Step.COPY:
+            progress = 80;
             Log.instance().log ("SETUP");
             do_setup ();
             break;
         case Step.SETUP:
+            progress = 90;
             Log.instance().log ("GRUB");
             do_grub ();
             break;
@@ -197,6 +204,7 @@ public class Installation : GLib.Object {
             do_cleanup ();
             break;
         case Step.CLEANUP:
+            progress = 100;
             Log.instance().log ("DONE");
             do_done ();
             break;
@@ -490,7 +498,7 @@ public class Installation : GLib.Object {
 
         var i = thisObject.get_private() as Installation;
         if (i != null) {
-            var result = "({ 'status': %d, 'description': '%s' })".printf (i.state, i.description);
+            var result = "({ 'status': %d, 'description': '%s', 'progress': %d })".printf (i.state, i.description, i.progress);
             var s = new String.with_utf8_c_string (result);
             return ctx.evaluate_script (s, null, null, 0, null);
         }
