@@ -1,6 +1,48 @@
 using Gee;
 using JSCore;
 
+public class SwapCollector {
+    static ArrayList<string> swaps;
+
+    static void reget () {
+        swaps = new ArrayList<string> ();
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/sbin/fdisk", "-l" };
+        string[] env = { "LC_ALL=C" };
+
+
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+
+        foreach (var line in normal_output.split("\n")) {
+            if ((line.index_of ("/dev/") == 0)
+                && (line.index_of ("Linux swap") > 0)) {
+                swaps.add (line.split (" ", 2)[0]);
+            }
+        }
+    }
+
+    public static bool is_swap (string partition) {
+        if (swaps == null) {
+            reget ();
+        }
+        return swaps.contains (partition); 
+    }
+
+    public static ArrayList<string> get_partitions () {
+        if (swaps == null) {
+            reget ();
+        }
+        return swaps;
+    }
+}
+
+
+
 public class OsProber {
     static HashMap<string,string> probes;
 
