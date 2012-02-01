@@ -15,19 +15,27 @@ if [ -f /live/image/live/packages-to-remove ];then
     for i in `cat /live/image/live/packages-to-remove`;do
         P="$P $i"
     done
+    echo "Removing packages: $P"
 fi
 
 if [ "x$P" != "x" ];then
     do_chroot /usr/bin/apt-get --yes purge $P
 fi
 
+echo "Updating initramfs"
 do_chroot /usr/sbin/update-initramfs -k all -u
+
+echo "Removing unused packages"
 do_chroot /usr/bin/apt-get --yes autoremove
+
+echo "Clean up packaging system"
 do_chroot /usr/bin/apt-get --yes clean 
 
 ###### USER
 
 read AUTOLOGIN USERNAME < /tmp/user-setup
+echo "Configuring user $USERNAME"
+echo "Auto-login: $AUTOLIGIN"
 rm -f /tmp/user-setup
 USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
 do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
@@ -40,6 +48,7 @@ rm -f /tmp/user-pass
 
 if [ "x$AUTOLOGIN" = "x1" ];then
     if [ -s /target/var/lib/dpkg/info/lightdm.list ];then
+        echo "Setting up lightdm autologin"
         if [ -s /target/etc/lightdm/lightdm.conf ];then
             sed -i -r -e "s|^#.*autologin-user=.*\$|autologin-user=$USERNAME|" \
                       -e "s|^#.*autologin-user-timeout=.*\$|autologin-user-timeout=0|" \
@@ -63,6 +72,7 @@ fi
 ###### HOSTNAME
 
 read HOSTNAME < /tmp/hostname
+echo "Setting up hostname $HOSTNAME"
 mv /tmp/hostname /target/etc/
     cat << @@EOF > /target/etc/hosts 
 127.0.0.1   localhost $HOSTNAME
@@ -78,6 +88,7 @@ ff02::2 ip6-allrouters
 
 ###### OpenSSH server
 if [ -e /target/var/lib/dpkg/info/openssh-server.postinst ]; then
+    echo "Restarting openssh server"
     if ! ls /target/etc/ssh/ssh_host_*_key > /dev/null 2>&1; then
         do_chroot /usr/sbin/dpkg-reconfigure --no-reload openssh-server
     fi
