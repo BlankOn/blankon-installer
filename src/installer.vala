@@ -69,6 +69,7 @@ public class Installation : GLib.Object {
     public string language { get; set construct; }
     public string region { get; set construct; }
     public string keyboard { get; set construct; }
+    public bool autologin { get; set construct; }
     public int state { get; set construct; }
     public string description { get; set construct; }
 
@@ -86,6 +87,7 @@ public class Installation : GLib.Object {
     public Installation.from_string(string uri) {
         state = State.NOT_STARTED;
         description = "";
+        autologin = false;
         foreach (var param in uri.split("&")) {
             var entry = param.split("=");
             if (entry.length == 2) { // handle only valid key-value entry
@@ -119,6 +121,9 @@ public class Installation : GLib.Object {
                     break;
                 case  "keyboard":
                     keyboard = entry[1];
+                    break;
+                case  "autologin":
+                    autologin = (entry[1] == "true");
                     break;
                 }
             }
@@ -308,7 +313,7 @@ public class Installation : GLib.Object {
         var content = ("%s:%s\n").printf(user_name, password);
         Utils.write_simple_file ("file:///tmp/user-pass", content);
 
-        content = ("%s %s\n").printf(user_name, full_name);
+        content = ("%d %s %s\n").printf((int) autologin, user_name, full_name);
         Utils.write_simple_file ("file:///tmp/user-setup", content);
 
         content = ("%s\n").printf(host_name);
@@ -481,7 +486,7 @@ public class Installation : GLib.Object {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
 
-        var location = "file:///tmp/reboot";
+        var location = "file:///tmp/post-install.sh";
         Utils.write_simple_file (location, "/sbin/reboot\n");
         Gtk.main_quit();
 

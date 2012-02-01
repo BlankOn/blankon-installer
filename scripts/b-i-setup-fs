@@ -27,7 +27,7 @@ do_chroot /usr/bin/apt-get --yes clean
 
 ###### USER
 
-read USERNAME FULLNAME < /tmp/user-setup
+read AUTOLOGIN USERNAME FULLNAME < /tmp/user-setup
 rm -f /tmp/user-setup
 USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
 do_chroot /usr/sbin/useradd -G $USER_GROUPS -c "$FULLNAME" -m $USERNAME -s /bin/bash
@@ -35,6 +35,30 @@ do_chroot /usr/sbin/useradd -G $USER_GROUPS -c "$FULLNAME" -m $USERNAME -s /bin/
 do_chroot /usr/sbin/chpasswd < /tmp/user-pass
 rm -f /target/tmp/user-pass
 
+###### AUTOLOGIN
+
+if [ "x$AUTOLOGIN" = "x1" ];then
+    if [ -s /target/var/lib/dpkg/info/lightdm.list ];then
+        if [ -s /target/etc/lightdm/lightdm.conf ];then
+            sed -i -r -e "s|^#.*autologin-user=.*\$|autologin-user=$USERNAME|" \
+                      -e "s|^#.*autologin-user-timeout=.*\$|autologin-user-timeout=0|" \
+                      /target/etc/lightdm/lightdm.conf
+        fi
+        if [ ! -s /target/etc/pam.d/lightdm-autologin ];then
+            cat << @@EOF > /target/etc/pam.d/lightdm-autologin
+auth requisite pam_nologin.so
+auth required pam_env.so readenv=1
+auth required pam_env.so readenv=1 envfile=/etc/default/locale
+auth    required    pam_succeed_if.so user != root quiet_success
+auth required pam_permit.so
+@include common-account
+session required pam_limits.so
+@include common-session
+@include common-password
+@@EOF
+        fi
+    fi
+fi
 ###### HOSTNAME
 
 read HOSTNAME < /tmp/hostname

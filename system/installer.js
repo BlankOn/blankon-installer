@@ -7,7 +7,7 @@ var stepInactiveColor ="";
 var targetPartition = "";
 var nextSlideValidators = {};
 var strongPassword = false;
-var encryptHome = false;
+var autoLogin = false;
 
 var targetDevice = "";
 var targetPartitionSize = 0;
@@ -293,6 +293,7 @@ function canContinuePersonalization() {
     result = result && personalizationValidation.password;
     result = result && personalizationValidation.password2;
 
+    checkAutoLogin();
     return result;
 }
 
@@ -599,7 +600,7 @@ function sendInstallationData() {
     params += "&language=" + language;
     params += "&region=" + document.getElementById("region").value;
     params += "&keyboard=" + document.getElementById("keyboard").value;
-    params += "&encrypt=" + encryptHome;
+    params += "&autologin=" + (autoLogin ? "true" : "false");
     installation = new Installation(params);
     installation.start();
 
@@ -682,9 +683,8 @@ function check_strong_password() {
     document.getElementById("password2").value = "";
     personalizationValidation.password = false;
     personalizationValidation.password2 = false;
-
 }
 
-function check_encrypt_home() {
-    encryptHome = (document.getElementById("encrypt_home").value == "on");
+function checkAutoLogin() {
+    autoLogin = (document.getElementById("autologin").value == "on");
 }
