@@ -537,7 +537,7 @@ public class Installation : GLib.Object {
             out JSCore.Value exception) {
 
         var location = "file:///tmp/post-install.sh";
-        Utils.write_simple_file (location, "/sbin/reboot\n");
+        Utils.write_simple_file (location, "sudo /sbin/reboot\n");
         Gtk.main_quit();
 
         return new JSCore.Value.undefined (ctx);
