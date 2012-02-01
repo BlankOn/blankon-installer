@@ -217,7 +217,7 @@ function getPartitions() {
     for (var i = 0;i < devices.length; i ++){
         var device = document.createElement("div");
         device.setAttribute("class", "device");
-        var txt = create_string("txt_device_info_line", "<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
+        var txt = createString("txt_device_info_line", "<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
         item.appendChild(device);
         device.appendChild(txt);
         for (var j = 0; j < devices[i].partitions.length; j ++) {
@@ -236,10 +236,10 @@ function getPartitions() {
                 partition.setAttribute("class", "partition_disabled");
             }
             if (p.id > 0) {
-                txt = create_string("txt_device_partition_line", "Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
+                txt = createString("txt_device_partition_line", "Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
                 partition.appendChild(txt);
             } else if (p.type.indexOf("FREESPACE") > 0) {
-                txt = create_string("txt_device_free_partition_line", "Free partition: {1} GB", (p.size/gbSize).toFixed(2));
+                txt = createString("txt_device_free_partition_line", "Free partition: {1} GB", (p.size/gbSize).toFixed(2));
                 partition.appendChild(txt);
             }
             device.appendChild(partition);
@@ -660,7 +660,7 @@ function showError() {
 
 }
 
-function create_string(logical, string) {
+function createString(logical, string) {
     var obj = document.createElement("span");
     obj.setAttribute("id", logical);
     if (arguments.length > 2) {
@@ -672,12 +672,12 @@ function create_string(logical, string) {
     return obj;
 }
 
-function show_advanced_options() {
-    document.getElementById("show_advanced_options_button").style.display = "none";
+function showAdvancedOptions() {
+    document.getElementById("showAdvancedOptions_button").style.display = "none";
     document.getElementById("advanced_options").setAttribute("class", "advanced_options_shown");
 }
 
-function check_strong_password() {
+function checkStrongPassword() {
     strongPassword = (document.getElementById("strong_password").value == "on");
     document.getElementById("password").value = "";
     document.getElementById("password2").value = "";
