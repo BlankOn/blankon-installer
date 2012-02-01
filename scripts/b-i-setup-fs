@@ -34,7 +34,7 @@ do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 
 do_chroot /usr/sbin/chpasswd $USERNAME < /tmp/user-pass
 do_chroot /usr/bin/chfn < /tmp/user-info
-rm -f /target/tmp/user-pass
+rm -f /tmp/user-pass
 
 ###### AUTOLOGIN
 
