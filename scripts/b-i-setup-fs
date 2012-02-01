@@ -27,12 +27,13 @@ do_chroot /usr/bin/apt-get --yes clean
 
 ###### USER
 
-read AUTOLOGIN USERNAME FULLNAME < /tmp/user-setup
+read AUTOLOGIN USERNAME < /tmp/user-setup
 rm -f /tmp/user-setup
 USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
-do_chroot /usr/sbin/useradd -G $USER_GROUPS -c "$FULLNAME" -m $USERNAME -s /bin/bash
+do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 
-do_chroot /usr/sbin/chpasswd < /tmp/user-pass
+do_chroot /usr/sbin/chpasswd $USERNAME < /tmp/user-pass
+do_chroot /usr/bin/chfn < /tmp/user-info
 rm -f /target/tmp/user-pass
 
 ###### AUTOLOGIN

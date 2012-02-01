@@ -313,8 +313,11 @@ public class Installation : GLib.Object {
         var content = ("%s:%s\n").printf(user_name, password);
         Utils.write_simple_file ("file:///tmp/user-pass", content);
 
-        content = ("%d %s %s\n").printf((int) autologin, user_name, full_name);
+        content = ("%d %s\n").printf((int) autologin, user_name);
         Utils.write_simple_file ("file:///tmp/user-setup", content);
+
+        content = ("%s\n\n\n\n\n").printf(full_name);
+        Utils.write_simple_file ("file:///tmp/user-info", content);
 
         content = ("%s\n").printf(host_name);
         Utils.write_simple_file ("file:///tmp/hostname", content);
