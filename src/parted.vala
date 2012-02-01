@@ -39,6 +39,11 @@ public class SwapCollector {
         }
         return swaps;
     }
+
+    public static void reset () {
+        reget (); 
+    } 
+
 }
 
 
@@ -68,6 +73,7 @@ public class OsProber {
             }
         }
     }
+
 
     public static string get_description (string partition) {
         if (probes == null)
@@ -309,7 +315,7 @@ public class Device : GLib.Object {
     // Partition is created either inside a new extended partition
     // or as a new logical partition. The partition list will be
     // rebuilt.
-    public int create_partition (uint64 byte_start, uint64 byte_end, string fs) throws DeviceError {
+    public int create_partition (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size) throws DeviceError {
         if (device == null) {
             throw new DeviceError.CANT_CREATE_PARTITION ("Invalid device"); 
         }
@@ -401,6 +407,21 @@ public class Device : GLib.Object {
                     throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
                 }
             }
+
+            if (swap_size > 0) {
+                var swap_size_sector = (Ped.Sector) (swap_size / get_unit_size ());
+                end  = start + swap_size_sector; 
+                Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
+                new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, swap_type, start, end);
+                start = end + swap_size_sector + 1; 
+                end  = (Ped.Sector) (byte_end / get_unit_size ());
+                var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
+                if (part_num == 0) {
+                    throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
+                }
+
+            }
+
             new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, fs_type, start, end);
         } else {
             new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, fs_type, start, end);

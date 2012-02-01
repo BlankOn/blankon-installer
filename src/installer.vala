@@ -40,6 +40,7 @@ public class Log : GLib.Object {
 
 
 public class Installation : GLib.Object {
+    const uint64 OneGig = 1024*1024*1024;
     public enum State {
         NOT_STARTED,
         ON_GOING,
@@ -73,6 +74,7 @@ public class Installation : GLib.Object {
     public int state { get; set construct; }
     public string description { get; set construct; }
 
+    uint64 installation_size;
     string partition_path;
     string device_path;
 
@@ -132,6 +134,26 @@ public class Installation : GLib.Object {
         installation_started.connect(() => {
             real_start();
         });
+
+        installation_size = 4 * OneGig;
+        try {
+            var file = File.new_for_path ("/live/image/.disk/installation_size");
+            if (file.query_exists ()) {
+                var dis = new DataInputStream (file.read());
+                size_t l;
+                var line = dis.read_line (out l);
+                dis.close ();
+                if (line != null) {
+                    installation_size = uint64.parse (line);
+                    if (installation_size <= 0) {
+                        installation_size = 4 * OneGig;
+                    }
+                }
+            }
+        } catch (Error e) {
+            stderr.printf ("%s\n", e.message);
+        }
+
     }
 
     public void start() {
@@ -260,9 +282,17 @@ public class Installation : GLib.Object {
             var can_continue = false;
             var new_partition = -1;
             try {
+                uint64 swap_size = 0;
+                if (SwapCollector.get_partitions().is_empty) {
+                     if (partitions.get(partition).size - OneGig > installation_size) {
+                        swap_size = OneGig;
+                        Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
+                     }
+                }
+                swap_size = OneGig;
                 new_partition = device.create_partition (partitions.get (partition).start,
                                                          partitions.get (partition).end,
-                                                         "ext4");
+                                                         "ext4", swap_size);
 
                 Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
                 if (new_partition != -1) {
