@@ -352,6 +352,15 @@ public class Installation : GLib.Object {
         content = ("%s\n").printf(host_name);
         Utils.write_simple_file ("file:///tmp/hostname", content);
 
+        SwapCollector.reset ();
+        var swaps = "";
+        foreach (var p in SwapCollector.get_partitions ()) {
+            swaps += p + "\n";
+        }
+
+        content = ("%s").printf(swaps);
+        Utils.write_simple_file ("file:///tmp/swaps", content);
+
         do_simple_command ("/sbin/b-i-setup-fs", Step.SETUP, "Setting up", "Unable to setup installation");
     }
 
