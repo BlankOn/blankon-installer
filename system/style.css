@@ -218,18 +218,23 @@ div.advanced_options_hidden {
 }
 
 div.progress_bar_enclosure {
-    height: 10px;
+    height: 12px;
     width: 400px;
     background-color: #888;
     border-radius: 5px;
 }
 
 div#progress_bar {
-    width: 1%;
-    height: 10px;
+    width: 5%;
+    height: 12px;
     background-color: #aaa;
     border-radius: 5px;
     -webkit-transition: width 1s ease-out;
+    display: -webkit-box;
+    -webkit-box-pack: center;
+    -webkit-box-orient: vertical;
+    -webkit-box-align: end;
+
 }
 
 
