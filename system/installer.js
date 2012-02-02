@@ -642,7 +642,7 @@ function updateStatus() {
         if (status.status == 2) {
             showError();
         } else {
-            nextSlide();
+            setTimeout("nextSlide()", 2000);
         }
     }
 }
