@@ -46,8 +46,6 @@ public class SwapCollector {
 
 }
 
-
-
 public class OsProber {
     static HashMap<string,string> probes;
 
@@ -149,7 +147,6 @@ public class Device : GLib.Object {
             this.ptype          = PartitionType.FREESPACE;
         }
     }
-
 
     public bool is_valid () {
         return valid;
@@ -392,8 +389,8 @@ public class Device : GLib.Object {
 
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
-        Ped.Sector start = (Ped.Sector) (byte_start / get_unit_size ());
-        Ped.Sector end  = (Ped.Sector) (byte_end / get_unit_size ());
+        uint64 start = (uint64) (byte_start / get_unit_size ());
+        uint64 end  = (uint64) (byte_end / get_unit_size ());
 
         if (create_logical) {
             if (create_extended) {
@@ -409,12 +406,12 @@ public class Device : GLib.Object {
             }
 
             if (swap_size > 0) {
-                var swap_size_sector = (Ped.Sector) (swap_size / get_unit_size ());
+                var swap_size_sector = (uint64) (swap_size / get_unit_size ());
                 end  = start + swap_size_sector; 
                 Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
                 new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, swap_type, start, end);
                 start = end + swap_size_sector + 1; 
-                end  = (Ped.Sector) (byte_end / get_unit_size ());
+                end  = (uint64) (byte_end / get_unit_size ());
                 var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
                 if (part_num == 0) {
                     throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
@@ -572,4 +569,3 @@ public class Parted {
         g.set_property (context, s, o, PropertyAttribute.None, null);
     }
 }
-
