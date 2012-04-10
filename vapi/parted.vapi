@@ -14,7 +14,7 @@ namespace Ped {
             public uint64 sector_size_logical;
             [CCode (cname = "phys_sector_size")]
             public uint64 sector_size_physical;
-            public Sector length;
+            public uint64 length;
 
             [CCode (cname = "ped_device_get")]
             public Device.from_name (string name);
@@ -55,11 +55,6 @@ namespace Ped {
             public string name;
         }
 
-    [SimpleType]
-        [IntegerType]
-        public struct Sector {
-        }
-
     [CCode (ref_function = "", unref_function = "")]
         public class Partition {
 
@@ -67,8 +62,8 @@ namespace Ped {
                 public Partition(Disk disk,
                         PartitionType type,
                         FileSystemType fs_type,
-                        Sector start,
-                        Sector end);
+                        uint64 start,
+                        uint64 end);
 
             public weak Ped.Geometry geom;
             public int num;
@@ -77,7 +72,7 @@ namespace Ped {
             public string get_name ();
         }
 
-    [CCode (cprefix = "PED_PARTITION_", cname = "_PedPartitionType")]
+    [CCode (cprefix = "PED_PARTITION_", cname = "PedPartitionType")]
         public enum PartitionType {
             NORMAL,
                 LOGICAL,
@@ -123,9 +118,9 @@ namespace Ped {
 
     [CCode (ref_function = "", unref_function = "")]
     public struct Geometry {
-        public Sector start;
-        public Sector end;
-        public Sector length;
+        public uint64 start;
+        public uint64 end;
+        public uint64 length;
     }
 
     public class Timer {
