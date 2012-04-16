@@ -1,0 +1,353 @@
+# SOME DESCRIPTIVE TITLE
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2012-04-16 16:32+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Welcome to BlankOn"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Welcome to BlankOn installation program. Please choose your language and "
+"region below continue. If your choice is not on the list, you can choose the "
+"default values and set again later after the system is fully installed in "
+"the Settings application."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Language"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Region"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Keyboard"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"You can choose whether want to continue using the Live CD or to install into "
+"your computer"
+msgstr ""
+
+#. type: span
+#: FIXME:0 FIXME:0
+#, no-wrap
+msgid "Continue using Live CD"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Install BlankOn"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Installation Target"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Sorry, it seems that there is no device that we can install BlankOn "
+"into. Please attach a hard drive or flash disk before continuing. If you're "
+"running as normal user, try again running the installer as root."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please wait while I scan your computer for available devices"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Please choose the partition on device below which you would like to install "
+"BlankOn into."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "WARNING"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"The selected partition will be wiped out. Swap partition will be created if "
+"you don't have one."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Personalization"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please enter your personalization preference below.."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Enforce strong password"
+msgstr ""
+
+#. type: span
+#: FIXME:0 FIXME:0
+#, no-wrap
+msgid "Automatically login"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Computer Name"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Computer name must be at least 1 character long and started with an "
+"alphabet. It must be written in lowercase ascii without any space."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Your Name"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "User Name"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Username must be at least 1 character long and started with an alphabet. It "
+"must be written in lowercase ascii without any space."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Password must be at least 8 character long with number and alphabet "
+"lowercase and uppercase combination."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password must be at least 1 character."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Password should be at least 8 character long with number and alphabet "
+"lowercase and uppercase combination, otherwise it will be very easy for "
+"others to guess your password."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password (once again)"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "You must use exactly the same password as typed above."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Installation Summary"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"This is our installation summary. Please proceed if you're agree. Beyond "
+"this point, the installer will make changes to your system and you can't go "
+"back."
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Target device"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Target partition"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Computer name"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Full name"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "User name"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Installation"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please wait a moment while the installation is applied to your system"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Preparing"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Done"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"Your system is ready, now please continue to reboot into your newly "
+"installed system"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Reboot to newly installed system"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "ADVANCED MODE"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Click to switch to Quick Mode"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Click to switch to Advanced Mode"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Previous"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Next"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Sorry,"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid ""
+"There is an error during installation. Please see the log below, you can "
+"capture this or just send the /var/log/blankon-installer.log file to "
+"blankon-dev@googlegroups.com"
+msgstr ""
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Exit installation and continue using LiveCD"
+msgstr ""
+
+#. type: textarea
+#: FIXME:0
+#, no-wrap
+msgid "Please wait while loading the log..."
+msgstr ""
