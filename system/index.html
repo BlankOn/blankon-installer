@@ -4,142 +4,150 @@
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, width=device-width">
 <link rel="stylesheet" href="style.css">
 
+<script type="text/javascript" src="jq.js">
+</script>
 <script type="text/javascript" src="installer.js">
 </script>
 </head>
-<body onload="setup(false)" onresize="setup(true)">
+<body>
 <div id="base">
 <div class="topbar">
 <img src="blankon.png" id="logo"/>
 </div>
 
-<div class="viewport" id="viewport">
-    <div class="main" id="slider">
+<div class="ui-page" id="first" data-toolbar="no">
+    <h1><span>Welcome to BlankOn</span></h1>
+    <p><span>Welcome to BlankOn installation program. Please choose your language and region below continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the <b>Settings</b> application.</span></p>
+    <p>
+    <label><span>Language</span></label>
+    <select id="opt-language">
+    </select>
+    </p>
+    <p>
+    <label><span>Region</span></label>
+    <select id="opt-region">
+    <option></option>
+    </select>
+    </p>
+    <p>
+    <label><span>Keyboard</span></label>
+    <select id="opt-keyboard">
+    <option></option>
+    </select>
+    </p>
 
-       <div class="column" id="locale">
-            <h1><span id="txt_welcome">Welcome to BlankOn</span></h1>
-            <p><span id="txt_welcome_description">Welcome to BlankOn installation program. Please choose your language and region below continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the <b>Settings</b> application.</span></p>
-            <p>
-            <label><span id="txt_language">Language</span></label>
-            <select id="language">
-            <option></option>
-            </select>
-            </p>
-            <p>
-            <label><span id="txt_region">Region</span></label>
-            <select id="region">
-            <option></option>
-            </select>
-            </p>
-            <p>
-            <label><span id="txt_keyboard">Keyboard</span></label>
-            <select id="keyboard">
-            <option></option>
-            </select>
-            </p>
+    <p><span>You can choose whether want to continue using the Live CD or to install into your computer</span></p>
 
-            <p><span id="txt_welcome_choices">You can choose whether want to continue using the Live CD or to install into your computer</span></p>
+    <a class="button btn-shutdown"/><span>Continue using Live CD</span></a>
+    <a class="button" id="btn-install"/><span>Install BlankOn</span></a>
+</div>
 
-            <button class="button" onclick="shutdown()"/><span id="txt_continue_live">Continue using Live CD</span></button>
-            <button class="button" onclick="nextSlide()"/><span id="txt_install">Install BlankOn</span></button>
-        </div>
+<div class="ui-page" id="target">
+    <h1><span>Installation Target</span></h1>
+    <div id="no_target" style="display:none"><span>Sorry, it seems that there is no device that we can install BlankOn into. Please attach a hard drive or flash disk before continuing. If you're running as normal user, try again running the installer as root.</span></div>
+    <div id="waiting_target"><span>Please wait while I scan your computer for available devices</span></div>
+    <div id="select_target" style="display:none"><span>Please choose the partition on device below which you would like to install BlankOn into. <p><b>WARNING</b>: The selected partition will be wiped out. Swap partition will be created if you don't have one.</span></div>
 
-       <div class="column" id="target">
-            <h1><span id="txt_installation_target">Installation Target</span></h1>
-            <p><span id="txt_installation_target_description">Please choose the partition on device below which you would like to install BlankOn into. <p/><p/><b>WARNING</b>: The selected partition will be wiped out. Swap partition will be created if you don't have one.</span></p>
+    <div id="device_list">
+    </div>
 
-            <div id="device_list">
-            </div>
-
-        </div>
+</div>
 
 
- 
-       <div class="column" id="personalization">
-            <h1><span id="txt_personalization">Personalization</span></h1>
-            <p><span id="txt_personalization_description">Please enter your personalization preference below..</span></p>
-            <button id="showAdvancedOptions_button" class="button" onclick="showAdvancedOptions()"/><span id="txt_showAdvancedOptions">Show advanced options</span></button>
-            <div id="advanced_options" class="advanced_options_hidden">
-            <p>
-            <label><span id="txt_strong_password">Enforce strong password</span></label>
-            <input type="checkbox" id="strong_password" onchange="checkStrongPassword()"/>
-            </p>
-            <p>
-            <label><span id="txt_autologin">Automatically login</span></label>
-            <input type="checkbox" id="autologin"/>
-            </p>
 
-            </div>
-
-            <p>
-            <label><span id="txt_computer_name">Computer Name</span></label>
-            <input type="text" id="computer_name" size=30 class="fields" value="blankon"/>
-            <div class="hint" id="hint_computer_name"><span id="txt_hint_computer_name">Computer name must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
-            </p>
-
-            <p>
-            <label><span id="txt_your_name">Your Name</span></label>
-            <input type="text" id="full_name" size=50 class="fields"/>
-            <div class="hint" id="hint_full_name"><span id="txt_hint_full_name"></span></div>
-            </p>
-
-            <p>
-            <label><span id="txt_username">User Name</span></label>
-            <input type="text" id="user_name" size=15 class="fields">
-            <div class="hint" id="hint_user_name"><span id="txt_hint_user_name">Username must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
-            </p>
-
-            <p>
-            <label><span id="txt_password">Password</span></label>
-            <input type="password" id="password" value="" size=15 class="fields">
-            <div class="hint" id="hint_password_strong"><span id="txt_hint_password_strong">Password must be at least 8 character long with number and alphabet lowercase and uppercase combination.</span></div>
-            <div class="hint" id="hint_password"><span id="txt_hint_password">Password must be at least 1 character.</span></div>
-            <div class="hint_warning" id="hint_password_warning"><span id="txt_hint_password_warning">Password shoule be at least 8 character long with number and alphabet lowercase and uppercase combination, otherwise it will be very easy for others to guess your password.</span></div>
-            </p>
-
-            <p>
-            <label><span id="txt_password2">Password (once again)</span></label>
-            <input type="password" id="password2" value="" size=15 class="fields">
-            <div class="hint" id="hint_password2"><span id="txt_hint_password2">You must use exactly the same password as typed above.</span></div>
-            </p>
-
-        </div>
-        <div class="column" id="summary">
-            <h1><span id="txt_installation_summary">Installation Summary</span></h1>
-            <p><span id="txt_installation_summary_description">This is our installation summary. Please proceed if you're agree. Beyond this point, the installer will make changes to your system and you can't go back.</span></p>
-
-            <li> <b><span id="txt_summary_target_device">Target device: </span></b><span id="summary_target_device">
-            <li> <b><span id="txt_summary_target_partition">Target partition: </span></b><span id="summary_target_partition">
-            <li> <b><span id="txt_summary_target_hostname">Computer name: </span></b><span id="summary_target_hostname">
-            <li> <b><span id="txt_summary_target_username">User name: </span></b><span id="summary_target_username">
-        </div>
-
-        <div class="column" id="installation">
-            <h1><span id="txt_installation">Installation</span></h1>
-            <p><span id="txt_installation_description">Please wait a moment while the installation is applied to your system</span></p>
-
-            <span id="current_step">Preparing</span>...
-            <div class="progress_bar_enclosure"><div id="progress_bar"><div class="spinner"></div></div></div>
-        </div>
-        <div class="column" id="done">
-            <h1><span id="txt_done">Done</span></h1>
-            <p><span id="txt_done_description">Your system is ready, now please continue to reboot into your newly installed system</span></p>
-
-            <button class="button" onclick="shutdown()"/><span id="txt_continue_live">Continue using Live CD</span></button>
-            <button class="button" onclick="reboot()"/><span id="txt_continue_reboot">Reboot</span></button>
-        </div>
+<div class="ui-page" id="personalization">
+    <h1><span>Personalization</span></h1>
+    <p><span>Please enter your personalization preference below..</span></p>
+    <div class="ui-advanced-options ui-advanced-options-hidden">
+    <p>
+    <label><span>Enforce strong password</span></label>
+    <input type="checkbox" id="opt-strong-password" value="on"/>
+    </p>
+    <p>
+    <label><span>Automatically login</span></label>
+    <input type="checkbox" id="opt-auto-login"/>
+    </p>
 
     </div>
+
+    <p>
+    <label><span>Computer Name</span></label>
+    <input type="text" id="txt-computer-name" size=30 class="fields" value="blankon"/>
+    <div class="ui-hint" id="hint-txt-computer-name"><span>Computer name must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
+    </p>
+
+    <p>
+    <label><span>Your Name</span></label>
+    <input type="text" id="txt-full-name" size=50 class="fields"/>
+    <div class="ui-hint" id="hint-txt-full-name"><span></span></div>
+    </p>
+
+    <p>
+    <label><span>User Name</span></label>
+    <input type="text" id="txt-user-name" size=15 class="fields">
+    <div class="ui-hint" id="hint-txt-user-name"><span>Username must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
+    </p>
+
+    <p>
+    <label><span>Password</span></label>
+    <input type="password" id="txt-password" value="" size=15 class="fields">
+    <div class="ui-hint" id="hint-txt-password-strong"><span>Password must be at least 8 character long with number and alphabet lowercase and uppercase combination.</span></div>
+    <div class="ui-hint" id="hint-txt-password"><span>Password must be at least 1 character.</span></div>
+    <div class="ui-hint-warning" id="hint-txt-password-warning"><span>Password should be at least 8 character long with number and alphabet lowercase and uppercase combination, otherwise it will be very easy for others to guess your password.</span></div>
+    </p>
+
+    <p>
+    <label><span>Password (once again)</span></label>
+    <input type="password" id="txt-password2" value="" size=15 class="fields">
+    <div class="ui-hint" id="hint-txt-password2"><span>You must use exactly the same password as typed above.</span></div>
+    </p>
+
 </div>
+<div class="ui-page" id="summary">
+    <h1><span>Installation Summary</span></h1>
+    <p><span>This is our installation summary. Please proceed if you're agree. Beyond this point, the installer will make changes to your system and you can't go back.</span></p>
+
+    <span>Target device</span>: <b><span id="summary-target-device"></span></b><br/>
+    <span>Target partition</span>: <b><span id="summary-target-partition"></span></b><br/>
+    <span>Computer name</span>: <b><span id="summary-computer-name"></span></b><br/>
+    <span>Full name</span>: <b><span id="summary-full-name"></span></b><br/>
+    <span>User name</span>: <b><span id="summary-user-name"></span></b><br/>
+    <span>Automatically login</span>: <b><span id="summary-auto-login"></span></b><br/>
+
+</div>
+
+<div class="ui-page" id="installation" data-toolbar="no">
+    <h1><span>Installation</span></h1>
+    <p><span>Please wait a moment while the installation is applied to your system</span></p>
+
+    <span id="current-step">Preparing</span>...
+    <div class="ui-progress-bar-enclosure"><div id="progress-bar"><div class="ui-spinner"></div></div></div>
+</div>
+<div class="ui-page" id="done" data-toolbar="no">
+    <h1><span>Done</span></h1>
+    <p><span>Your system is ready, now please continue to reboot into your newly installed system</span></p>
+    <a class="button btn-shutdown"/><span>Continue using Live CD</span></a>
+    <a class="button" id="btn-reboot"/><span>Reboot to newly installed system</span></a>
+</div>
+
+<span class="ui-advanced-mode-text-hidden"  id="ui-advanced-mode-text">ADVANCED MODE</span>
 <nav class="toolbar" id="toolbar">
-<button class="toolbar" id="next" onclick="nextSlide()"/><span id="txt_next">Next</span></button>
-<button class="toolbar" id="prev" onclick="previousSlide()"><span id="txt_previous">Previous</span></button>
+<div class="ui-switch-mode">
+<div id="ui-switch-mode-button"></div>
+<span id="ui-switch-mode-text" class="ui-switch-mode-hidden"></span>
+<span id="ui-switch-mode-quick-text" style="display:none">Click to switch to Quick Mode</span>
+<span id="ui-switch-mode-advanced-text" style="display:none">Click to switch to Advanced Mode</span>
+</div>
+<div class="ui-navigation-buttons">
+<a class="ui-button-toolbar ui-button-toolbar-enabled" id="prev"><span>Previous</span></a>
+<a class="ui-button-toolbar ui-button-toolbar-disabled" id="next"><span>Next</span></a>
+</div>
 </nav>
 
-<div id="error_frame">
-<h1><span id="txt_error">Sorry,</span></h1>
-<p><span id="txt_error_description">There is an error during installation. Please see the log below, you can capture this or just send the /var/log/blankon-installer.log file to blankon-dev@googlegroups.com</span></p>
-            <button class="button" onclick="shutdown()"/><span id="txt_exit">Exit installation</span></button>
+<div class="ui-page" id="error" data-toolbar="no">
+<h1><span>Sorry,</span></h1>
+<p><span>There is an error during installation. Please see the log below, you can capture this or just send the /var/log/blankon-installer.log file to blankon-dev@googlegroups.com</span></p>
+    <a class="button btn-shutdown"/><span>Exit installation and continue using LiveCD</span></a>
             <p>
 <textarea rows="20" cols="90" id="log">Please wait while loading the log...</textarea>
 </div>

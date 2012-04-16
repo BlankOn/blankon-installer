@@ -1,694 +1,598 @@
-var currentSlide = 0;
-var totalSlide = 3
-var width = window.innerWidth;
-var language ="en";
-var stepActiveColor ="";
-var stepInactiveColor ="";
-var targetPartition = "";
-var nextSlideValidators = {};
-var strongPassword = false;
-var autoLogin = false;
+var install = (function(){
+    var language = "en";
+    var statusUpdater = -1;
+    var gbSize = 1073741824;
+    var minimumPartitionSize = 4 * gbSize;
+    var alphaStart = ("a").charCodeAt(0);
+    var alphaEnd = ("z").charCodeAt(0);
 
-var targetDevice = "";
-var targetPartitionSize = 0;
+    var ALPHAStart = ("A").charCodeAt(0);
+    var ALPHAEnd = ("Z").charCodeAt(0);
+    var digitStart = ("0").charCodeAt(0);
+    var digitEnd = ("9").charCodeAt(0);
 
-var targetDeviceId = -1;
-var targetPartitionId = -1;
 
-var statusUpdater = -1;
-var translations = {};
-var devices = [];
-var gbSize = 1073741824;
-var minimumPartitionSize = 4 * gbSize;
-var installation = undefined;
+    var currentPage = -1;
+    var previousPage = -1;
+    var mode = 0;
+    var strongPassword = false;
+    var autoLogin = false;
 
-var onchangeUpdaterList = [
-    "language",
-    "computer_name",
-    "full_name",
-    "user_name",
-    "password",
-    "password2"
-];
+    // Table to hold the validity of the mandatory inputs
+    var formValid = {
+        computerName : false,
+            userName : false,
+            password : false,
+           password2 : false,
+    };
 
-// Table to hold the validity of the mandatory inputs
-var personalizationValidation = {
-    computerName : false,
-        userName : false,
-        password : false,
-       password2 : false,
-};
+    // Holds private callback functions 
+    var _ = {}
+    
+    // Holds list of known installable devices
+    var devices = [];
 
-// Table to hold the readyness of each data source
-var dataReady = {
-    partitions : false,
-     languages : false,
-       regions : false,
-     keyboards : false,
+    // Returns true if can continue from page "Target"
+    _.canContinueTarget = function() {
+        return ($("div.ui-partition-selected").length > 0);
+    }
 
-};
+    // Returns true if can continue from page "Personalization"
+    _.canContinuePersonalization = function() {
+        var result = true;
+        result = result && formValid.computerName;
+        result = result && formValid.userName;
+        result = result && formValid.password;
+        result = result && formValid.password2;
 
-var alphaStart = ("a").charCodeAt(0);
-var alphaEnd = ("z").charCodeAt(0);
+        if ($("#txt-full-name").val().length < 1) {
+            $("#txt-full-name").val($("#txt-user-name").val());
+        }
+        checkAutoLogin();
+        return result;
+    }
 
-var ALPHAStart = ("A").charCodeAt(0);
-var ALPHAEnd = ("Z").charCodeAt(0);
-var digitStart = ("0").charCodeAt(0);
-var digitEnd = ("9").charCodeAt(0);
+    // Returns true that we always can get pass the Summary page
+    _.canContinueSummary = function() {
+        return true;
+    }
 
-/* SETUP */
-function setupUpdater() {
-    for (var i = 0; i < onchangeUpdaterList.length; i ++) {
-        var id = onchangeUpdaterList [i];
-        var item = document.getElementById(id);
-        if (item != undefined) {
-            item.setAttribute("onchange", camelize("on_" + id + "Changed") + "(this)");
+    // Validates current slide so the "Next" button would be clickable
+    var validateCurrentPage = function() {
+        if (currentPage < 0) {
+            return;
+        }
+        var p = $(".ui-page").get(currentPage).id;
+        var f = "canContinue" + p.charAt(0).toUpperCase() + p.slice(1);
+       
+        $("#next").addClass("ui-button-toolbar-disabled").removeClass("ui-button-toolbar-enabled");
+        if (typeof _[f] === "function") {
+            if (_[f]() == true) {
+                $("#next").addClass("ui-button-toolbar-enabled").removeClass("ui-button-toolbar-disabled");
+            }
         }
     }
-}
 
-function setup(resizing) {
-    var paddingLeft  = 0;
-    var paddingRight = 0;
+    // Gets partition data of specified deviceId and partitionId
+    var getPartitionData = function(deviceId, partitionId) {
+        return devices[deviceId].partitions[partitionId]; 
+    }
 
-    // Get padding from CSS
-    if (document.styleSheets) {
-        for (var i = 0; i < document.styleSheets.length; i ++) {
-            var sheet = document.styleSheets[i];
-            for (var j = 0; j < sheet.cssRules.length; j ++) {
-                rules = sheet.cssRules[j];
-                if (rules.selectorText == "div.column") {
-                    paddingLeft  = rules.style.paddingLeft;
-                    paddingRight = rules.style.paddingRight;
-                } else if (rules.selectorText == "div.steps") {
-                    stepInactiveColor = rules.style.color;
-                } else if (rules.selectorText == "div.steps_long") {
-                    stepActiveColor = rules.style.color;
+    // Selects partition
+    var selectPartition = function() {
+        $("div.ui-partition-selected").attr("class", "ui-partition");
+        $(this).attr("class", "ui-partition ui-partition-selected");
+
+        validateCurrentPage();
+    }
+
+    // Populates partition selection
+    var getPartitions = function() {
+        var item = $("#device_list");
+        item.empty();
+        for (var i = 0;i < devices.length; i ++){
+            var device = $("<div>", {
+                "class": "device"
+            });
+
+            var device_txt = createString("<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
+            item.append(device);
+            device.html(device_txt);
+            for (var j = 0; j < devices[i].partitions.length; j ++) {
+                var p = devices[i].partitions[j];
+                if (p.size <= (0.01*gbSize)) {
+                    continue;
+                }
+
+                var partition = $("<div>", {
+                    "data-device": i,
+                    "data-partition": j
+                });
+                if (p.size > minimumPartitionSize
+                        && (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0)) {
+                    partition.click(selectPartition);
+                    partition.attr("class", "ui-partition");
+                    partition.attr("data-size", p.size);
+                    partition.attr("data-device", device_txt);
+                } else {
+                    partition.attr("class", "ui-partition-disabled");
+                }
+                if (p.id > 0) {
+                    txt = createString("Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
+                    partition.html(txt);
+                    partition.attr("data-info", txt);
+                } else if (p.type.indexOf("FREESPACE") > 0) {
+                    txt = createString("Free partition: {1} GB", (p.size/gbSize).toFixed(2));
+                    partition.attr("data-info", txt);
+                    partition.html(txt);
+                }
+                device.append(partition);
+            }
+        }
+    }
+
+    // Prepares the "target" page
+    _.preparePageTarget = function(e) {
+        devices = Parted.getDevices();
+        if (devices.length > 0) {
+            getPartitions(devices);
+            $("#waiting_target").hide();
+            $("#select_target").show();
+        } else {
+            $("#waiting_target").hide();
+            $("#no_target").show();
+        }
+        cleanUpListener(e);
+    } 
+
+    _.preparePagePersonalization = function(e) {
+        var p = $("div.ui-partition-selected");
+        $("#txt-computer-name").focus();    
+        cleanUpListener(e);
+    }
+
+    _.preparePageSummary = function(e) {
+        var p = $("div.ui-partition-selected");
+        $("#summary-target-device").html(p.attr("data-device"));
+        $("#summary-target-partition").html(p.attr("data-info"));
+        $("#summary-full-name").text($("#txt-full-name").val());
+        $("#summary-computer-name").text($("#txt-computer-name").val());
+        $("#summary-user-name").text($("#txt-user-name").val());
+        $("#summary-auto-login").text(autoLogin ? "Yes" : "No");
+        cleanUpListener(e);
+    }
+
+    _.preparePageInstallation = function(e) {
+        $("nav.toolbar").css("bottom", "-" + $("nav.toolbar").height() + "px"); 
+        setTimeout(sendInstallationData, 1000);
+        cleanUpListener(e);
+    }
+
+    var cleanUpListener = function(e) {
+        var id = e.target.id;
+        var f = "preparePage" + id.charAt(0).toUpperCase() + id.slice(1);
+        e.target.removeEventListener("webkitTransitionEnd", _[f], true);
+    }
+
+    // Creates string with positional parameters
+    var createString = function(string) {
+        if (arguments.length > 1) {
+            for (var i = 0; i < arguments.length - 1; i ++) {
+                string = string.replace("{"+ (i + 1) +"}", arguments[i+1]);
+            }
+        }
+        return string;
+    }
+
+    // Animates pages with transition
+    var displayPage = function() {
+        // We reverse animation if going back through the list
+        var reverse = (previousPage > currentPage);
+        var withTransition = true;
+        var pages = $(".ui-page");
+        var outgoing = null;
+        var incoming = null;
+
+        if (arguments.length > 0) {
+            previousPage = currentPage;
+            outgoing = pages.get(currentPage);
+            for (var i = 0; i < pages.length; i++) {
+                var p = pages.get(i);
+                if (p.id == arguments[0]) {
+                    incoming = p;
+                    currentPage = i;
+                    break;
                 }
             }
+            reverse = (previousPage > currentPage);
+                console.log(arguments[0]);
+        } else {
+        // get the pages we're interested in
+            outgoing = (currentPage < 0) ?
+                        null : 
+                        (reverse ?
+                            pages.get(currentPage + 1) :
+                            pages.get(currentPage - 1));
+            incoming = pages.get(currentPage);
+        }
+
+        // put incoming page way outside the screen on the right
+        if (withTransition) {
+            $(incoming).removeClass("ui-animation-slide");
+            var prefix = reverse ? "-" : "";
+            $(incoming).css("left", prefix + window.outerWidth + "px");
+        }
+
+        if (withTransition) {
+            var id = incoming.id;
+            var f = "preparePage" + id.charAt(0).toUpperCase() + id.slice(1);
+            // setup function that will be run after transition is finished
+            if (typeof _[f] === "function") {
+                incoming.addEventListener("webkitTransitionEnd", _[f], true);
+            }
+            // apply the pages with the animation styles
+            if (outgoing != null) {
+                $(outgoing).addClass("ui-animation-slide");
+                $(incoming).addClass("ui-animation-slide");
+            }
+        }
+
+        // start the animation
+        if (outgoing != null) {
+            var prefix = reverse ? "" : "-";
+            $(outgoing).css("left", prefix + window.outerWidth + "px");
+        }
+        $(incoming).css("left", "0px");
+
+        // show navigation toolbar when necessary
+        if ($(incoming).attr("data-toolbar") == "no") {
+            $("nav.toolbar").css("bottom", "-" + $("nav.toolbar").height() + "px"); 
+        } else {
+            $("nav.toolbar").css("bottom", "0px"); 
+        }
+        validateCurrentPage();
+    }
+
+    var goPreviousPage = function() {
+        if (canGoPreviousPage()) {
+            previousPage = currentPage;
+            currentPage --;
+            displayPage();
         }
     }
 
-    width = window.innerWidth;
-    document.getElementById("error_frame").style.marginTop = window.innerHeight;
-    var columns = document.querySelectorAll("div.column");
-    var navigationBar = document.getElementById("toolbar");
-    for (var i = 0; i < columns.length; i++){
-        columns[i].style.width = (width - parseInt(paddingLeft) - parseInt(paddingRight))+ "px"; 
-        columns[i].style.left = (i * width) + "px"; 
-
-        if (resizing == false) {
-            var id = columns[i].id;
-
-            nextSlideValidators[i] = camelize("canContinue_" + id) + "()";
-
-            var toolbarStep = document.createElement("div");
-            toolbarStep.setAttribute("class", "steps");
-            toolbarStep.setAttribute("id", "step" + (i + 1));
-            toolbarStep.innerHTML = (i + 1);
-            var toolbarDescription = document.createElement("div");
-            toolbarDescription.setAttribute("class", "steps_long");
-            toolbarDescription.setAttribute("id", "step" + (i + 1) + "_long");
-
-            var h1 = columns[i].getElementsByTagName("h1");
-            for (var j = 0; j < h1.length; j ++) {
-                toolbarDescription.innerHTML = h1[j].innerHTML;
-                break;
-            }
-            navigationBar.appendChild(toolbarStep);
-            navigationBar.appendChild(toolbarDescription);
-        }
-    }
-
-    if (resizing)
-        return;
-
-    totalSlide = columns.length;
-    retranslate();
-    getLanguages();
-    getRegions();
-    getKeyboards();
-    getPartitions();
-    setupUpdater();
-    updateSlideVisibility();
-    validateCurrentSlide();
-}
-
-
-function getLanguages() {
-
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState == 4 && ajax.responseText) {
-            var languages = eval("(" + ajax.responseText + ")")
-            var item = document.querySelector("select#language");
-            item.options.length = 0;
-            for (var lang in languages) {
-                var option = document.createElement("option");
-                if (lang == language)
-                    option.selected = true;
-                option.text = languages[lang];
-                option.value = lang;
-                item.add(option);
-            }
-            dataReady.languages = true;
-            baseIsReady();
-        } 
-    }
-    ajax.open("GET", "languages.json");
-    ajax.send(null);
-}
-
-function getRegions() {
-
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState == 4 && ajax.responseText) {
-            var regions = eval("(" + ajax.responseText + ")")
-                var item = document.querySelector("select#region");
-            item.options.length = 0;
-            for (var region in regions) {
-                var option = document.createElement("option");
-                if (region == language)
-                    option.selected = true;
-                option.text = regions[region];
-                option.value = region;
-                item.add(option);
-            }
-            dataReady.regions = true;
-            baseIsReady();
-        } 
-    }
-    ajax.open("GET", "regions.json");
-    ajax.send(null);
-}
-
-function getKeyboards() {
-
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState == 4 && ajax.responseText) {
-            var keyboards = eval("(" + ajax.responseText + ")")
-            var item = document.querySelector("select#keyboard");
-            item.options.length = 0;
-            for (var keyboard in keyboards) {
-                var option = document.createElement("option");
-                if (keyboard == language)
-                    option.selected = true;
-                option.text = keyboards[keyboard];
-                option.value = keyboard;
-                item.add(option);
-            }
-            dataReady.keyboards = true;
-            baseIsReady();
-        } 
-    }
-    ajax.open("GET", "keyboards.json");
-    ajax.send(null);
-}
-
-function getPartitions() {
-    devices = Parted.getDevices();
-    var item = document.getElementById("device_list");
-    item.innerHTML = "";
-    for (var i = 0;i < devices.length; i ++){
-        var device = document.createElement("div");
-        device.setAttribute("class", "device");
-        var txt = createString("txt_device_info_line", "<b>{1}</b> ({2}) <i>{3} GB</i>", devices[i].model, devices[i].path, (devices[i].size/gbSize).toFixed(2));
-        item.appendChild(device);
-        device.appendChild(txt);
-        for (var j = 0; j < devices[i].partitions.length; j ++) {
-            var p = devices[i].partitions[j];
-            if (p.size <= (0.01*gbSize)) {
-                continue;
-            }
-
-            var partition = document.createElement("div");
-            partition.setAttribute("id", i + ":" + j);
-            if (p.size > minimumPartitionSize
-                    && (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0)) {
-                partition.setAttribute("onclick", "selectPartition('" + i + "', '" + j + "')");
-                partition.setAttribute("class", "partition");
-            } else {
-                partition.setAttribute("class", "partition_disabled");
-            }
-            if (p.id > 0) {
-                txt = createString("txt_device_partition_line", "Used partition (ID={1}{2}): {3} {4} GB", devices[i].path, p.id, p.description, (p.size/gbSize).toFixed(2));
-                partition.appendChild(txt);
-            } else if (p.type.indexOf("FREESPACE") > 0) {
-                txt = createString("txt_device_free_partition_line", "Free partition: {1} GB", (p.size/gbSize).toFixed(2));
-                partition.appendChild(txt);
-            }
-            device.appendChild(partition);
-        }
-    }
-
-    dataReady.partitions = true;
-    baseIsReady(); 
-}
-
-function getPartitionData(deviceId, partitionId) {
-    return devices[deviceId].partitions[partitionId]; 
-}
-
-function selectPartition(deviceId, partitionId) {
-    var items = document.querySelectorAll("div.partition");
-    for (var i = 0; i < items.length; i++){
-        if (items[i].id == deviceId + ":" + partitionId) {
-            items[i].setAttribute("class", "partition_selected");
-            continue;
-        }
-        items[i].setAttribute("class", "partition");
-    }
-    targetPartition = getPartitionData(deviceId, partitionId).id;
-
-    if (getPartitionData(deviceId, partitionId).type.indexOf("FREESPACE") > 0) {
-        targetPartition = translate("Free partition");
-    }
-    targetPartitionSize = getPartitionData(deviceId, partitionId).size;
-    targetDevice = devices[deviceId].model;
-    targetDeviceId = deviceId;
-    targetPartitionId = partitionId;
-    validateCurrentSlide ();
-}
-
-function canContinueLocale() {
-    return true;
-}
-
-function canContinueTarget() {
-    if (targetPartition != "")
+    var canGoPreviousPage = function() {
         return true;
-
-    return false;
-}
-
-function canContinuePersonalization() {
-    var result = true;
-    result = result && personalizationValidation.computerName;
-    result = result && personalizationValidation.userName;
-    result = result && personalizationValidation.password;
-    result = result && personalizationValidation.password2;
-
-    checkAutoLogin();
-    return result;
-}
-
-function canContinueSummary() {
-   
-    document.getElementById("summary_target_device").innerHTML = targetDevice;
-    document.getElementById("summary_target_partition").innerHTML = targetPartition + " (" + targetPartitionSize + "MB)";
-    document.getElementById("summary_target_hostname").innerHTML = document.getElementById("computer_name").value;
-    document.getElementById("summary_target_username").innerHTML = document.getElementById("user_name").value;
-    return true;
-}
-
-function canContinueInstallation() {
-    setTimeout("sendInstallationData()", 1000);
-    document.getElementById("prev").style.display = "none";
-    document.getElementById("next").style.display = "none";
-    return false;
-}
-
-
-function canContinueDone() {
-    document.getElementById("prev").style.display = "none";
-    document.getElementById("next").style.display = "none";
-    return false;
-}
-
-/* EVENTS */
-function onComputerNameChanged(item) {
-    var result = false;
-
-    if (item.value.length > 0) {
-        result = true;
     }
 
-    var lowercase = item.value.toLowerCase();
-    result = result && validateLowerCaseAlphanumeric (lowercase);
-   
-    item.value = lowercase;
-    displayHint (item, !result);
-    giveFocusIfInvalid(item);
-    personalizationValidation.computerName = result;
-
-    validateCurrentSlide();
-    return result;
-}
-
-function onUserNameChanged(item) {
-    // same validation with computer_name
-    var result = onComputerNameChanged(item);
-    personalizationValidation.userName = result;
-
-    validateCurrentSlide();
-    return result;
-}
-
-function onPasswordChanged(item) {
-    var result = false;
-
-    if (item.value.length > 0) {
-        result = true;
+    var goNextPage = function() {
+        if (canGoNextPage()) {
+            previousPage = currentPage;
+            currentPage ++;
+            displayPage();
+        }
     }
 
-    var string = item.value;
+    var canGoNextPage = function() {
+        if (currentPage == -1) {
+            return true;
+        }
 
-    var hasAlpha = false;
-    var hasDigit = false;
-    var hasALPHA = false;
+        var result = true;
 
-    var strongResult = false;
-    if (string.length > 7) {
-        strongResult = true;
+        return result;
     }
 
-    if (strongResult) {
-        strongResult = false;
+    var populateSelection = function(data, label , compareTo) {
+        var sel = $("#opt-" + label);  
+        for (var i in data) {
+            var opt = $("<option>").
+                text(data[i]).
+                attr("value", i);
+            if (i == compareTo) {
+                opt.attr("selected", "true");
+            }
+            sel.append(opt);
+        }
+    }
+
+    var displayModeSwitchText = function() {
+        $("#ui-switch-mode-text").removeClass("ui-switch-mode-hidden").addClass("ui-switch-mode-shown");
+    }
+
+
+    var hideModeSwitchText = function() {
+        $("#ui-switch-mode-text").removeClass("ui-switch-mode-shown").addClass("ui-switch-mode-hidden");
+    }
+
+    var setupButtons = function() {
+        $("#btn-install").click(goNextPage); 
+        $(".btn-shutdown").click(Installation.shutdown); 
+        $("#btn-reboot").click(Installation.reboot); 
+        $("#next").click(goNextPage); 
+        $("#prev").click(goPreviousPage); 
+        $("#ui-switch-mode-button").mouseover(displayModeSwitchText); 
+        $("#ui-switch-mode-button").mouseleave(hideModeSwitchText); 
+        $("#ui-switch-mode-button").click(switchMode); 
+    }
+
+    var switchMode = function() {
+        mode ++;
+        if (mode > 1) 
+            mode = 0;
+
+        applyMode ();
+    }
+
+    var applyMode = function() {
+        if (mode == 0) {
+            $("#ui-advanced-mode-text").addClass("ui-advanced-mode-text-hidden").removeClass("ui-advanced-mode-text-shown");
+            $("#ui-switch-mode-text").text($("#ui-switch-mode-advanced-text").text());
+            $(".ui-advanced-options").addClass("ui-advanced-options-hidden").removeClass("ui-advanced-options-shown");
+        } else {
+            $("#ui-advanced-mode-text").removeClass("ui-advanced-mode-text-hidden").addClass("ui-advanced-mode-text-shown");
+            $("#ui-switch-mode-text").text($("#ui-switch-mode-quick-text").text());
+            $(".ui-advanced-options").addClass("ui-advanced-options-shown").removeClass("ui-advanced-options-hidden");
+        }
+    }
+        
+
+    var setupAjax = function() {
+        $.getJSON("languages.json", function(data) {
+                populateSelection(data, "language", language);
+            });
+
+        $.getJSON("regions.json", function(data) {
+                populateSelection(data, "region", language);
+            });
+
+	    $.getJSON("keyboards.json", function(data) {
+		    populateSelection(data, "keyboard", language);
+	    });
+    }
+
+    // Displays hint of a field object
+    var displayHint = function (object, display) {
+        var item = $("#hint-" + object.id);
+        if (arguments.length > 2) {
+            item = $("#" + arguments[2]);
+        }
+        if (item.length > 0) {
+            if (display) {
+                item.css("display", "inherit");
+            } else {
+                item.css("display", "none");
+            }
+        }
+    }
+
+    // Validates string which only has alphanumeric and in lowercase
+    var validateLowerCaseAlphanumeric = function(string) {
+        var result = true;
         for (var i = 0; i < string.length; i ++) {
             var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
-            var isALPHA = (string.charCodeAt(i) >= ALPHAStart && string.charCodeAt(i) <= ALPHAEnd);
             var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
-            if (isAlpha) {
-                hasAlpha = true;
-            }
-
-            if (isALPHA) {
-                hasALPHA = true;
-            }
-
-            if (isDigit) {
-                hasDigit = true;
-            }
-
-            if (hasALPHA && hasAlpha && hasDigit) {
-                strongResult = true
+            if (i == 0) {
+                if (!isAlpha) {
+                    result = false;
                     break;
-            }
-        }
-    }
-
-    if (strongPassword) {
-        result = strongResult;
-        displayHint (item, !result, "password_strong");
-        displayHint (item, false, "password_warning");
-    } else {
-        displayHint (item, !strongResult, "password_warning");
-        displayHint (item, !result);
-    }
-    giveFocusIfInvalid(item);
-    personalizationValidation.password = result;
-
-    validateCurrentSlide();
-    return true;
-}
-
-function onPassword2Changed(item) {
-    var result = false;
-    var p = document.getElementById("password");
-    if (p != undefined) {
-        result = (p.value == item.value);    
-    }
-
-    displayHint (item, !result);
-    giveFocusIfInvalid(item);
-    personalizationValidation.password2 = result;
-
-    validateCurrentSlide();
-    return result;
-}
-
-function onLanguageChanged() {
-    var item = document.querySelector("select#language");
-    language = item.options[item.selectedIndex].value; 
-    retranslate();
-}
-
-/* UTILITIES */
-
-function translate(string) {
-    if (language == "C") {
-        return string;
-    }
-
-    if (translations[string] == undefined) {
-        return string;
-    }
-    return translations[string];
-}
-
-function retranslate() {
-    if (language == "C") {
-        return;
-    }
-
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        var success = false;
-        if (ajax.readyState==4 && ajax.responseText) {
-            translations = eval("(" + ajax.responseText + ")")
-            var items = document.querySelectorAll("span");
-            for (var i = 0; i < items.length; i++){
-                if (translations[items[i].id] != undefined) {
-                    items[i].innerHTML = translations[items[i].id];
                 }
             }
-            success = true;
-        } 
 
-        if (success) {
-            language = "C";
-        } 
-    }
-    ajax.open("GET", "translations." + language + ".json");
-    ajax.send(null);
-}
-
-function displayHint(object, display) {
-    var id = object.id;
-    if (arguments.length > 2) {
-        id = arguments[2];
-    }
-    var item = document.getElementById("hint_" + id);
-    if (item != undefined) {
-        if (display) {
-            item.style.display = "inherit";
-        } else {
-            item.style.display = "none";
-        }
-    }
-}
-
-function validateLowerCaseAlphanumeric(string) {
-    var result = true;
-    for (var i = 0; i < string.length; i ++) {
-        var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
-        var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
-        if (i == 0) {
-            if (!isAlpha) {
+            if (!(isAlpha || isDigit)) {
                 result = false;
                 break;
             }
         }
+        return result;
+    }
 
-        if (!(isAlpha || isDigit)) {
-            result = false;
-            break;
+    // Decorates a field when the value is invalid
+    // also gives a focus to it
+    var decorateFieldWhenInvalid = function(element, invalid) {
+        if (invalid) {
+            if ($(element).attr("focused") != "true") {
+                element.focus(); 
+                $(element).attr("focused", "true");
+            }
+            $(element).addClass("invalid");
+        } else {
+            $(element).attr("focused", "");
+            $(element).removeClass("invalid");
         }
     }
-    return result;
-}
 
-function giveFocusIfInvalid(result, item) {
-    if (!result) {
-        item.focus();
+    var onComputerNameChanged = function() {
+        var result = false;
+
+        if (this.value.length > 0) {
+            result = true;
+        }
+
+        var lowercase = this.value.toLowerCase();
+        result = result && validateLowerCaseAlphanumeric (lowercase);
+        this.value = lowercase;
+
+        displayHint (this, !result);
+        decorateFieldWhenInvalid(this, !result);
+        formValid.computerName = result;
+
+        validateCurrentPage();
+        return result;
     }
-}
 
-function camelize(string) {
-    var result = "";
-    var capitalize = false;
-    for (var i = 0; i < string.length; i++){
-        var c = string.charAt(i);
-        if (c == '_') {
-            capitalize = true;
-            continue;
+    var onUserNameChanged = function() {
+        var result = false;
+
+        if (this.value.length > 0) {
+            result = true;
+        }
+
+        var lowercase = this.value.toLowerCase();
+        result = result && validateLowerCaseAlphanumeric (lowercase);
+        this.value = lowercase;
+
+        displayHint (this, !result);
+        decorateFieldWhenInvalid(this, !result);
+        formValid.userName = result;
+
+        validateCurrentPage();
+        return result;
+    }
+
+    var onPasswordChanged = function() {
+        var result = false;
+
+        if (this.value.length > 0) {
+            result = true;
+        }
+
+        var string = this.value;
+
+        var hasAlpha = false;
+        var hasDigit = false;
+        var hasALPHA = false;
+
+        var strongResult = false;
+        if (string.length > 7) {
+            strongResult = true;
+        }
+
+        if (strongResult) {
+            strongResult = false;
+            for (var i = 0; i < string.length; i ++) {
+                var isAlpha = (string.charCodeAt(i) >= alphaStart && string.charCodeAt(i) <= alphaEnd);
+                var isALPHA = (string.charCodeAt(i) >= ALPHAStart && string.charCodeAt(i) <= ALPHAEnd);
+                var isDigit = (string.charCodeAt(i) >= digitStart && string.charCodeAt(i) <= digitEnd);
+                if (isAlpha) {
+                    hasAlpha = true;
+                }
+
+                if (isALPHA) {
+                    hasALPHA = true;
+                }
+
+                if (isDigit) {
+                    hasDigit = true;
+                }
+
+                if (hasALPHA && hasAlpha && hasDigit) {
+                    strongResult = true
+                        break;
+                }
+            }
+        }
+
+        if (strongPassword) {
+            result = strongResult;
+            displayHint (this, !result, "hint-txt-password-strong");
+            displayHint (this, false, "hint-txt-password-warning");
         } else {
-            if (capitalize) {
-                result += c.toUpperCase();
-                capitalize = false;
+            displayHint (this, false, "hint-txt-password-strong");
+            displayHint (this, !strongResult, "hint-txt-password-warning");
+            displayHint (this, !result);
+        }
+        decorateFieldWhenInvalid(this, !result);
+        formValid.password = result;
+
+        validateCurrentPage();
+        return true;
+    }
+
+    var onPassword2Changed = function() {
+        var result = false;
+        result = ($("#txt-password").val() == this.value);    
+
+        displayHint (this, !result);
+        decorateFieldWhenInvalid(this, !result);
+        formValid.password2 = result;
+
+        validateCurrentPage();
+        return result;
+    }
+
+
+    // Checks the strong password option
+    var checkStrongPassword = function() {
+        strongPassword = ($("#opt-strong-password").get(0).checked);
+        $("#txt-password").val("");
+        $("#txt-password2").val("");
+        formValid.password = false;
+        formValid.password2 = false;
+    }
+
+    // Checks whether the auto login is selected
+    var checkAutoLogin = function() {
+        autoLogin = ($("#opt-auto-login").get(0).checked);
+    }
+
+    // Setups events of the form fields
+    var setupForm = function() {
+        $("#txt-computer-name").blur(onComputerNameChanged);
+        $("#txt-user-name").blur(onUserNameChanged);
+        $("#txt-password").blur(onPasswordChanged);
+        $("#txt-password2").blur(onPassword2Changed);
+        $("#opt-strong-password").blur(checkStrongPassword);
+        $("#opt-auto-login").blur(checkAutoLogin);
+    }
+
+    var sendInstallationData = function() {
+        var p = $("div.ui-partition-selected");
+        var params = ""
+        params += "&partition=" + p.attr("data-partition");
+        params += "&device=" + p.attr("data-device");
+        params += "&hostname=" + $("#txt-computer-name").val(); 
+        params += "&username=" + $("#txt-user-name").val();
+        params += "&fullname=" + $("#txt-full-name").val();
+        params += "&password=" + $("#txt-password").val();
+        params += "&language=" + $("#opt-language").val();
+        params += "&region="   + $("#opt-region").val(); 
+        params += "&keyboard=" + $("#opt-keyboard").val(); 
+        params += "&autologin=" + (autoLogin ? "true" : "false");
+        installation = new Installation(params);
+        installation.start();
+
+        updateStatus();
+        statusUpdater = setInterval(updateStatus, 5000);
+    }
+
+    var updateStatus = function () {
+        var status = installation.getStatus(); 
+        console.log(status.status + ":" + status.description);
+        $("#current-step").html(status.description);
+        $("#progress-bar").css("width", status.progress + "%");
+
+        if (status.status > 1) {
+            clearInterval (statusUpdater);
+            if (status.status == 2) {
+                showError();
             } else {
-                result += c;
+                setTimeout(goNextPage, 2000);
             }
         }
     }
-    return result;
-}
 
-function updateSlideVisibility() {
-    var items = document.querySelectorAll("div.steps_long");
-    for (var i = 0; i < items.length; i++){
-        if (i == currentSlide)
-            continue;
-        items[i].style.maxWidth = "0px";
-    }
-    items[currentSlide].style.maxWidth = "500px";
+    var showError = function() {
+        displayPage("error");  
 
-    items = document.querySelectorAll("div.steps");
-    for (var i = 0; i < items.length; i++){
-        items[i].style.color = stepInactiveColor;
-    }
-    items[currentSlide].style.color = stepActiveColor;
-
-    if (currentSlide == 0) {
-        document.getElementById("next").style.display = "none";
-        document.getElementById("prev").style.display = "none";
-    } else {
-        document.getElementById("next").style.display = "inherit";
-        document.getElementById("prev").style.display = "inherit";
-    }
-}
-
-function validateCurrentSlide() {
-    if (nextSlideValidators[currentSlide]) {
-        eval("var canContinue = " + nextSlideValidators[currentSlide]);
-      
-        if (canContinue) {
-            document.getElementById("next").removeAttribute("disabled");
-        } else {
-            document.getElementById("next").setAttribute("disabled", "disabled");
-        }
-    }
-}
-
-function slide() {
-    var pos = currentSlide * width * -1;
-    document.getElementById("slider").style.WebkitTransform="translateX(" + pos + "px)";
-    updateSlideVisibility();
-    validateCurrentSlide();
-}
-
-function nextSlide() {
-    if (currentSlide + 1 >= totalSlide)
-        return;
-
-    currentSlide ++;
-    slide();
-}
-
-function previousSlide() {
-    if (currentSlide - 1 < 0)
-        return;
-
-    currentSlide --;
-    slide();
-}
-
-function sendInstallationData() {
-    var params = ""
-    params += "&partition=" + targetPartitionId;
-    params += "&device=" + targetDeviceId;
-    params += "&hostname=" + document.getElementById("computer_name").value; 
-    params += "&username=" + document.getElementById("user_name").value;
-    params += "&fullname=" + document.getElementById("full_name").value;
-    params += "&password=" + document.getElementById("password").value;
-    params += "&language=" + language;
-    params += "&region=" + document.getElementById("region").value;
-    params += "&keyboard=" + document.getElementById("keyboard").value;
-    params += "&autologin=" + (autoLogin ? "true" : "false");
-    installation = new Installation(params);
-    installation.start();
-
-    updateStatus();
-    statusUpdater = setInterval("updateStatus()", 5000);
-}
-
-function shutdown() {
-    Installation.shutdown();
-}
-
-function reboot() {
-    Installation.reboot();
-}
-
-function baseIsReady() {
-    if (dataReady.partitions &&
-        dataReady.languages &&
-        dataReady.regions &&
-        dataReady.keyboards) {
-        document.getElementById("base").style.opacity = "1";
-    }
-}
-
-function updateStatus() {
-    if (typeof installation === "undefined") {
-        console.log("installation is undefined");
-    }
-    var status = installation.getStatus(); 
-    console.log(status.status + ":" + status.description);
-    document.getElementById("current_step").innerHTML = status.description;
-    var progressBar = document.getElementById("progress_bar");
-    if (!(typeof progressBar === "undefined")) {
-        progressBar.style.width = status.progress + "%";
+        $("#log").load("file:////var/log/blankon-installer.log");
     }
 
-    if (status.status > 1) {
-        clearInterval (statusUpdater);
-        if (status.status == 2) {
-            showError();
-        } else {
-            setTimeout("nextSlide()", 2000);
-        }
+    var init = function() {
+        setupButtons();
+        setupForm();
+        setupAjax();
+        goNextPage();
+        applyMode();
     }
-}
 
-function showError() {
-    var ajax = new XMLHttpRequest();
-
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState==4 && ajax.responseText) {
-            document.getElementById("log").innerHTML = ajax.responseText; 
-        } 
+    return {
+        init: init
     }
-    ajax.open("GET", "http://install/show_log?");
-    ajax.send(null);
 
-    document.getElementById("error_frame").style.marginTop = "0px";
-    document.getElementById("viewport").style.opacity = "0";
-    document.getElementById("toolbar").style.display = "none";
+}).apply();
 
-}
+$(document).ready(function() {
 
-function createString(logical, string) {
-    var obj = document.createElement("span");
-    obj.setAttribute("id", logical);
-    if (arguments.length > 2) {
-        for (var i = 0; i < arguments.length - 2; i ++) {
-            string = string.replace("{"+ (i + 1) +"}", arguments[i+2]);
-        }
-    }
-    obj.innerHTML = string;
-    return obj;
-}
-
-function showAdvancedOptions() {
-    document.getElementById("showAdvancedOptions_button").style.display = "none";
-    document.getElementById("advanced_options").setAttribute("class", "advanced_options_shown");
-}
-
-function checkStrongPassword() {
-    strongPassword = (document.getElementById("strong_password").value == "on");
-    document.getElementById("password").value = "";
-    document.getElementById("password2").value = "";
-    personalizationValidation.password = false;
-    personalizationValidation.password2 = false;
-}
-
-function checkAutoLogin() {
-    autoLogin = (document.getElementById("autologin").value == "on");
-}
+    install.init ();
+});
