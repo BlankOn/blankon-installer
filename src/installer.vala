@@ -583,7 +583,7 @@ public class Installation : GLib.Object {
             Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
             Intl.textdomain( Config.GETTEXT_PACKAGE );
-            Utils.write_simple_file("/var/run/locale", "LC_ALL=%s\n".printf((string)buffer));
+            Utils.write_simple_file("/var/run/locale", "LC_ALL=%s\nLANG=%s\n".printf((string)buffer, (string)buffer));
             buffer = null;
         }
 
