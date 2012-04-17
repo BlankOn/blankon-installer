@@ -583,6 +583,7 @@ public class Installation : GLib.Object {
             Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
             Intl.textdomain( Config.GETTEXT_PACKAGE );
+            Utils.write_simple_file("/var/run/locale", "LC_ALL=%s\n".printf((string)buffer));
             buffer = null;
         }
 
@@ -633,9 +634,9 @@ public class Installation : GLib.Object {
 }
 
 public class Utils {
-    public static void write_simple_file (string uri, string content) {
+    public static void write_simple_file (string path, string content) {
         try {
-            var file = File.new_for_uri (uri);
+            var file = File.new_for_path (path);
             if (file.query_exists ()) {
                 file.delete ();
             }
@@ -643,7 +644,7 @@ public class Utils {
             dos.put_string (content);
             dos.close ();
         } catch (Error e) {
-            stderr.printf ("%s\n", e.message);
+            stderr.printf ("Error writing to %s: %s\n", path, e.message);
         }
     }
 }
