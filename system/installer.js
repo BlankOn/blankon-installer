@@ -526,6 +526,13 @@ var install = (function(){
         autoLogin = ($("#opt-auto-login").get(0).checked);
     }
 
+    // Changes language 
+    var changeLanguage = function() {
+        language = $("#opt-language").val();
+        Installation.setLocale(language);
+        translate();
+    }
+
     // Setups events of the form fields
     var setupForm = function() {
         $("#txt-computer-name").blur(onComputerNameChanged);
@@ -534,6 +541,8 @@ var install = (function(){
         $("#txt-password2").blur(onPassword2Changed);
         $("#opt-strong-password").blur(checkStrongPassword);
         $("#opt-auto-login").blur(checkAutoLogin);
+        $("#opt-language").blur(changeLanguage);
+        $("#opt-language").change(changeLanguage);
     }
 
     var sendInstallationData = function() {
@@ -578,12 +587,32 @@ var install = (function(){
         $("#log").load("file:////var/log/blankon-installer.log");
     }
 
+    // Translates all <span> element which has
+    // translate attribute set to "yes" (if not given
+    // then considered as "yes")
+    var translate = function() {
+        $("span[translate!='no']").text(function(index, text) {
+            if (this.hasAttribute("data-string")) {
+                text = this.getAttribute("data-string");
+            } else {
+                this.setAttribute("data-string", text);
+            }
+            this.innerHTML = gettext(text);
+        });
+    }
+
+    // Calls the gettext function defined in backend
+    var gettext = function(text) {
+        return Installation.translate(text);
+    }
+
     var init = function() {
         setupButtons();
         setupForm();
         setupAjax();
         goNextPage();
         applyMode();
+        translate();
     }
 
     return {

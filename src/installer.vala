@@ -543,10 +543,58 @@ public class Installation : GLib.Object {
         return new JSCore.Value.undefined (ctx);
     }
 
-    
+    public static JSCore.Value js_translate (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+        if (arguments.length == 1) {
+            var s = arguments [0].to_string_copy (ctx, null);
+            char[] buffer = new char[s.get_length() + 1];
+            s.get_utf8_c_string (buffer, buffer.length);
+
+            s = new String.with_utf8_c_string (_((string) buffer));
+            var result = new JSCore.Value.string (ctx, s);
+            s = null;
+            buffer = null;
+            return result;
+        }
+
+        return new JSCore.Value.undefined (ctx);
+    }
+
+    public static JSCore.Value js_set_locale (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+        if (arguments.length == 1) {
+            var s = arguments [0].to_string_copy (ctx, null);
+            char[] buffer = new char[s.get_length() + 1];
+            s.get_utf8_c_string (buffer, buffer.length);
+
+            var x = Intl.setlocale(LocaleCategory.ALL, (string)buffer);
+            stdout.printf("Changing locale to %s: %s\n", (string) buffer, x);
+
+            Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
+            Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
+            Intl.textdomain( Config.GETTEXT_PACKAGE );
+            buffer = null;
+        }
+
+        return new JSCore.Value.undefined (ctx);
+    }
+
+
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
         { "reboot", js_reboot, PropertyAttribute.ReadOnly },
+        { "translate", js_translate, PropertyAttribute.ReadOnly },
+        { "setLocale", js_set_locale, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 
