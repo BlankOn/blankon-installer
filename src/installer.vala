@@ -349,16 +349,16 @@ public class Installation : GLib.Object {
 
     void do_setup () {
         var content = ("%s:%s\n").printf(user_name, password);
-        Utils.write_simple_file ("file:///tmp/user-pass", content);
+        Utils.write_simple_file ("/tmp/user-pass", content);
 
         content = ("%d %s\n").printf((int) autologin, user_name);
-        Utils.write_simple_file ("file:///tmp/user-setup", content);
+        Utils.write_simple_file ("/tmp/user-setup", content);
 
         content = ("%s\n\n\n\n\n").printf(full_name);
-        Utils.write_simple_file ("file:///tmp/user-info", content);
+        Utils.write_simple_file ("/tmp/user-info", content);
 
         content = ("%s\n").printf(host_name);
-        Utils.write_simple_file ("file:///tmp/hostname", content);
+        Utils.write_simple_file ("/tmp/hostname", content);
 
         SwapCollector.reset ();
         var swaps = "";
@@ -367,7 +367,7 @@ public class Installation : GLib.Object {
         }
 
         content = ("%s").printf(swaps);
-        Utils.write_simple_file ("file:///tmp/swaps", content);
+        Utils.write_simple_file ("/tmp/swaps", content);
 
         do_simple_command ("/sbin/b-i-setup-fs", Step.SETUP, "Setting up", "Unable to setup installation");
     }
@@ -536,7 +536,7 @@ public class Installation : GLib.Object {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
 
-        var location = "file:///tmp/post-install.sh";
+        var location = "/tmp/post-install.sh";
         Utils.write_simple_file (location, "sudo /sbin/reboot\n");
         Gtk.main_quit();
 
