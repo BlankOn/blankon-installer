@@ -633,22 +633,6 @@ public class Installation : GLib.Object {
 
 }
 
-public class Utils {
-    public static void write_simple_file (string path, string content) {
-        try {
-            var file = File.new_for_path (path);
-            if (file.query_exists ()) {
-                file.delete ();
-            }
-            var dos = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
-            dos.put_string (content);
-            dos.close ();
-        } catch (Error e) {
-            stderr.printf ("Error writing to %s: %s\n", path, e.message);
-        }
-    }
-}
-
 public class Installer : WebView {
     string translate_uri (string old) {
         var uri = old.replace("http://system", "file://" + Config.SYSTEM_PATH + "/");
@@ -664,6 +648,11 @@ public class Installer : WebView {
         return "about:blank";
     }
 
+    string translate_theme (string old) {
+        var uri = "file://%s".printf(Utils.get_icon_path (old.replace("theme://", "")));
+        return uri;
+    }
+
     public Installer () {
         var settings = new WebSettings();
         settings.enable_file_access_from_file_uris = true;
@@ -671,7 +660,9 @@ public class Installer : WebView {
         set_settings(settings);
 
         resource_request_starting.connect((frame, resource, request, response) => {
-            if (request.uri.has_prefix("http://install/")) {
+            if (resource.uri.has_prefix("theme://")) {
+                request.set_uri(translate_theme(resource.uri));
+            } else if (request.uri.has_prefix("http://install/")) {
                 var uri = translate_install (resource.uri);
                 request.set_uri(uri);
             } else {

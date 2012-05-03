@@ -14,6 +14,7 @@ blankon_installer_SOURCES = \
     main.vala \
 	installer.vala \
 	parted.vala \
+    utils.vala \
 	$(NULL)
 
 blankon_installer_VALAFLAGS = \

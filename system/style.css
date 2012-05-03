@@ -127,7 +127,7 @@ select{
 #ui-switch-mode-button {
     cursor: pointer;
     margin-right: 10px;
-    background-image: url(/usr/share/icons/BlankOn/categories/scalable/gnome-settings.svg);
+    background-image: url(theme://gnome-settings);
     background-position: center center;
 
     width: 32px;
