@@ -342,10 +342,6 @@ var install = (function(){
                 populateSelection(data, "language", language);
             });
 
-        $.getJSON("regions.json", function(data) {
-                populateSelection(data, "region", language);
-            });
-
 	    $.getJSON("keyboards.json", function(data) {
 		    populateSelection(data, "keyboard", language);
 	    });
@@ -533,6 +529,26 @@ var install = (function(){
         translate();
     }
 
+    // Change timezone selection
+    var changeZone = function() {
+        var selection = $("#opt-timezone");
+        selection.empty();
+        selection.show();
+        var zone = $("#opt-zone").val();
+        var data = Utils.getTimezones(zone);
+        for (var i = 0; i < data.length; i ++) {
+            var opt = $("<option>").
+                text(data[i].replace("_", " ")).
+                attr("value", zone + "/" + data[i]);
+            selection.append(opt);
+        }
+    }
+
+    // Change timezone
+    var changeTimezone = function() {
+        Installation.setTimezone($("#opt-timezone").val());
+    }
+
     // Setups events of the form fields
     var setupForm = function() {
         $("#txt-computer-name").blur(onComputerNameChanged);
@@ -543,6 +559,10 @@ var install = (function(){
         $("#opt-auto-login").blur(checkAutoLogin);
         $("#opt-language").blur(changeLanguage);
         $("#opt-language").change(changeLanguage);
+        $("#opt-zone").change(changeZone);
+        $("#opt-zone").blur(changeZone);
+        $("#opt-timezone").change(changeTimezone);
+        $("#opt-timezone").blur(changeTimezone);
     }
 
     var sendInstallationData = function() {
@@ -555,7 +575,7 @@ var install = (function(){
         params += "&fullname=" + $("#txt-full-name").val();
         params += "&password=" + $("#txt-password").val();
         params += "&language=" + $("#opt-language").val();
-        params += "&region="   + $("#opt-region").val(); 
+        params += "&timezone="   + $("#opt-timezone").val(); 
         params += "&keyboard=" + $("#opt-keyboard").val(); 
         params += "&autologin=" + (autoLogin ? "true" : "false");
         installation = new Installation(params);
@@ -607,7 +627,7 @@ var install = (function(){
     }
 
     var init = function() {
-        $(".ui-page").css("left", $(window).width());
+        $(".ui-page").css("left", "40000px");
         setupButtons();
         setupForm();
         setupAjax();

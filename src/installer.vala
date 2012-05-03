@@ -565,6 +565,29 @@ public class Installation : GLib.Object {
         return new JSCore.Value.undefined (ctx);
     }
 
+    public static JSCore.Value js_set_timezone (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+        if (arguments.length == 1) {
+            var s = arguments [0].to_string_copy (ctx, null);
+            char[] buffer = new char[s.get_length() + 1];
+            s.get_utf8_c_string (buffer, buffer.length);
+
+            stdout.printf("Changing timezone to %s\n", (string) buffer);
+
+            FileUtils.unlink("/etc/localtime");
+            FileUtils.symlink("/usr/share/zoneinfo/%s".printf((string) buffer), "/etc/localtime");
+            Utils.write_simple_file("/var/run/timezone", "TZ=%s\nexport TZ\n".printf((string)buffer));
+            buffer = null;
+        }
+
+        return new JSCore.Value.undefined (ctx);
+    }
+
     public static JSCore.Value js_set_locale (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
@@ -596,6 +619,7 @@ public class Installation : GLib.Object {
         { "reboot", js_reboot, PropertyAttribute.ReadOnly },
         { "translate", js_translate, PropertyAttribute.ReadOnly },
         { "setLocale", js_set_locale, PropertyAttribute.ReadOnly },
+        { "setTimezone", js_set_timezone, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 
@@ -672,6 +696,7 @@ public class Installer : WebView {
         });
 
         window_object_cleared.connect ((frame, context) => {
+            Utils.setup_js_class ((JSCore.GlobalContext) context);
             Parted.setup_js_class ((JSCore.GlobalContext) context);
             Installation.setup_js_class ((JSCore.GlobalContext) context);
         });

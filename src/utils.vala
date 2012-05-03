@@ -44,8 +44,47 @@ namespace Utils {
         return new JSCore.Value.undefined (ctx);
     }
 
+    public static JSCore.Value js_get_timezones (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+        if (arguments.length > 0) {
+            var s = arguments [0].to_string_copy (ctx, null);
+            char[] buffer = new char[s.get_length() + 1];
+            s.get_utf8_c_string (buffer, buffer.length);
+
+            StringBuilder json = new StringBuilder();
+            json.assign("[");
+            var dir = Dir.open ("/usr/share/zoneinfo/%s".printf((string)buffer), 0);
+            stdout.printf("ldokqwpdkqwpdkw " + (string)buffer);
+            while (true) {
+                var name = dir.read_name ();
+                if (name == null) {
+                    break;
+                }
+                json.append("'%s',".printf(name));
+            }
+            if (json.str [json.len - 1] == ',') {
+                json.erase (json.len - 1, 1); // Remove trailing comma
+            }
+            json.append("]");
+
+            s = new String.with_utf8_c_string (json.str);
+            var r = ctx.evaluate_script (s, null, null, 0, null);
+            s = null;
+            buffer = null;
+            return r;
+        }
+
+        return new JSCore.Value.undefined (ctx);
+    }
+
     static const JSCore.StaticFunction[] js_funcs = {
         { "getIconPath", js_get_icon_path, PropertyAttribute.ReadOnly },
+        { "getTimezones", js_get_timezones, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 
