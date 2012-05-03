@@ -607,6 +607,7 @@ var install = (function(){
     }
 
     var init = function() {
+        $(".ui-page").css("left", $(window).width());
         setupButtons();
         setupForm();
         setupAjax();
