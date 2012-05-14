@@ -1,0 +1,93 @@
+#!/bin/bash
+
+if [ -z $ROOTFS ];then
+    echo "ROOTFS is not defined"
+    exit 1
+fi
+
+PATH=./
+/bin/rm -f $ROOTFS/_removed
+
+function do_apt_get {
+    echo "Hijakcing apt-get $@"
+    removing=0
+    removed=""
+    for i in $@;do
+        if [ $removing -eq 1 ];then
+            removed="$removed $i"
+        elif [ "purge" = $i ];then
+            removing=1
+        fi
+    done
+    if [ "x$removed" != "x" ];then
+        echo $removed >> $ROOTFS/_removed
+    fi
+}
+
+function chroot {
+    echo "Hijacking chroot"
+    shift
+    shift
+    shift
+    if [ "$1" = "/usr/bin/apt-get" ];then
+        shift
+        do_apt_get $@
+    fi
+    return 0
+}
+
+function cp {
+    return 0
+}
+
+function hijack_arg {
+    local _a=""
+    local c=2
+    local x=$#
+    local arg=$1
+    while [ $c -lt $x -o $c -eq $x ];do
+        shift 
+        _a="$_a `echo $1|/bin/sed -e \"s|/target/|$ROOTFS/target/|g\"`" 
+        let c=c+1
+    done
+    echo $args
+    eval "$arg='$_a'"
+}
+
+function rm {
+    args=""
+    hijack_arg args $@
+    echo "rm $args"
+    eval "/bin/rm $args"
+}
+
+function fail {
+    echo "FAIL: $1"
+}
+
+function mkdir {
+    /bin/mkdir $@
+}
+
+function cat {
+    /bin/cat $@
+}
+
+function echo {
+    /bin/echo $@
+}
+
+function mv {
+    /bin/mv $@
+}
+
+function check_file {
+    file=$1
+    if [ ! -e $1 ];then
+        fail "check_file $1 doesn't exist"
+    fi
+    shift
+    echo $@ > $file.compared
+    cmp $file $file.compared 
+}
+

@@ -1,0 +1,41 @@
+#!/bin/bash
+set -x
+set -e
+
+pushd `dirname $0`
+
+ROOTFS=/tmp/setup-fs
+mkdir -p $ROOTFS
+
+. ./functions
+
+### Initialization
+
+mkdir -p $ROOTFS/live/image/live
+cat << @@EOF > $ROOTFS/live/image/live/packages-to-remove
+p1
+p2
+p3
+@@EOF
+
+mkdir -p $ROOTFS/tmp
+echo "1 testuser" > $ROOTFS/tmp/user-setup
+echo "testuser:testpasswd" > $ROOTFS/tmp/user-pass
+cat << @@EOF > $ROOTFS/tmp/user-info
+long name
+room
+work
+home
+@@EOF
+echo "testhostname" > $ROOTFS/tmp/hostname
+
+mkdir -p $ROOTFS/target/etc/
+
+### Test
+. ../scripts/b-i-setup-fs
+
+### Checking
+
+check_file $ROOTFS/_removed "p1 p2 p3"
+
+popd
