@@ -90,6 +90,12 @@ ff02::2 ip6-allrouters
 ###### Timezone
 cp -f /etc/localtime /target/etc/localtime
 
+###### Repository
+
+if [ -f /usr/share/blankon-repository-setup/sources.list ];then
+    cp -f usr/share/blankon-repository-setup/sources.list /target/etc/apt/ 
+fi
+
 ###### Swap
 
 for i in `cat /tmp/swaps`;do
