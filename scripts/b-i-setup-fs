@@ -93,7 +93,7 @@ cp -f /etc/localtime /target/etc/localtime
 ###### Repository
 
 if [ -f /usr/share/blankon-repository-setup/sources.list ];then
-    cp -f usr/share/blankon-repository-setup/sources.list /target/etc/apt/ 
+    cp -f /usr/share/blankon-repository-setup/sources.list /target/etc/apt/ 
 fi
 
 ###### Swap
