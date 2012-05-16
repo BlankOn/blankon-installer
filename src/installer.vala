@@ -581,7 +581,7 @@ public class Installation : GLib.Object {
 
             FileUtils.unlink("/etc/localtime");
             FileUtils.symlink("/usr/share/zoneinfo/%s".printf((string) buffer), "/etc/localtime");
-            Utils.write_simple_file("/var/run/timezone", "TZ=%s\nexport TZ\n".printf((string)buffer));
+            Utils.write_simple_file("/run/timezone", "TZ=%s\nexport TZ\n".printf((string)buffer));
             buffer = null;
         }
 
@@ -606,7 +606,7 @@ public class Installation : GLib.Object {
             Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
             Intl.textdomain( Config.GETTEXT_PACKAGE );
-            Utils.write_simple_file("/var/run/locale", "LC_ALL=%s\nLANG=%s\n".printf((string)buffer, (string)buffer));
+            Utils.write_simple_file("/run/locale", "LC_ALL=%s\nLANG=%s\n".printf((string)buffer, (string)buffer));
             buffer = null;
         }
 
