@@ -1,5 +1,5 @@
 var install = (function(){
-    var language = "en";
+    var language = "C";
     var statusUpdater = -1;
     var gbSize = 1073741824;
     var minimumPartitionSize = 4 * gbSize;
