@@ -613,6 +613,36 @@ public class Installation : GLib.Object {
         return new JSCore.Value.undefined (ctx);
     }
 
+    public static JSCore.Value js_get_locale_list (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/usr/bin/locale", "-a" };
+        string[] env = { "LC_ALL=C" };
+
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+
+        var result = "["; 
+        foreach (var line in normal_output.split("\n")) {
+            if (line == "") continue;
+            if (!(line == "C" || line.has_prefix ("C.") || line == "POSIX")) {
+               result += "'" + line + "',"; 
+            }
+        } 
+        result += "'C']";
+        var s = new String.with_utf8_c_string (result);
+        return ctx.evaluate_script (s, null, null, 0, null);
+    }
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -620,6 +650,7 @@ public class Installation : GLib.Object {
         { "translate", js_translate, PropertyAttribute.ReadOnly },
         { "setLocale", js_set_locale, PropertyAttribute.ReadOnly },
         { "setTimezone", js_set_timezone, PropertyAttribute.ReadOnly },
+        { "getLocaleList", js_get_locale_list, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 
