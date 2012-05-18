@@ -339,8 +339,18 @@ var install = (function(){
 
     var setupAjax = function() {
         $.getJSON("languages.json", function(data) {
-                populateSelection(data, "language", language);
-            });
+            var availableLocale = Installation.getLocaleList();
+            var locales = {};
+            for (var i = 0; i < availableLocale.length; i ++) {
+                var l = availableLocale[i];
+                if (typeof data[l] === "undefined") {
+                    locales[l] = l;
+                } else {
+                    locales[l] = data[l];
+                }
+            }
+            populateSelection(locales, "language", language);
+        });
 
 	    $.getJSON("keyboards.json", function(data) {
 		    populateSelection(data, "keyboard", language);
