@@ -8,6 +8,12 @@ if [ -z "$DEVICE" ];then
     exit 1
 fi
 
+grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
+mv /tmp/grub /target/etc/default/grub
+cat << @@EOF >> /target/etc/default/grub
+GRUB_CMDLINE_LINUX_DEFAULT="quiet console=tty2"
+@@EOF
+
 /bin/mount --bind /dev /target/dev
 /bin/mount --bind /proc /target/proc
 /bin/mount --bind /sys /target/sys
