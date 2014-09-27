@@ -65,10 +65,10 @@ var install = (function(){
         var p = $(".ui-page").get(currentPage).id;
         var f = "canContinue" + p.charAt(0).toUpperCase() + p.slice(1);
        
-        $("#next").addClass("ui-button-toolbar-disabled").removeClass("ui-button-toolbar-enabled");
+        $("#next").addClass("disabled").removeClass("ui-button-toolbar-enabled");
         if (typeof _[f] === "function") {
             if (_[f]() == true) {
-                $("#next").addClass("ui-button-toolbar-enabled").removeClass("ui-button-toolbar-disabled");
+                $("#next").addClass("ui-button-toolbar-enabled").removeClass("disabled");
             }
         }
     }
@@ -142,13 +142,11 @@ var install = (function(){
             $("#waiting_target").hide();
             $("#no_target").show();
         }
-        cleanUpListener(e);
     } 
 
     _.preparePagePersonalization = function(e) {
         var p = $("div.ui-partition-selected");
         $("#txt-computer-name").focus();    
-        cleanUpListener(e);
     }
 
     _.preparePageSummary = function(e) {
@@ -159,19 +157,11 @@ var install = (function(){
         $("#summary-computer-name").text($("#txt-computer-name").val());
         $("#summary-user-name").text($("#txt-user-name").val());
         $("#summary-auto-login").text(autoLogin ? "Yes" : "No");
-        cleanUpListener(e);
     }
 
     _.preparePageInstallation = function(e) {
         $("nav.toolbar").css("bottom", "-" + $("nav.toolbar").height() + "px"); 
         setTimeout(sendInstallationData, 1000);
-        cleanUpListener(e);
-    }
-
-    var cleanUpListener = function(e) {
-        var id = e.target.id;
-        var f = "preparePage" + id.charAt(0).toUpperCase() + id.slice(1);
-        e.target.removeEventListener("webkitTransitionEnd", _[f], true);
     }
 
     // Creates string with positional parameters
@@ -188,6 +178,10 @@ var install = (function(){
     var displayPage = function() {
         // We reverse animation if going back through the list
         var reverse = (previousPage > currentPage);
+        var animationName = "bounceIn";
+        var outgoingAnimationName = "bounceOut";
+        var animationSuffix = reverse ? "Left" : "Right";
+        var outgoingAnimationSuffix = reverse ? "Right" : "Left";
         var withTransition = true;
         var pages = $(".ui-page");
         var outgoing = null;
@@ -204,8 +198,6 @@ var install = (function(){
                     break;
                 }
             }
-            reverse = (previousPage > currentPage);
-                console.log(arguments[0]);
         } else {
         // get the pages we're interested in
             outgoing = (currentPage < 0) ?
@@ -216,33 +208,25 @@ var install = (function(){
             incoming = pages.get(currentPage);
         }
 
-        // put incoming page way outside the screen on the right
-        if (withTransition) {
-            $(incoming).removeClass("ui-animation-slide");
-            var prefix = reverse ? "-" : "";
-            $(incoming).css("left", prefix + window.outerWidth + "px");
-        }
-
         if (withTransition) {
             var id = incoming.id;
             var f = "preparePage" + id.charAt(0).toUpperCase() + id.slice(1);
-            // setup function that will be run after transition is finished
-            if (typeof _[f] === "function") {
-                incoming.addEventListener("webkitTransitionEnd", _[f], true);
-            }
             // apply the pages with the animation styles
             if (outgoing != null) {
-                $(outgoing).addClass("ui-animation-slide");
-                $(incoming).addClass("ui-animation-slide");
+                $(outgoing).addClass(outgoingAnimationName + outgoingAnimationSuffix).one("webkitAnimationEnd", function() {
+                  $(this).removeClass(outgoingAnimationName + outgoingAnimationSuffix + " active");
+                });
+                $(outgoing).removeClass(animationName + animationSuffix);
+                $(incoming).addClass("active");
+                $(incoming).addClass(animationName + animationSuffix + " active").one("webkitAnimationEnd", function() {
+                  $(this).removeClass(animationName + animationSuffix);
+                  if (typeof _[f] === "function") {
+                    // setup function that will be run after transition is finished
+                    _[f]();
+                  }
+                });
             }
         }
-
-        // start the animation
-        if (outgoing != null) {
-            var prefix = reverse ? "" : "-";
-            $(outgoing).css("left", prefix + window.outerWidth + "px");
-        }
-        $(incoming).css("left", "0px");
 
         // show navigation toolbar when necessary
         if ($(incoming).attr("data-toolbar") == "no") {
@@ -266,6 +250,12 @@ var install = (function(){
     }
 
     var goNextPage = function() {
+        var disabled = $(this).hasClass("disabled");
+        if (disabled) {
+            e.preventDefault();
+            return;
+        }
+
         if (canGoNextPage()) {
             previousPage = currentPage;
             currentPage ++;
@@ -546,11 +536,28 @@ var install = (function(){
         selection.show();
         var zone = $("#opt-zone").val();
         var data = Utils.getTimezones(zone);
+        var prioritizedCities = ["Jakarta", "Jayapura", "Ujung Pandang", "Pontianak"];
+
+        for (var j = 0; j < prioritizedCities.length; j++) {
+          var city = prioritizedCities[j];
+          var name = city;
+          if (city == "Ujung Pandang") {
+            name = "Makassar";
+          } 
+          var opt = $("<option>").text(name).attr("value", zone + "/" + city);
+          selection.append(opt);
+          console.log("x");
+        }
+
         for (var i = 0; i < data.length; i ++) {
-            var opt = $("<option>").
-                text(data[i].replace("_", " ")).
-                attr("value", zone + "/" + data[i]);
-            selection.append(opt);
+          var city = data[i].replace("_", " ");
+          if (city.indexOf(prioritizedCities) >= 0) {
+            continue;
+          }
+          var opt = $("<option>").
+              text(city).
+              attr("value", zone + "/" + data[i]);
+          selection.append(opt);
         }
     }
 
@@ -637,10 +644,10 @@ var install = (function(){
     }
 
     var init = function() {
-        $(".ui-page").css("left", "40000px");
         setupButtons();
         setupForm();
         setupAjax();
+        changeZone();
         goNextPage();
         applyMode();
         translate();

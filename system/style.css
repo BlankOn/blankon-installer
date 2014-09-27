@@ -1,5 +1,10 @@
+/*
+dasar tombol : http://www.red-team-design.com/just-another-awesome-css3-buttons
+entity icons : http://www.codemonkeyjack.com/EntitiesChart.html
+*/
+
 body {
-    background-color: #dedede;
+    background-color: #000;
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     font-family: "Sans";
@@ -7,7 +12,12 @@ body {
 }
 
 img#logo {
-    float: right; 
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  margin: 0px;
+  padding: 0px;
+  vertical-align: middle;
 }
 
 div.topbar {
@@ -43,10 +53,12 @@ nav.toolbar {
 }
 
 .ui-animation-slide {
-    -webkit-transition: all 300ms ease-in-out;
+    -webkit-transition: all 700ms ease-in-out;
 }
 
 div.ui-page {
+    background: url("texture.jpg");
+    background-repeat: repeat;
     top: 60px;
     position: fixed;
     overflow-y: auto;
@@ -55,7 +67,11 @@ div.ui-page {
     padding: 30px;
     padding-bottom: 120px;
     -webkit-box-sizing: border-box;
-    left: 12000px;
+    display: none;
+}
+
+.ui-page.active {
+    display: block;
 }
 
 label {
@@ -142,30 +158,6 @@ select{
     -webkit-box-shadow: 0px 0px 10px #eeeeee;
 }
 
-a.ui-button-toolbar-enabled {
-    color: black;
-    cursor: pointer;
-}
-
-a.ui-button-toolbar-disabled {
-    color: #aeaeae;
-    cursor: default;
-}
-
-a.ui-button-toolbar {
-    font-size: 16px;
-    border-radius: 10px;
-    font-weight: bold;
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-    background-color: #dedede;
-}
-
-a.ui-button-toolbar-enabled:hover {
-    background-color: #aeaeae;
-}
-
 div.steps {
     margin-top: 10px;
     background-color: #909090; 
@@ -192,24 +184,61 @@ div.steps_long {
 }
 
 div.device {
-    width: 500px;
-    background-color: #d0d0d0;
-    border-color: #202020;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 10px;
+
+	display: inline-block;
+	white-space: nowrap;
+	background-color: #ccc;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+	background-image: -webkit-linear-gradient(top, #eee, #ccc);
+	background-image: -moz-linear-gradient(top, #eee, #ccc);
+	background-image: -ms-linear-gradient(top, #eee, #ccc);
+	background-image: -o-linear-gradient(top, #eee, #ccc);
+	background-image: linear-gradient(top, #eee, #ccc);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#eeeeee', EndColorStr='#cccccc');
+	border: 1px solid #777;
+	padding: 0 1.5em;
+	margin: 0.5em;
+	font: bold 1em/2em Arial, Helvetica;
+	text-decoration: none;
+	color: #333;
+	text-shadow: 0 1px 0 rgba(255,255,255,.8);
+	-moz-border-radius: .2em;
+	-webkit-border-radius: .2em;
+	border-radius: .2em;
+	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+
+    width: 600px;
+
+    border-radius: 7px;
     padding: 10px;
 }
 
 .ui-partition {
-    width: inherit;
-    border-radius: 10px;
-    padding: 10px;
-    background-color: #a0a0a0;
-    border-color: #202020;
-    border-width: 1px;
-    border-style: solid;
-    cursor: pointer;
+    	
+    	background-color: #ccc;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+	background-image: -webkit-linear-gradient(top, #eee, #ccc);
+	background-image: -moz-linear-gradient(top, #eee, #ccc);
+	background-image: -ms-linear-gradient(top, #eee, #ccc);
+	background-image: -o-linear-gradient(top, #eee, #ccc);
+	background-image: linear-gradient(top, #eee, #ccc);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#eeeeee', EndColorStr='#cccccc');
+	border: 1px solid #777;
+	padding: 0 1.5em;
+	margin: 0.5em;
+	font: bold 1em/2em Arial, Helvetica;
+	text-decoration: none;
+	color: #333;
+	text-shadow: 0 1px 0 rgba(255,255,255,.8);
+	-moz-border-radius: .2em;
+	-webkit-border-radius: .2em;
+	border-radius: .2em;
+	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+    	cursor: pointer;
 }
 
 .ui-partition:hover {
@@ -222,22 +251,97 @@ div.device {
 
 .ui-partition-selected {
     background-color: #505050;
-    color: white;
     border-color: white;
+    background-color:#75caeb;
+    border-color:#5fc1e8;
+	
 }
 
+.ui-partition-selected:after {
+content:"\2714   ";
+float: right;        
+	text-align: center;
+	font-size: 1.5em;	
+}
+
+.ui-partition-aris-primary {
+	background-color:#158cba;
+	border-color:#127ba3;
+	color:#ffffff;
+	
+	border: 1px solid #777;
+	padding: 0 1.5em;
+	margin: 0.5em;
+	font: bold 1em/2em Arial, Helvetica;
+	text-decoration: none;
+	text-shadow: 0 1px 0 rgba(255,255,255,.8);
+	-moz-border-radius: .2em;
+	-webkit-border-radius: .2em;
+	border-radius: .2em;
+	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+    	cursor: pointer;
+}
+.ui-partition-aris-info {
+	color:#ffffff;
+	background-color:#75caeb;
+	border-color:#5fc1e8;
+	
+	border: 1px solid #777;
+	padding: 0 1.5em;
+	margin: 0.5em;
+	font: bold 1em/2em Arial, Helvetica;
+	text-decoration: none;
+	text-shadow: 0 1px 0 rgba(255,255,255,.8);
+	-moz-border-radius: .2em;
+	-webkit-border-radius: .2em;
+	border-radius: .2em;
+	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+    	cursor: pointer;
+}
+
+.ui-partition-selected-aris:after {
+content:"\2714   ";
+float: right;        
+	text-align: center;
+	font-size: 1.5em;	
+}
+
+
+
 .ui-partition-disabled {
-    background-color: #a0a0a0;
-    color: #f0f0f0;
-    border-color: #202020;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 10px;
-    padding: 10px;
+
+
+	background-color: #a0a0a0;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+	background-image: -webkit-linear-gradient(top, #a0a0a0, #ccc);
+	background-image: -moz-linear-gradient(top, #a0a0a0, #ccc);
+	background-image: -ms-linear-gradient(top, #a0a0a0, #ccc);
+	background-image: -o-linear-gradient(top, #a0a0a0, #ccc);
+	background-image: linear-gradient(top, #a0a0a0, #ccc);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#eeeeee', EndColorStr='#cccccc');
+	border: 1px solid #777;
+	padding: 0 1.5em;
+	margin: 0.5em;
+	font: bold 1em/2em Arial, Helvetica;
+	text-decoration: none;
+	color: #555;
+	text-shadow: 0 1px 0 rgba(255,255,255,.8);
+	-moz-border-radius: .2em;
+	-webkit-border-radius: .2em;
+	border-radius: .2em;
+	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+
+
 }
 
 .ui-partition-disabled:hover {
-    cursor: crosshair;
+    cursor: default;
 }
 
 input.fields {
@@ -265,31 +369,91 @@ div.ui-hint-warning {
     display: none;
 }
 
-a.button {
-    font-size: 16px;
-    border-radius: 10px;
-    font-weight: bold;
-    color: white;
-    background-color: #353535;
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-    cursor: pointer;
+a.button
+{        
+	cursor: pointer;
+	display: inline-block;
+	white-space: nowrap;
+	background-color: #ccc;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+	background-image: -webkit-linear-gradient(top, #eee, #ccc);
+	background-image: -moz-linear-gradient(top, #eee, #ccc);
+	background-image: -ms-linear-gradient(top, #eee, #ccc);
+	background-image: -o-linear-gradient(top, #eee, #ccc);
+	background-image: linear-gradient(top, #eee, #ccc);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#eeeeee', EndColorStr='#cccccc');
+	border: 1px solid #777;
+	padding: 0 1.5em;
+	margin: 0.5em;
+	font: bold 1em/2em Arial, Helvetica;
+	text-decoration: none;
+	color: #333;
+	text-shadow: 0 1px 0 rgba(255,255,255,.8);
+	-moz-border-radius: .2em;
+	-webkit-border-radius: .2em;
+	border-radius: .2em;
+	-moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	-webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
 }
 
-a.button:hover {
-    color: black;
-    background-color: #858585;
+a.button:hover
+{
+	background-color: #ddd;        
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#fafafa), to(#ddd));
+	background-image: -webkit-linear-gradient(top, #fafafa, #ddd);
+	background-image: -moz-linear-gradient(top, #fafafa, #ddd);
+	background-image: -ms-linear-gradient(top, #fafafa, #ddd);
+	background-image: -o-linear-gradient(top, #fafafa, #ddd);
+	background-image: linear-gradient(top, #fafafa, #ddd);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#fafafa', EndColorStr='#dddddd');        
+}
+
+a.button:active
+{
+	-moz-box-shadow: 0 0 4px 2px rgba(0,0,0,.3) inset;
+	-webkit-box-shadow: 0 0 4px 2px rgba(0,0,0,.3) inset;
+	box-shadow: 0 0 4px 2px rgba(0,0,0,.3) inset;
+	position: relative;
+	top: 1px;
+}
+
+a.button:focus
+{
+	outline: 0;
+	background: #fafafa;
+}    
+
+a.button:before
+{
+	background: #ccc;
+	background: rgba(0,0,0,.1);
+	float: left;        
+	width: 1em;
+	text-align: center;
+	font-size: 1.5em;
+	margin: 0 1em 0 -1em;
+	padding: 0 .2em;
+	-moz-box-shadow: 1px 0 0 rgba(0,0,0,.5), 2px 0 0 rgba(255,255,255,.5);
+	-webkit-box-shadow: 1px 0 0 rgba(0,0,0,.5), 2px 0 0 rgba(255,255,255,.5);
+	box-shadow: 1px 0 0 rgba(0,0,0,.5), 2px 0 0 rgba(255,255,255,.5);
+	-moz-border-radius: .15em 0 0 .15em;
+	-webkit-border-radius: .15em 0 0 .15em;
+	border-radius: .15em 0 0 .15em;
+        pointer-events: none;        
 }
 
 div#base {
+    background-color: #fff;
     width: 100%;
     height: 100%;
     position: fixed;
     top: 0px;
     opacity: 1;
+    border:1px solid black;
+    border-radius:5px;
     -webkit-transition: opacity 1s ease-out;
-    background-image: -webkit-linear-gradient(bottom, rgb(163,163,163) 9%, rgb(199,199,199) 55%);
+    !background-image: -webkit-linear-gradient(bottom, rgb(163,163,163) 9%, rgb(199,199,199) 55%);
 }
 
 div#error-frame {
@@ -363,4 +527,31 @@ textarea.log {
     50% { border-bottom: 3px solid black; }
     75% { border-left: 3px solid black; }
     100% { border-top: 3px solid black; }
+}
+
+.debug {
+  border: 1px solid red;
+}
+.navbar {
+  height: 60px;
+  background: rgb(111, 179, 224);
+  border: none;
+  border-radius: 0px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  z-index: 2;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+}
+
+.navbar-bg {
+  height: 60px;
+  background: #000;
+  z-index: 1;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
 }
