@@ -712,7 +712,7 @@ public class Installer : WebView {
 
     public Installer () {
         var settings = new WebSettings();
-        if (debug == 1) {
+        if (debug == "1") {
           settings.enable_developer_extras = true;
           web_inspector.inspect_web_view.connect(getInspectorView);
         }
