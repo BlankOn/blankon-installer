@@ -1,0 +1,117 @@
+#!/bin/bash
+
+set -e
+
+PATH=$PATH:/usr/sbin:/usr/bin
+
+function do_chroot() {
+    chroot /target /usr/bin/env PATH=$PATH $@ 
+}
+
+rm -f $ROOTFS/target/etc/fstab
+
+###### REMOVE PACKAGES
+
+P=""
+if [ -f $ROOTFS/live/image/live/packages-to-remove ];then
+    for i in `cat $ROOTFS/live/image/live/packages-to-remove`;do
+        P="$P $i"
+    done
+    echo "Removing packages: $P"
+fi
+
+if [ "x$P" != "x" ];then
+    do_chroot /usr/bin/apt-get --yes purge $P
+fi
+
+echo "Updating initramfs"
+do_chroot /usr/sbin/update-initramfs -k all -u
+
+echo "Removing unused packages"
+do_chroot /usr/bin/apt-get --yes autoremove
+
+echo "Clean up packaging system"
+do_chroot /usr/bin/apt-get --yes clean 
+
+###### USER
+
+read AUTOLOGIN USERNAME < $ROOTFS/tmp/user-setup
+echo "Configuring user $USERNAME"
+echo "Auto-login: $AUTOLIGIN"
+rm -f $ROOTFS/tmp/user-setup
+USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
+do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
+
+do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
+do_chroot /usr/bin/chfn < $ROOTFS/tmp/user-info
+rm -f $ROOTFS/tmp/user-pass
+
+###### AUTOLOGIN
+
+if [ "x$AUTOLOGIN" = "x1" ];then
+    if [ -s $ROOTFS/target/var/lib/dpkg/info/lightdm.list ];then
+        echo "Setting up lightdm autologin"
+        if [ -s $ROOTFS/target/etc/lightdm/lightdm.conf ];then
+            sed -i -r -e "s|^#.*autologin-user=.*\$|autologin-user=$USERNAME|" \
+                      -e "s|^#.*autologin-user-timeout=.*\$|autologin-user-timeout=0|" \
+                      $ROOTFS/target/etc/lightdm/lightdm.conf
+        fi
+        if [ ! -s $ROOTFS/target/etc/pam.d/lightdm-autologin ];then
+            cat << @@EOF > $ROOTFS/target/etc/pam.d/lightdm-autologin
+auth requisite pam_nologin.so
+auth required pam_env.so readenv=1
+auth required pam_env.so readenv=1 envfile=/etc/default/locale
+auth    required    pam_succeed_if.so user != root quiet_success
+auth required pam_permit.so
+@include common-account
+session required pam_limits.so
+@include common-session
+@include common-password
+@@EOF
+        fi
+    fi
+fi
+###### HOSTNAME
+
+read HOSTNAME < $ROOTFS/tmp/hostname
+echo "Setting up hostname $HOSTNAME"
+mv $ROOTFS/tmp/hostname $ROOTFS/target/etc/
+    cat << @@EOF > $ROOTFS/target/etc/hosts 
+127.0.0.1   localhost $HOSTNAME
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+@@EOF
+
+###### Locale
+if [ -f /run/locale ];then
+    cp /run/locale /target/etc/default/
+fi
+
+###### Timezone
+cp -f $ROOTFS/etc/localtime $ROOTFS/target/etc/localtime
+
+###### Repository
+
+if [ -f $ROOTFS/usr/share/blankon-repository-setup/sources.list ];then
+    cp -f $ROOTFS/usr/share/blankon-repository-setup/sources.list $ROOTFS/target/etc/apt/ 
+fi
+
+###### Swap
+
+for i in `cat $ROOTFS/tmp/swaps`;do
+    mkswap $i
+    echo "$i    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
+done
+
+###### OpenSSH server
+if [ -e $ROOTFS/target/var/lib/dpkg/info/openssh-server.postinst ]; then
+    echo "Restarting openssh server"
+    if ! ls $ROOTFS/target/etc/ssh/ssh_host_*_key > /dev/null 2>&1; then
+        do_chroot /usr/sbin/dpkg-reconfigure --no-reload openssh-server
+    fi
+fi

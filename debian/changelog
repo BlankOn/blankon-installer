@@ -1,0 +1,438 @@
+blankon-installer (0.1.61) tambora; urgency=low
+
+  * Make system read/write
+    - Add rw in GRUB_CMDLINE_LINUX_DEFAULT
+    
+ -- Mahyuddin <yudi.al@gmail.com>  Wed, 24 Sep 2014 22:08:18 +0700
+
+blankon-installer (0.1.60) suroboyo; urgency=low
+
+  * Changes: Fix permission access ~/.local directory
+
+ -- Mahyuddin Ramli <yudi.al@gmail.com>  Fri, 14 Feb 2014 16:53:47 +0700
+
+blankon-installer (0.1.59) suroboyo; urgency=low
+
+  * Run nice option as default user
+
+ -- Mahyuddin Ramli <dotovr@di.blankon.in>  Thu, 13 Feb 2014 22:25:59 +0700
+
+blankon-installer (0.1.58) suroboyo; urgency=low
+
+  * Changes: Enclose string with span so it can be translated
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 12 Feb 2014 16:59:17 +0700
+
+blankon-installer (0.1.57) suroboyo; urgency=low
+
+  * system/Makefile.am add animate.css 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 12 Feb 2014 08:16:54 +0700
+
+blankon-installer (0.1.56) suroboyo; urgency=low
+
+  * Re-style
+
+ -- Mahyuddin Ramli <yudi.al@gmail.com>  Mon, 10 Feb 2014 23:12:55 +0700
+
+blankon-installer (0.1.55) suroboyo; urgency=medium
+
+  * modified system/style.css:
+    - background: url("texture.jpg");
+    - background-repeat: repeat;
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Sun, 09 Feb 2014 22:30:49 +0700
+
+blankon-installer (0.1.54) suroboyo; urgency=medium
+
+  * add system/logo.png
+  * add system/texture.jpg
+  * modified system/index.html Personalization form fields 
+  * update system/Makefile.am
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Sun, 09 Feb 2014 22:49:40 +0800
+
+blankon-installer (0.1.53) suroboyo; urgency=medium
+
+  * redesign by aris eko 
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Sat, 08 Feb 2014 17:36:12 +0700
+
+blankon-installer (0.1.52) suroboyo; urgency=low
+
+  * Correct word wrap
+
+ -- Mahyuddin Ramli <yudi.al@gmail.com>  Fri, 07 Feb 2014 17:20:09 +0700
+
+blankon-installer (0.1.51) suroboyo; urgency=low
+
+  * Correct locale-gen path
+
+ -- Mahyuddin Ramli <yudi.al@gmail.com>  Fri, 07 Feb 2014 16:30:12 +0700
+
+blankon-installer (0.1.50) suroboyo; urgency=medium
+
+  * add Makefile.am bootstrap.min.css
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Thu, 06 Feb 2014 17:07:25 +0700
+
+blankon-installer (0.1.49) suroboyo; urgency=medium
+
+  * resubmit
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Thu, 06 Feb 2014 15:02:26 +0700
+
+blankon-installer (0.1.48) suroboyo; urgency=medium
+
+  * add :
+    - bootstrap.min.css
+    - edit style,css
+    - edit index.html
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Thu, 06 Feb 2014 14:03:39 +0700
+
+blankon-installer (0.1.47) suroboyo; urgency=low
+
+  * Changes: Remove option -u "USER" in nice not valid
+  * Make default user $blankon
+
+ -- Mahyuddin Ramli <yudi.al@gmail.com>  Thu, 06 Feb 2014 11:55:00 +0700
+
+blankon-installer (0.1.46) suroboyo; urgency=low
+
+  * Changes: Remove packages from correct location  
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 06 Feb 2014 10:32:31 +0700
+
+blankon-installer (0.1.45) suroboyo; urgency=medium
+
+  * replace version
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Wed, 05 Feb 2014 16:17:38 +0700
+
+blankon-installer (0.1.41) suroboyo; urgency=medium
+
+  * Fix Next buttons
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Wed, 05 Feb 2014 15:46:02 +0700
+
+blankon-installer (0.1.44) suroboyo; urgency=low
+
+  * Fix language.json  ache
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Tue, 21 Jan 2014 12:01:42 +0700
+
+blankon-installer (0.1.43) suroboyo; urgency=low
+
+  * system/languages.json:
+    - Set name ace.utf8 to Bahsa Aceh
+
+ -- Mahyuddin Ramli <yudi.al@gmail.com>  Mon, 20 Jan 2014 22:29:41 +0700
+
+blankon-installer (0.1.42) suroboyo; urgency=medium
+
+  * Fixing sentence on first page
+
+ -- princeofgiri <princeofgiri@di.blankon.in>  Thu, 09 Jan 2014 10:30:19 +0700
+
+blankon-installer (0.1.41) suroboyo; urgency=low
+
+  * b-i-setup-fs
+    - change path packages-to-remove original 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sun, 05 Jan 2014 16:11:54 +0700
+
+blankon-installer (0.1.40) suroboyo; urgency=low
+
+  * b-i-setup-fs
+    - change path packages-to-remove 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sun, 05 Jan 2014 10:09:27 +0700
+
+blankon-installer (0.1.39) suroboyo; urgency=low
+
+  * New style
+
+ -- princeofgiri <princeofgiri@di.blankon.in>  Mon, 25 Nov 2013 11:54:33 +0700
+
+blankon-installer (0.1.38) suroboyo; urgency=low
+
+  * scripts/blankon-session-try-installer
+    - Added option user: -u "$USER" 
+    - Fix script to run blankon-session by User in Live
+
+ -- Mahyuddin Idram Ahmad <dotovr@di.blankon.in>  Thu, 21 Nov 2013 19:10:46 +0700
+
+blankon-installer (0.1.37) suroboyo; urgency=low
+
+  * scripts/blankon-session-try-installer:
+    - Added script to export home
+    - Fix owners $USER_LIVE/.locals
+
+ -- Mahyuddin Idram Ahmad <dotovr@di.blankon.in>  Thu, 14 Nov 2013 19:44:05 +0700
+
+blankon-installer (0.1.36) suroboyo; urgency=low
+
+  * added depends plymouth-theme-blankon
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Thu, 07 Nov 2013 07:20:04 +0700
+
+blankon-installer (0.1.35) suroboyo; urgency=low
+
+  * scripts/b-i-install-grub 
+    - remove GRUB_CMDLINE_LINUX_DEFAULT="quiet consol=tty2"
+    - add GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"  
+
+ -- mijortsa <azis.astrojim@surabaya.di.blankon.in>  Thu, 07 Nov 2013 07:07:12 +0700
+
+blankon-installer (0.1.34) suroboyo; urgency=low
+
+  * Change path locale b-i-copy-fs
+  * Change path remove-package-live b-i-setup-fs
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 06 Nov 2013 16:38:49 +0700
+
+blankon-installer (0.1.33) suroboyo; urgency=low
+
+  * Changes: path b-i-copy-fs filesystem.squashfs by mdamt
+
+ -- Mahyuddin <dotovr@di.blankon>  Sat, 16 Mar 2013 23:53:03 +0700
+
+blankon-installer (0.1.32) suroboyo; urgency=low
+
+  * Changes: restore path b-i-copy-fs filesystem.squashfs by mdamt
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sat, 02 Feb 2013 16:17:54 +0700
+
+blankon-installer (0.1.31) suroboyo; urgency=low
+
+  * Changes: path b-i-copy-fs filesystem.squashfs
+  * Upload to suroboyo
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 30 Jan 2013 21:19:17 +0700
+
+blankon-installer (0.1.30) rote; urgency=low
+
+  * Changes: Hides all boot messages in the installed system
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sat, 21 Jul 2012 04:10:46 +0700
+
+blankon-installer (0.1.29) rote; urgency=low
+
+  * New: JSCore::getLocaleList to get list of available locales
+  * Changes: Use languages.json as map of endonyms
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sat, 19 May 2012 06:41:56 +0700
+
+blankon-installer (0.1.28) rote; urgency=low
+
+  * Changes: Use C for english locale
+  * Changes: Removed non-supported languages
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 17 May 2012 22:47:38 +0700
+
+blankon-installer (0.1.27) rote; urgency=low
+
+  * Changes: Set locale in target
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 16 May 2012 15:56:26 +0700
+
+blankon-installer (0.1.26) rote; urgency=low
+
+  * Changes: Copy generated locale files
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 16 May 2012 14:12:30 +0700
+
+blankon-installer (0.1.25) rote; urgency=low
+
+  * Changes: Added missing initial slash
+  * New: Testability
+  * Changes: Uses new /run directory
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 16 May 2012 13:25:13 +0700
+
+blankon-installer (0.1.24) rote; urgency=low
+
+  * debian/control 
+    - depends added blankon-repository-setup
+  * Changes: Added missing initial slash
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Tue, 15 May 2012 03:38:34 +0700
+
+blankon-installer (0.1.23) rote; urgency=low
+
+  * Changes: Build repository list from blankon-repository-setup
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Mon, 14 May 2012 21:06:00 +0700
+
+blankon-installer (0.1.22) rote; urgency=low
+
+  * Changes: Lookup icon from theme
+  * Changes: Utils class
+  * Changes: Timezone selection
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 03 May 2012 22:27:32 +0000
+
+blankon-installer (0.1.21) rote; urgency=low
+
+  * Changes: Adjust width in init
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 03 May 2012 22:27:09 +0000
+
+blankon-installer (0.1.20) rote; urgency=low
+
+  * Fixes: BlankOn#1037 - installasi error pada tahap akhir
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 18 Apr 2012 19:41:38 +0700
+
+blankon-installer (0.1.19) rote; urgency=low
+
+  * Changes: Translation support
+  * Changes: Prepare locale file to be sourced when running blankon-session
+  * Changes: Export LANG in the locale script
+  * Fixes: BlankOn#1036 - blankon-installer hanya muncul logo saja
+  * Added: blankon-installer icon
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Tue, 17 Apr 2012 19:00:04 +0700
+
+blankon-installer (0.1.18) rote; urgency=low
+
+  * Changes: Refactoring
+  * Changes: New style for heading and partitions
+  * Changes: HTML lint-ed
+  * Changes: Remove tag within span
+  * New: blankon-installer PO template
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Mon, 16 Apr 2012 21:51:53 +0700
+
+blankon-installer (0.1.17) rote; urgency=low
+
+  * Changes: Use proper icon name
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Mon, 16 Apr 2012 19:05:36 +0700
+
+blankon-installer (0.1.16) rote; urgency=low
+
+  * Depends to libvala-0.14-dev 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Fri, 13 Apr 2012 06:31:04 +0700
+
+blankon-installer (0.1.15) rote; urgency=low
+
+  * Changes: Use uint64 instead of defining a struct for Ped.Sector
+  * Changes: Use valac 0.14
+  * Changes: Use the alias name
+  * Changes: Update webkit vapi
+  * Changes: Removed trailing comma
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Fri, 13 Apr 2012 06:26:05 +0700
+
+blankon-installer (0.1.14) rote; urgency=low
+
+  * Changes: Put spinner inside the progress bar
+  * Changes: Schedule the done page sliding after 2 seconds so the progress bar has time to show that it's finishing
+  * New: Moved blankon-session-try-installer from blankon-session package 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 02 Feb 2012 17:59:14 +0700
+
+blankon-installer (0.1.13) rote; urgency=low
+
+  * New: Simple progress bar, not yet working while copying
+  * New: Call sudo in post-install script 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 02 Feb 2012 02:41:25 +0000
+
+blankon-installer (0.1.12) rote; urgency=low
+
+  * New: Autologin option
+  * Changes: Full name handling is now done with chfn
+  * Changes: Remove correct user-pass temporary file
+  * Changes: Verbose message in setup script
+  * Changes: Code consistency clean up
+  * New: SwapCollector, parted can't detect swap if it's formatted by ecryptfs
+  * Changes: Create swap when no swap is available
+  * Changes: Create and activate all swap partitions in fstab 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 01 Feb 2012 21:28:30 +0700
+
+blankon-installer (0.1.11) rote; urgency=low
+
+  * Changes: Replacing <li> with just a spinner
+  * Fixes: BlankOn#965 - Jahitan 20120127 tidak bisa masuk menjadi super user 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 01 Feb 2012 09:44:05 +0700
+
+blankon-installer (0.1.10) rote; urgency=low
+
+  * Changes: Simplify partitioning API
+  * Changes: Removed crufts 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Tue, 31 Jan 2012 07:20:55 +0700
+
+blankon-installer (0.1.9) rote; urgency=low
+
+  * New: Show spinner while installing 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Mon, 30 Jan 2012 13:33:04 +0700
+
+blankon-installer (0.1.8) rote; urgency=low
+
+  * Changes: Removed unnecessary <p> tags
+  * Changes: Advanced options
+  * Changes: Strong and weak password checks
+  * Changes: Remove crufts
+  * Changes: Pass encrypt home variable to backend
+  * Changes: Start installation after animation finishes 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sun, 29 Jan 2012 18:08:27 +0700
+
+blankon-installer (0.1.7) rote; urgency=low
+
+  * Changes: Use native JavaScript call to Parted library
+  * Changes: Use JavaScript native call for installer shutdown and reboot
+  * Changes: Evaluate the JSON on Vala side
+  * Changes: Use native JavaScript call for starting installation and getting the state of the installation object
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Sun, 29 Jan 2012 08:23:12 +0700
+
+blankon-installer (0.1.6) rote; urgency=low
+
+  * drop debian-installer-laucher from depends
+    - change: debian/control
+
+ -- Mas Supriyadi <supriyadi@surabaya.di.blankon.in>  Fri, 27 Jan 2012 19:51:05 +0700
+
+blankon-installer (0.1.5) rote; urgency=low
+
+  * Changes: Skip /dev/sr* devices 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Wed, 25 Jan 2012 20:21:11 +0700
+
+blankon-installer (0.1.4) rote; urgency=low
+
+  * Changes: Reboot when done
+  * Changes: Hostname should be assigned the same as localhost
+  * Changes: Set environment in chroot 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Mon, 23 Jan 2012 16:38:34 +0700
+
+blankon-installer (0.1.3) rote; urgency=low
+
+  * Added libparted0-dev at build-depend 
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 19 Jan 2012 21:53:39 +0700
+
+blankon-installer (0.1.2) rote; urgency=low
+
+  * New Upstream release
+    - git 64d43bafe4bf
+
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 19 Jan 2012 21:49:15 +0700
+
+blankon-installer (0.1.1) rote; urgency=low
+
+  * Initial Release:
+      
+ -- Rahman Yusri Aftian <aftian@di.blankon.in>  Thu, 12 Jan 2012 22:32:03 +0700
+
+

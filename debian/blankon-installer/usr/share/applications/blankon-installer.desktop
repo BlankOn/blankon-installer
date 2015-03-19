@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Install BlankOn 
+Comment=Install BlankOn permanently to your hard disk
+Exec=gksudo /usr/bin/blankon-installer
+Icon=blankon-installer
+Type=Application
+Categories=Application;System;
+StartupNotify=true
+Terminal=false
