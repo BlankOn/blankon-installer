@@ -1,9 +1,0 @@
-#!/bin/bash
-
-set -e
-rm -rf /rotfs
-mkdir /rofs
-mount -o loop /lib/live/mount/medium/live/filesystem.squashfs /rofs
-cp -a /rofs/* /target
-cp -a /usr/lib/locale/locale-archive /target/usr/lib/locale/
-umount /rofs
