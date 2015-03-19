@@ -710,9 +710,15 @@ public class Installer : WebView {
 
     public Installer () {
         var settings = new WebSettings();
+        // if debug
+        settings.enable_developer_extras = true;
+        
         settings.enable_file_access_from_file_uris = true;
         settings.enable_universal_access_from_file_uris = true;
         set_settings(settings);
+        
+        // if debug
+        web_inspector.inspect_web_view.connect(getInspectorView);
 
         resource_request_starting.connect((frame, resource, request, response) => {
             if (resource.uri.has_prefix("theme://")) {
@@ -731,6 +737,25 @@ public class Installer : WebView {
             Parted.setup_js_class ((JSCore.GlobalContext) context);
             Installation.setup_js_class ((JSCore.GlobalContext) context);
         });
+    }
+    
+    // if debug
+    private unowned WebView getInspectorView(WebView inspectedView) {
+        Window window = new Window();
+        WebView webview = new WebView();
+        ScrolledWindow scrolled_window = new ScrolledWindow(null, null);
+        scrolled_window.set_policy(PolicyType.AUTOMATIC, PolicyType.AUTOMATIC);
+        scrolled_window.add(webview);
+        window.add(scrolled_window);
+        window.title = "Inspector";
+        window.set_default_size(640, 480);
+        window.show_all();
+        window.delete_event.connect(() => {
+            webview.web_inspector.close();
+            return false;
+        });
+        unowned WebView handle = webview;
+        return handle;
     }
 
     public void start() {
