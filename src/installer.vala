@@ -710,13 +710,15 @@ public class Installer : WebView {
 
     public Installer () {
         var settings = new WebSettings();
-        settings.enable_file_access_from_file_uris = true;
         // if debug
-          settings.enable_developer_extras = true;
+        settings.enable_developer_extras = true;
+        
+        settings.enable_file_access_from_file_uris = true;
         settings.enable_universal_access_from_file_uris = true;
         set_settings(settings);
-        web_inspector.inspect_web_view.connect(getInspectorView);
         
+        // if debug
+        web_inspector.inspect_web_view.connect(getInspectorView);
 
         resource_request_starting.connect((frame, resource, request, response) => {
             if (resource.uri.has_prefix("theme://")) {
