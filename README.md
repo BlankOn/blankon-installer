@@ -1,3 +1,3 @@
 # BlankOn Linux Installer
 
-![build result](https://api.travis-ci.org/blankon/blankon-installer.svg)
+[![Build Status](https://api.travis-ci.org/BlankOn/blankon-installer.svg?branch=master)](https://travis-ci.org/BlankOn/blankon-installer)
