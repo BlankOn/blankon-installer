@@ -3,3 +3,4 @@
 set -e
 
 umount /target
+rm -rf /rofs
