@@ -8076,10 +8076,11 @@ body {
     display: none; 
   }
 }
-
+.logo {
+  margin:30px 30px -50px -20px;
+}
 .content {
-  /* height: 550px; */
-  /* height: 80vh; */
+  height: 600px;
   padding: 30px;
 }
 h1 {
@@ -8087,15 +8088,11 @@ h1 {
 }
 .page {
   float:left;
-  margin-left:10vw;
-  width:80vh;
 }
 .timeline {
   width:10vw;
 }
 .wrapper {
-  /* margin-left:auto; */
-  /* margin-right:auto; */
   position:relative;
   height:auto;
   background:#ccc">
@@ -8127,24 +8124,34 @@ h1 {
   animation-name: fadeOutDown;
 }
 
+.timezone-picker {
+  width: 700px !important;
+}
+
 .line {
   margin-left:19px; 
   position:absolute;
   background:#6D6D6D;
   width:2px;
-  margin-top:10vh;
-  height:75vh;
+  /* margin-top:10vh; */
+  /* height:75vh; */
   z-index:1000;
 }
 
-.step-line {
-  position:absolute;
-  z-index:0;
-}
 .step-container {
   position:absolute;
   z-index:2001;
-  margin-top:10vh;
+  /* margin-top:10vh; */
+}
+
+.step-container.ng-hide-add.ng-hide-add-active,
+.step-container.ng-hide-remove.ng-hide-remove-active {
+  -webkit-transition: all linear 0.5s;
+  transition: all linear 0.5s;
+}
+.step-line {
+  position:absolute;
+  z-index:0;
 }
 .step {
   background:#6D6D6D;
@@ -8152,7 +8159,7 @@ h1 {
   height:10px;
   margin-left:15px; 
   border-radius:5px;
-  margin-bottom:calc(15vh - 10px);
+  /* margin-bottom:calc(15vh - 10px); */
 }
 .step:hover {
   border : 5px solid;
@@ -8160,11 +8167,11 @@ h1 {
   cursor:pointer;
 }
 .step-big {
-  background:#6D6D6D;
+  background:#438FB9;
   width:30px;
   height:30px; 
   border-radius:15px;
-  margin-bottom:calc(15vh - 30px);
+  /* margin-bottom:calc(15vh - 30px); */
   margin-left:5px;
   padding-top:4px;
   text-align:center;
@@ -8175,18 +8182,17 @@ h1 {
 }
 
 .nav-button {
-  /* text-align:center; */
+  padding-left: 30px;
 }
 .personalization-form {
   width:600px;
 }
 .drive-block {
   background:#494949;
-  padding:8px 4px 8px 4px;
+  padding:8px 0px 8px 0px;
   height:50px;
 }
 .partition-block {
-  background:black;
   float:left;
   height:34px;
   margin-left:8px;
@@ -8198,14 +8204,42 @@ h1 {
   cursor:pointer;
 }
 
+.normal {
+  background:green;
+}
+
 .selected {
   background:#0082AC !important;
 }
 
-.disabled {
-  background:#0082AC !important;
+.disallow {
+  background:grey;
   cursor: default;
   pointer-events: none;
+}
+
+.freespace {
+  background:white;
+}
+
+.legend-partition {
+  margin-bottom: 10px;
+}
+.legend-partition-normal {
+  background-color:green;
+  padding:1px 4px 1px 4px;
+  font-size:12px;
+}
+.legend-partition-disallow {
+  background-color:grey;
+  padding:1px 4px 1px 4px;
+  font-size:12px;
+}
+.legend-partition-freespace {
+  background-color:white;
+  padding:1px 4px 1px 4px;
+  font-size:12px;
+  color:black;
 }
 
 .partition-block:hover span {

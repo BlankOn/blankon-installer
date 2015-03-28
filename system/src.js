@@ -1,24 +1,26 @@
 angular.module("done",[])
 .controller("DoneCtrl", [
-    "$scope", "$window", 
-    function ($scope, $window){
-  $scope.languages = $window.BiLanguage.available();
+    "$scope", "$window", "$rootScope", 
+    function ($scope, $window, $rootScope){
+      $scope.reboot = function(){
+        console.log("reboot");
+        $rootScope.installation.reboot;
+      };
 
-  $scope.setLanguage = function(lang) {
-    console.log(lang);
-  }
+
 }])
 
 angular.module("hello",[])
 .controller("HelloCtrl", [
-    "$scope", "$window", 
-    function ($scope, $window){
-  $scope.languages = $window.BiLanguage.available();
-
-  $scope.setLanguage = function(lang) {
-    $rootScope.installationData.lang = lang.id;
-    $rootScope.selectedLang = lang.title;
-  }
+    "$scope", "$window", "$rootScope", 
+    function ($scope, $window, $rootScope){
+      $scope.languages = $window.BiLanguage.available();
+    
+      $scope.setLanguage = function(lang) {
+        console.log(lang);
+        $rootScope.installationData.lang = lang.id;
+        $rootScope.selectedLang = lang.title;
+      }
 }])
 
 angular.module("install",[])
@@ -27,26 +29,31 @@ angular.module("install",[])
     function ($scope, $window, $rootScope, $timeout, $interval){
   console.log(JSON.stringify($rootScope.installationData));
     var showError = function(){
-      $scope.errorLog = "Error!";
+      console.log("error");
+      $scope.error = true;
     }
     var updateStatus = function(){
-      var status = installation.getStatus();
+      var status = $rootScope.installation.getStatus();
       console.log(status.status + ":" + status.description);
       $scope.currentStep = status.description;
       $scope.progressBarWidth = status.progress;
       if (status.status > 1) {
-        console.log("stopped");
         $interval.cancel(statusUpdater);
         if (status.status == 2) {
-          console.log("error");
           showError();
         } else {
-          console.log("installation finished");
           $rootScope.next();
         }
       }
     }
-
+    $scope.loadingDot = "";
+    $interval(function(){
+      if ($scope.loadingDot.length === 8) {
+        $scope.loadingDot = "";
+      } else {
+        $scope.loadingDot += " .";
+      }
+    }, 500);
     var params = "";
     params += "&partition=" + $rootScope.installationData.partition;
     params += "&device=" + $rootScope.installationData.device;
@@ -58,8 +65,9 @@ angular.module("install",[])
     params += "&timezone=" + $rootScope.installationData.timezone;
     params += "&keyboard=" + $rootScope.installationData.keyboard;
     params += "&autologin=" + false;
-    installation = new Installation(params);
-    installation.start();
+    console.log(params);
+    $rootScope.installation = new Installation(params);
+    $rootScope.installation.start();
     $scope.currentStep = "";
     statusUpdater = $interval(updateStatus, 1000);
 
@@ -74,15 +82,17 @@ angular.module("partition",[])
 
   var gbSize = 1073741824;
   var minimumPartitionSize = 4 * gbSize;
-  var driveBlockWidth = (60/100) * $window.innerWidth;
+  var driveBlockWidth = 600;
   $scope.selectInstallationTarget = function(deviceId, partition) {
     $rootScope.installationData.device = deviceId;
     $rootScope.installationData.partition = partition.id;
     $rootScope.selectedInstallationTarget = $rootScope.selectedDrive.path + partition.id + " ("+partition.sizeGb+" GB)";
     for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {
       if ($rootScope.selectedDrive.partitions[j].id === partition.id) {
-        $rootScope.selectedDrive.partitions[j].selected = true;
-        $rootScope.validInstallationTarget = true;
+        if (!$rootScope.selectedDrive.partitions[j].disallow) {
+          $rootScope.selectedDrive.partitions[j].selected = true;
+          $rootScope.validInstallationTarget = true;
+        }
       } else {
         $rootScope.selectedDrive.partitions[j].selected = false;
       }
@@ -161,11 +171,113 @@ angular.module("partition",[])
               }
           ]
       }
-    ];  
+    ]; 
+    $rootScope.devices__ = [
+    {
+        "path": "/dev/sda",
+        "size": 53687091200,
+        "model": "ATA VBOX HARDDISK",
+        "label": "msdos",
+        "partitions": [
+            {
+                "id": -1,
+                "parent": -1,
+                "start": 32256,
+                "end": 1048064,
+                "size": 1016320,
+                "type": "DEVICE_PARTITION_TYPE_FREESPACE",
+                "filesystem": "",
+                "description": ""
+            },
+            {
+                "id": 1,
+                "parent": -1,
+                "start": 1048576,
+                "end": 11060379136,
+                "size": 11059331072,
+                "type": "DEVICE_PARTITION_TYPE_NORMAL",
+                "filesystem": "ext4",
+                "description": ""
+            },
+            {
+                "id": 2,
+                "parent": -1,
+                "start": 11060379648,
+                "end": 12253658624,
+                "size": 1193279488,
+                "type": "DEVICE_PARTITION_TYPE_NORMAL",
+                "filesystem": "ext4",
+                "description": ""
+            },
+            {
+                "id": 3,
+                "parent": -1,
+                "start": 12253659136,
+                "end": 53687090688,
+                "size": 41433432064,
+                "type": "DEVICE_PARTITION_TYPE_EXTENDED",
+                "filesystem": "",
+                "description": ""
+            },
+            {
+                "id": -1,
+                "parent": -1,
+                "start": 12253659136,
+                "end": 12253659136,
+                "size": 512,
+                "type": "DEVICE_PARTITION_TYPE_FREESPACE",
+                "filesystem": "",
+                "description": ""
+            },
+            {
+                "id": -1,
+                "parent": -1,
+                "start": 12253659648,
+                "end": 12254707200,
+                "size": 1048064,
+                "type": "DEVICE_PARTITION_TYPE_FREESPACE",
+                "filesystem": "",
+                "description": ""
+            },
+            {
+                "id": 5,
+                "parent": -1,
+                "start": 12254707712,
+                "end": 51533315584,
+                "size": 39278608384,
+                "type": "DEVICE_PARTITION_TYPE_LOGICAL",
+                "filesystem": "ext4",
+                "description": ""
+            },
+            {
+                "id": -1,
+                "parent": -1,
+                "start": 51533316096,
+                "end": 51534364160,
+                "size": 1048576,
+                "type": "DEVICE_PARTITION_TYPE_FREESPACE",
+                "filesystem": "",
+                "description": ""
+            },
+            {
+                "id": 6,
+                "parent": -1,
+                "start": 51534364672,
+                "end": 53687090688,
+                "size": 2152726528,
+                "type": "DEVICE_PARTITION_TYPE_LOGICAL",
+                "filesystem": "ext4",
+                "description": ""
+            }
+        ],
+        "$$hashKey": "00S"
+    }
+]; 
       $scope.scanning = true;
     }, 1000);
   }
   $scope.setDrive = function(path) {
+    console.log(JSON.stringify($rootScope.devices));
     $rootScope.validInstallationTarget = false;
     /* $rootScope.devices.forEach(function(drive){ */
     for (i = 0; i < $rootScope.devices.length; i++)
@@ -173,7 +285,7 @@ angular.module("partition",[])
         $rootScope.selectedDrive = $rootScope.devices[i];
         $rootScope.selectedDrive.id = i;
         $rootScope.selectedDrive.qualifiedPartitions = [];
-        $rootScope.selectedDrive.driveWidth = 16;
+        $rootScope.selectedDrive.driveWidth = 8;
         $rootScope.selectedDrive.sizeGb = $rootScope.selectedDrive.size * gbSize;
         /* $rootScope.selectedDrive.partitions.forEach(function(p){ */
         for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {
@@ -186,21 +298,24 @@ angular.module("partition",[])
           if ( p.size > minimumPartitionSize
             && (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0)) {
             p.blockWidth = parseInt(((p.size/$rootScope.selectedDrive.size)*driveBlockWidth));
+            console.log(p.id + "_" + (p.size/gbSize));
             $rootScope.selectedDrive.driveWidth += (8+p.blockWidth);
             p.sizeGb = (p.size/gbSize).toFixed(2);
             p.selected = false;
+            p.normal = true;
             $rootScope.selectedDrive.qualifiedPartitions.push(p);
           } else {
-            p.blockWidth = parseInt(((p.size/$rootScope.selectedDrive.size)*driveBlockWidth));
-            $rootScope.selectedDrive.driveWidth += (8+p.blockWidth);
-            p.sizeGb = (p.size/gbSize).toFixed(2);
-            p.selected = false;
-            p.disabled = true;
-            $rootScope.selectedDrive.qualifiedPartitions.push(p);
+            if (p.type.indexOf("EXTENDED") < 1) {
+              console.log(p.id + "_" + (p.size/gbSize));
+              p.blockWidth = parseInt(((p.size/$rootScope.selectedDrive.size)*driveBlockWidth));
+              $rootScope.selectedDrive.driveWidth += (8+p.blockWidth);
+              p.sizeGb = (p.size/gbSize).toFixed(2);
+              p.selected = false;
+              p.disallow = true;
+              $rootScope.selectedDrive.qualifiedPartitions.push(p);
+            }
           }
-          if (p.id > 0) {
-            
-          } else if (p.type.indexOf("FREESPACE") > 0) {
+          if (p.id < 1 && p.type.indexOf("FREESPACE") > 0) {
             p.freespace = true;
           }
         }
@@ -213,8 +328,18 @@ angular.module("summary",[])
 .controller("SummaryCtrl", [
     "$scope", "$window", "$rootScope", 
     function ($scope, $window, $rootScope){
-  $scope.languages = $window.BiLanguage.available();
 
+}])
+
+angular.module("timezone",[])
+.controller("TimezoneCtrl", [
+    "$scope", "$window", "$rootScope", 
+    function ($scope, $window, $rootScope, $watch){
+
+      $("area, timezone-next").click(function(){
+        $rootScope.installationData.timezone = $("select").val();
+        console.log($rootScope.installationData);
+      });
 }])
 
 angular.module("user",[])
@@ -226,14 +351,17 @@ angular.module("user",[])
     $rootScope.personalizationError = false;
     if (value) {
       console.log(value)
-      $scope.installationData.hostname = value.replace(/[^a-zA-Z0-9]/g, "");
+      $scope.installationData.hostname = value.replace(/[^a-z0-9-]/g, "");
     }
+  });
+  $scope.$watch("installationData.fullname", function(value){
+    $rootScope.personalizationError = false;
   });
   $scope.$watch("installationData.username", function(value){
     $rootScope.personalizationError = false;
     if (value) {
       console.log(value)
-      $scope.installationData.username = value.replace(/[^a-zA-Z0-9]/g, "");
+      $scope.installationData.username = value.replace(/[^a-z0-9-]/g, "");
     }
   });
   $scope.$watch("installationData.password", function(value){
@@ -281,6 +409,7 @@ angular.module('Biui', [
   "html",
   "mm.foundation",
   "hello",
+  "timezone",
   "partition",
   "user",
   "summary",
@@ -295,6 +424,15 @@ angular.module('Biui', [
       templateProvider: function($templateCache) {
         return $templateCache.get("hello/hello.html");
       }
+    }
+  )
+})
+.config(function($stateProvider) {
+  $stateProvider
+  .state("timezone", {
+      url: "/timezone",
+      controller: "TimezoneCtrl",
+      templateUrl: "timezone.html"
     }
   )
 })
@@ -366,47 +504,52 @@ angular.module('Biui', [
       {
         seq : 1,
         step : 2,
-        name : "Installation Target",
-        path : "partition"
+        name : "Timezone",
+        path : "timezone"
       },
       {
         seq : 2,
         step : 3,
-        name : "Personalization",
-        path : "user"
+        name : "Installation Target",
+        path : "partition"
       },
       {
         seq : 3,
         step : 4,
-        name : "Installation Summary",
-        path : "summary"
+        name : "Personalization",
+        path : "user"
       },
       {
         seq : 4,
         step : 5,
-        name : "Installing...",
-        path : ""
+        name : "Installation Summary",
+        path : "summary"
       },
       {
         seq : 5,
         step : 6,
+        name : "Installing...",
+        path : ""
+      },
+      {
+        seq : 6,
+        step : 7,
         name : "Finish`",
         path : ""
       },
     ]
 
     $rootScope.goStep = function (seq) {
-      /* if (seq < 4) { */
+      if (seq < 4) {
         $rootScope.currentState = seq;
         $location.path($rootScope.steps[seq].path);
-      /* } */
+      }
     }
-    console.log((window.innerWidth*(80/100)));
-    /* $(".line").css("height", "800px"); */
-    $rootScope.installationData = {};
 
+$rootScope.installationData = {};
     $rootScope.states = [
       "hello",
+      "timezone",
       "partition",
       "user",
       "summary",
@@ -442,23 +585,36 @@ angular.module('Biui', [
       console.log($rootScope.back);
       $timeout(function(){
         if ($rootScope.currentState - 1 >= 0) {
-          $rootScope.currentState --;
-          $state.go($rootScope.states[$rootScope.currentState], function(){
-
-        });
+          $rootScope.currentState--;
+          $state.go($rootScope.states[$rootScope.currentState]);
           $timeout(function(){
             $rootScope.back = false;
             $rootScope.forward = true;
             console.log($rootScope.back);
-          }, 1100);
+          }, 1300);
         }
       }, 100);
     }
     $rootScope.exit = function(){
       Installation.shutdown();
     }
-    $state.go($rootScope.states[$rootScope.currentState]);
-    $rootScope.started = true;
+    $timeout(function(){
+      console.log($(window).width());
+      // Fix layout according to screen size
+      $(".page").css("width", ($(window).width()*(70/100)).toString() + "px");
+      $(".content").css("height", ($(window).height()*(70/100)).toString() + "px !important");
+      $(".page").css("margin-left", ($(window).width()*(7/100)).toString() + "px");
+      $(".line").css("height", ($(window).height()*(72/100)).toString() + "px");
+      $(".line").css("margin-top", ($(window).height()*(10/100)).toString() + "px");
+      $(".step-container").css("margin-top", ($(window).height()*(10/100)).toString() + "px");
+      $(".step").css("margin-bottom", (($(window).height()*(12/100))-10).toString() + "px");
+      $(".step-big").css("margin-bottom", (($(window).height()*(12/100))-30).toString() + "px");
+      $state.go($rootScope.states[$rootScope.currentState]);
+      $rootScope.started = true;
+    }, 500);
+    $timeout(function(){
+      $rootScope.showStepLine = true;
+    }, 1000);
   }
 ])
 
