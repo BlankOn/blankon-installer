@@ -16,19 +16,55 @@ angular.module("hello",[])
   $scope.languages = $window.BiLanguage.available();
 
   $scope.setLanguage = function(lang) {
-    console.log(lang);
+    $rootScope.installationData.lang = lang.id;
+    $rootScope.selectedLang = lang.title;
   }
 }])
 
 angular.module("install",[])
 .controller("InstallCtrl", [
-    "$scope", "$window", 
-    function ($scope, $window){
-  $scope.languages = $window.BiLanguage.available();
+    "$scope", "$window", "$rootScope","$timeout","$interval", 
+    function ($scope, $window, $rootScope, $timeout, $interval){
+  console.log(JSON.stringify($rootScope.installationData));
+    var showError = function(){
+      $scope.errorLog = "Error!";
+    }
+    var updateStatus = function(){
+      var status = installation.getStatus();
+      console.log(status.status + ":" + status.description);
+      $scope.currentStep = status.description;
+      $scope.progressBarWidth = status.progress;
+      if (status.status > 1) {
+        console.log("stopped");
+        $interval.cancel(statusUpdater);
+        if (status.status == 2) {
+          console.log("error");
+          showError();
+        } else {
+          console.log("installation finished");
+          $rootScope.next();
+        }
+      }
+    }
 
-  $scope.setLanguage = function(lang) {
-    console.log(lang);
-  }
+    var params = "";
+    params += "&partition=" + $rootScope.installationData.partition;
+    params += "&device=" + $rootScope.installationData.device;
+    params += "&hostname=" + $rootScope.installationData.hostname;
+    params += "&username=" + $rootScope.installationData.username;
+    params += "&fullname=" + $rootScope.installationData.fullname;
+    params += "&password=" + $rootScope.installationData.password;
+    params += "&language=" + $rootScope.installationData.language;
+    params += "&timezone=" + $rootScope.installationData.timezone;
+    params += "&keyboard=" + $rootScope.installationData.keyboard;
+    params += "&autologin=" + false;
+    installation = new Installation(params);
+    installation.start();
+    $scope.currentStep = "";
+    statusUpdater = $interval(updateStatus, 1000);
+
+
+
 }])
 
 angular.module("partition",[])
@@ -56,6 +92,76 @@ angular.module("partition",[])
     // give time for transition
     $timeout(function(){
       $rootScope.devices = Parted.getDevices();
+      $rootScope.devices_ = [
+      {
+          "path": "/dev/sda",
+          "size": 1000204886016,
+          "model": "ATA TOSHIBA MQ01ABD1",
+          "label": "msdos",
+          "partitions": [
+              {
+                  "id": -1,
+                  "parent": -1,
+                  "start": 32256,
+                  "end": 1048064,
+                  "size": 1016320,
+                  "type": "DEVICE_PARTITION_TYPE_FREESPACE",
+                  "filesystem": "",
+                  "description": ""
+              },
+              {
+                  "id": 1,
+                  "parent": -1,
+                  "start": 1048576,
+                  "end": 20972568064,
+                  "size": 20971520000,
+                  "type": "DEVICE_PARTITION_TYPE_NORMAL",
+                  "filesystem": "ext3",
+                  "description": "Ubuntu 14.04.1 LTS (14.04)"
+              },
+              {
+                  "id": 2,
+                  "parent": -1,
+                  "start": 20972568576,
+                  "end": 41944088064,
+                  "size": 20971520000,
+                  "type": "DEVICE_PARTITION_TYPE_NORMAL",
+                  "filesystem": "ext4",
+                  "description": ""
+              },
+              {
+                  "id": 3,
+                  "parent": -1,
+                  "start": 41944088576,
+                  "end": 62915608064,
+                  "size": 20971520000,
+                  "type": "DEVICE_PARTITION_TYPE_NORMAL",
+                  "filesystem": "ext4",
+                  "description": "BlankOn Tambora (Development Branch) (10.0)"
+              },
+              {
+                  "id": 4,
+                  "parent": -1,
+                  "start": 62915608576,
+                  "end": 1000204140032,
+                  "size": 937288531968,
+                  "type": "DEVICE_PARTITION_TYPE_NORMAL",
+                  "filesystem": "ext3",
+                  "description": ""
+              },
+              {
+                  "id": -1,
+                  "parent": -1,
+                  "start": 1000204140544,
+                  "end": 1000204885504,
+                  "size": 745472,
+                  "type": "DEVICE_PARTITION_TYPE_METADATA",
+                  "filesystem": "",
+                  "description": ""
+              }
+          ]
+      }
+    ];  
       $scope.scanning = true;
     }, 1000);
   }
@@ -105,23 +211,66 @@ angular.module("partition",[])
 
 angular.module("summary",[])
 .controller("SummaryCtrl", [
-    "$scope", "$window", 
-    function ($scope, $window){
+    "$scope", "$window", "$rootScope", 
+    function ($scope, $window, $rootScope){
   $scope.languages = $window.BiLanguage.available();
 
-  $scope.setLanguage = function(lang) {
-    console.log(lang);
-  }
 }])
 
 angular.module("user",[])
 .controller("UserCtrl", [
-    "$scope", "$window", 
-    function ($scope, $window){
+    "$scope", "$window", "$rootScope", 
+    function ($scope, $window, $rootScope){
   $scope.languages = $window.BiLanguage.available();
-
-  $scope.setLanguage = function(lang) {
-    console.log(lang);
+  $scope.$watch("installationData.hostname", function(value){
+    $rootScope.personalizationError = false;
+    if (value) {
+      console.log(value)
+      $scope.installationData.hostname = value.replace(/[^a-zA-Z0-9]/g, "");
+    }
+  });
+  $scope.$watch("installationData.username", function(value){
+    $rootScope.personalizationError = false;
+    if (value) {
+      console.log(value)
+      $scope.installationData.username = value.replace(/[^a-zA-Z0-9]/g, "");
+    }
+  });
+  $scope.$watch("installationData.password", function(value){
+    $scope.isSamePassword = false;
+    $rootScope.personalizationError = false;
+    if (value) {
+      console.log(value);
+      if (value.length >= 8) {
+        $scope.validPassword = true;
+      } else {
+        $scope.passwordStrength = "weak"; 
+        $scope.validPassword = false;
+      }
+      if (value.length >= 8) {
+        $scope.passwordStrength = "strong"; 
+      }
+      if (value.match(/(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/g) && value.length >= 8) {
+        $scope.passwordStrength = "veryStrong"; 
+      }
+      console.log($scope.passwordStrength);
+    }
+  });
+  $scope.$watch("installationData.passwordRepeat", function(value){
+    $rootScope.personalizationError = false;
+    if (value && value == $scope.installationData.password) {
+      $scope.isSamePassword = true;
+    } else {
+      $scope.isSamePassword = false;
+    }
+  });
+  $scope.validatePersonalization = function(installationData, validPassword, isSamePassword) {
+    $rootScope.personalizationError = false;
+    if (installationData.hostname && installationData.username && installationData.fullname && validPassword && isSamePassword) {
+      $rootScope.next();
+    } else {
+      $rootScope.personalizationError = true;
+    }
   }
 }])
 
@@ -247,12 +396,13 @@ angular.module('Biui', [
     ]
 
     $rootScope.goStep = function (seq) {
-      if (seq < 4) {
+      /* if (seq < 4) { */
         $rootScope.currentState = seq;
         $location.path($rootScope.steps[seq].path);
-      }
+      /* } */
     }
-    console.log(window.innerHeight);
+    console.log((window.innerWidth*(80/100)));
+    /* $(".line").css("height", "800px"); */
     $rootScope.installationData = {};
 
     $rootScope.states = [

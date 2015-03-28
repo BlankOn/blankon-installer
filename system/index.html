@@ -13,13 +13,12 @@
 
 <body>    
   <div>
-    <div class="columns page">
+    <div class="page">
   <div class="wrapper"> 
           <div ui-view class="fade" ng-class="{back:back, forward:forward}"></div>
   </div>
     </div>
-    <div class="columns timeline">
-  <div style="float:right;margin:50px 50px 50px 0px">
+    <div class="columns timeline" style="float:right">
     <div class="line-container">
     <div class="line"></div>
     </div>
@@ -29,7 +28,6 @@
             <div class="step-big" ng-show="currentState == state.seq">{{state.step}}</div>
             </div>
     </div>
-  </div>
     </div>
   </div>
 </body>
