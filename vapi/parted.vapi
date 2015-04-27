@@ -101,15 +101,6 @@ namespace Ped {
     }
 
     [CCode (unref_function = "")]
-        public class FileSystem {
-            [CCode (cname = "ped_file_system_create")]
-                public FileSystem.create(Geometry geom,
-                        FileSystemType type,
-                        Timer? timer);
-            public FileSystemType? type;
-        }
-
-    [CCode (unref_function = "")]
         public class FileSystemType {
             [CCode (cname="ped_file_system_type_get")]
                 public FileSystemType(string name);

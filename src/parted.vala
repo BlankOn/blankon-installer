@@ -428,7 +428,6 @@ public class Device : GLib.Object {
             if (part_num == 0) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
             }
-            new Ped.FileSystem.create (new_partition.geom, fs_type, null);
 
             disk.commit_to_dev ();
             disk.commit_to_os ();
