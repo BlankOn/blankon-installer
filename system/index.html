@@ -1,194 +1,35 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, width=device-width"/>
-		<link rel="stylesheet" href="bootstrap.min.css"/>
-		<link rel="stylesheet" href="style.css"/>
-		<link rel="stylesheet" href="animate.css"/>
+<!doctype html>
+<html lang="en" ng-app="Biui">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>BlankOn Installer</title>  
+  
+  <link rel="stylesheet" href="app.css"/>
+  <script src="libs.js"></script>    
+  <script src="html.min.js"></script>    
+  <script src="src.js"></script> 
+</head>
 
-		<script type="text/javascript" src="jq.js">
-		</script>
-		<script type="text/javascript" src="installer.js">
-		</script>
-	</head>
-	<body>
-		<div id="base">
-			<div class="navbar-bg">
+<body>    
+  <div>
+    <div class="page">
+      <div class="wrapper">
+      <div ui-view class="fade" ng-class="{back:back, forward:forward}"></div>
       </div>
-			<div class="navbar"  role="navigation">
-						<img src="blankon.png" id="logo" class=""/>
-			</div>
-		 
-			<div class="ui-page active animated form-horizontal jumbotron" id="first" data-toolbar="no">
-				<h1><span>Welcome to BlankOn</span></h1>
-				<p><span>Welcome to BlankOn installation program. Please choose your language and region below to continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the Settings application.</span></p>
-				<p>
-					<div class="form-group">
-            <label class="control-label"><span>Language</span></label>
-						<div class="col-sm-2">
-							<select class="form-control" id="opt-language"></select>
-						</div>
-					</div>
-
-				</p>
-				<p>
-					<div class="form-group">
-						<label class="control-label"><span>Timezone</span></label>
-						<div class="col-sm-2">
-							<select class="form-control" id="opt-zone">
-								<option>Asia</option>
-								<option>America</option>
-								<option>Africa</option>
-								<option>Australia</option>
-								<option>Atlantic</option>
-								<option>Europe</option>
-								<option>Pacific</option>
-							</select>
-							<select class="form-control" id="opt-timezone" style="display:none">
-							</select>
-						</div>
-					</div>
-				</p>
-				<!-- p>
-					<label><span>Keyboard</span></label>
-					<select id="opt-keyboard">
-						<option></option>
-					</select>
-				</p -->
-
-				<p><span>You can choose whether want to continue using the Live CD or to install into your computer</span></p>
-				
-				<button class="btn btn-info btn-shutdown"><span>Continue using Live CD</span></button>
-				<button class="btn btn-success" id="btn-install"><span>Install BlankOn</span></button>
-			</div>
-			
-			<!--Langkah Partisi-->
-			<div class="ui-page animated" id="target">
-				<h1><span>Installation Target</span></h1>
-				<div id="no_target" style="display:none"><span>Sorry, it seems that there is no device that we can install BlankOn into. Please attach a hard drive or flash disk before continuing. If you're running as normal user, try again running the installer as root.</span></div>
-				<div id="waiting_target"><span>Please wait while I scan your computer for available devices</span></div>
-        <div id="select_target" style="display:none"><span>Please choose the partition on device below which you would like to install BlankOn into.</span> <p/><b><span>WARNING</span></b>: <span>The selected partition will be wiped out. Swap partition will be created if you don't have one.</span></div>
-				<div id="device_list" >
-					
-				</div>
-			</div>
-		
-			<!--Langkah personalization-->
-			
-			<div class="ui-page animated form-horizontal jumbotron" id="personalization">
-				
-				
-				<h1><span>Personalization</span></h1>
-				<p><span>Please enter your personalization preference below..</span></p>
-				<div class="ui-advanced-options ui-advanced-options-hidden">
-					<p/>
-					<label><span>Enforce strong password</span></label>
-					<input type="checkbox" id="opt-strong-password" value="on"/>
-					<p/>
-					<label><span>Automatically login</span></label>
-					<input type="checkbox" id="opt-auto-login"/>
-
-				</div>
-					
-				<div class="form-group">
-					<label for="Computer-name"><span>Computer Name</span></label>
-					<div class="col-sm-4">
-						<input type="text" id="txt-computer-name" value="blankon" class="form-control">
-						<div class="ui-hint" id="hint-txt-computer-name"><span>Computer name must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
-					</div>
-				</div>
-				<div class="form-group">
-          <label for="Your-Name"><span>Your Name</span></label>
-					<div class="col-sm-4">
-						<input type="text" class="form-control" id="txt-full-name" placeholder="Your Name">
-						<div class="ui-hint" id="hint-txt-computer-name"><span>Computer name must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
-					</div>
-				</div>
-				<div class="form-group">
-          <label for="User-name"><span>User Name</span></label>
-					<div class="col-sm-4">
-						<input type="text" class="form-control" id="txt-user-name">
-						<div class="ui-hint" id="hint-txt-user-name"><span>Username must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space.</span></div>
-					</div>
-				</div>
-				<div class="form-group">
-					<label for="Password"><span>Password</span></label>
-					<div class="col-sm-4">
-						<input type="password" class="form-control" id="txt-password" value="" placeholder="type password here"/>
-						<div class="ui-hint" id="hint-txt-password-strong">
-							<span style="relative">Password must be at least 8 character long with number and alphabet lowercase and uppercase combination.</span>
-						</div>
-						<div class="ui-hint" id="hint-txt-password"><span>Password must be at least 1 character.</span></div>
-						<div class="ui-hint-warning" id="hint-txt-password-warning">
-							<span style="relative">Password should be at least 8 character long with number and alphabet lowercase and uppercase combination, otherwise it will be very easy for others to guess your password.</span>
-						</div>
-					</div>
-				</div>
-				<div class="form-group">
-					<label for="PasswordOnce"><span>Password (once again)</span></label>
-					<div class="col-sm-4">
-						<input type="password" class="form-control" id="txt-password2" value=""/>
-						<div class="ui-hint" id="hint-txt-password2"><span>You must use exactly the same password as typed above.</span></div>
-					</div>
-				</div>
-				<!---->
-				
-				
-			</div>
-			
-			<div class="ui-page animated jumbotron" id="summary">
-				<h1><span>Installation Summary</span></h1>
-				<p><span>This is our installation summary. Please proceed if you're agree. Beyond this point, the installer will make changes to your system and you can't go back.</span></p>
-				<!--div class="alertaris-info"-->
-					<span>Target device</span>: <b><span id="summary-target-device" class="alertaris-info-text"></span></b><br/>
-					<span>Target partition</span>: <b><span id="summary-target-partition" class="alertaris-info-text"></span></b><br/>
-					<span>Computer name</span>: <b><span id="summary-computer-name" class="alertaris-info-text"></span></b><br/>
-					<span>Full name</span>: <b><span id="summary-full-name" class="alertaris-info-text"></span></b><br/>
-					<span>User name</span>: <b><span id="summary-user-name" class="alertaris-info-text"></span></b><br/>
-					<span>Automatically login</span>: <b><span id="summary-auto-login" class="alertaris-info-text"></span></b><br/>
-				<!--/div-->
-			</div>
-			
-			<div class="ui-page animated jumbotron" id="installation" data-toolbar="no">
-				<h1><span>Installation</span></h1>
-				<p><span>Please wait a moment while the installation is applied to your system</span></p>
-
-				<span id="current-step">Preparing</span>...
-				<div class="ui-progress-bar-enclosure"><div id="progress-bar"><div class="ui-spinner"></div></div></div>
-			</div>
-			<div class="ui-page animated" id="done" data-toolbar="no">
-				<h1><span>Done</span></h1>
-				<p><span>Your system is ready, now please continue to reboot into your newly installed system</span></p>
-        <a class="button btn btn-primary btn-shutdown"><span>Continue using Live CD</span></a>
-				<!--a class="button btn-shutdown"><span>Continue using Live CD</span></a-->
-				<a class="button" id="btn-reboot"><span>Reboot to newly installed system</span></a>
-			</div>
-
-			<!--span class="ui-advanced-mode-text-hidden"  id="ui-advanced-mode-text">ADVANCED MODE</span-->
-			<span class="ui-advanced-mode-text-hidden"  id="ui-advanced-mode-text" style="color:#eeeeee;">ADVANCED MODE</span>
-			
-			<nav class="toolbar" id="toolbar">
-				<div class="ui-switch-mode">
-					<div id="ui-switch-mode-button"></div>
-					<span id="ui-switch-mode-text" class="ui-switch-mode-hidden"></span>
-					<span id="ui-switch-mode-quick-text" style="display:none">Click to switch to Quick Mode</span>
-					<span id="ui-switch-mode-advanced-text" style="display:none">Click to switch to Advanced Mode</span>
-				</div>
-				<div class="ui-navigation-buttons">
-					<a class="btn btn-success" id="prev"><span>Previous</span></a>
-					<a class="btn btn-success " id="next"><span>Next</span></a>
-				</div>
-			</nav>
-			
-			<div class="ui-page animated jumbotron" id="error" data-toolbar="no">
-				<h1><span>Sorry,</span></h1>
-				<p><span>There is an error during installation. Please see the log below, you can capture this or just send the /var/log/blankon-installer.log file to blankon-dev@googlegroups.com</span></p>
-				<a class="btn btn-info btn-shutdown"><span>Exit installation and continue using LiveCD</span></a>
-				<p/>
-				<br>
-				<textarea rows="12" cols="90" id="log" readonly style="resize:none;" onclick="return gulungan()">Please wait while loading the log...</textarea>
-			</div>
-			
-		</div><!--EndBASE-->
-	</body>
+    </div>
+    <div class="columns timeline" style="float:right">
+    <img src="logo.png" class="logo">            
+    <div class="line-container">
+    <div class="line"></div>
+    </div>
+    <div class="step-container fade" ng-show="showStepLine">
+            <div ng-repeat="state in steps">
+            <div class="step fade" ng-hide="currentState == state.seq" ng-click="goStep(state.seq)"></div>
+            <div class="step-big fade" ng-show="currentState == state.seq">{{state.step}}</div>
+            </div>
+    </div>
+    </div>
+  </div>
+</body>
 </html>
