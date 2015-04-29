@@ -8207,12 +8207,20 @@ h1 {
   cursor:pointer;
 }
 
+.partition-block-hover {
+  background:#0082AC !important;
+}
+
 .normal {
   background:green;
 }
 
+.primary {
+  background:#FFC35C;
+}
+
 .logical {
-  background:orange;
+  background:#FFEC8A;
 }
 
 .selected {
@@ -8240,6 +8248,12 @@ h1 {
   height:37px;
   margin-bottom: 10px;
 }
+.legend-partition-primary {
+  background-color:#FFC35C;
+  padding:1px 4px 1px 4px;
+  font-size:12px;
+  color:black;
+}
 .legend-partition-normal {
   background-color:green;
   padding:1px 4px 1px 4px;
@@ -8251,9 +8265,10 @@ h1 {
   font-size:12px;
 }
 .legend-partition-logical {
-  background-color:orange;
+  background-color:#FFEC8A;
   padding:1px 4px 1px 4px;
   font-size:12px;
+  color:black;
 }
 .legend-partition-freespace {
   background-color:white;
@@ -8284,8 +8299,8 @@ h1 {
 }
 
 .partoedi-button {
-  width:90px !important;
-  margin-top:10px;
+  width:100px !important;
+  margin:0px !important;
 }
 
 .spinner {
