@@ -71,6 +71,7 @@ public class Installation : GLib.Object {
     public string region { get; set construct; }
     public string keyboard { get; set construct; }
     public bool autologin { get; set construct; }
+    public bool advancedMode { get; set construct; }
     public int state { get; set construct; }
     public int progress { get; private set; }
     public string description { get; set construct; }
@@ -128,6 +129,9 @@ public class Installation : GLib.Object {
                     break;
                 case  "autologin":
                     autologin = (entry[1] == "true");
+                    break;
+                case  "advancedMode":
+                    advancedMode = (entry[1] == "true");
                     break;
                 }
             }
@@ -281,48 +285,53 @@ public class Installation : GLib.Object {
 
         var partitions = d.get (device).partitions;
         device_path = d.get (device).get_path ();
-
-        if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
-            description = "Partitioning";
-            step = Step.PARTITION; 
-
-            Device device = new Device.from_name (device_path);
-            var can_continue = false;
-            var new_partition = -1;
-            try {
-                uint64 swap_size = 0;
-                if (SwapCollector.get_partitions().is_empty) {
-                     if (partitions.get(partition).size - OneGig > installation_size) {
-                        swap_size = OneGig;
-                        Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
-                     }
+        
+        if (!advancedMode) {
+            if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
+                description = "Partitioning";
+                step = Step.PARTITION; 
+    
+                Device device = new Device.from_name (device_path);
+                var can_continue = false;
+                var new_partition = -1;
+                try {
+                    uint64 swap_size = 0;
+                    if (SwapCollector.get_partitions().is_empty) {
+                         if (partitions.get(partition).size - OneGig > installation_size) {
+                            swap_size = OneGig;
+                            Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
+                         }
+                    }
+                    swap_size = OneGig;
+                    new_partition = device.create_partition (partitions.get (partition).start,
+                                                             partitions.get (partition).end,
+                                                             "ext4", swap_size);
+    
+                    Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
+                    if (new_partition != -1) {
+                        can_continue = true;
+                    }
+                } catch (DeviceError e) {
+                    Log.instance().log_without_newline (e.message);
                 }
-                swap_size = OneGig;
-                new_partition = device.create_partition (partitions.get (partition).start,
-                                                         partitions.get (partition).end,
-                                                         "ext4", swap_size);
-
-                Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
-                if (new_partition != -1) {
-                    can_continue = true;
-                }
-            } catch (DeviceError e) {
-                Log.instance().log_without_newline (e.message);
+              
+    
+                if (can_continue == false) {
+                    step = Step.DONE;
+                    last_step = Step.DONE;
+                    state = State.ERROR;
+                    description = "Error while doing partition";
+                    return;
+                } 
+                Parted.get_devices (false); // re-read devices and partitions
+                partition_path = device_path + new_partition.to_string ();
+            } else {
+                partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
-          
-
-            if (can_continue == false) {
-                step = Step.DONE;
-                last_step = Step.DONE;
-                state = State.ERROR;
-                description = "Error while doing partition";
-                return;
-            } 
-            Parted.get_devices (false); // re-read devices and partitions
-            partition_path = device_path + new_partition.to_string ();
         } else {
-            partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
+            stdout.printf("Enter andvanced partitioning");
         }
+
         last_step = Step.PARTITION;
         do_next_job ();
     }

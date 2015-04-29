@@ -410,7 +410,7 @@ public class Device : GLib.Object {
                 end  = start + swap_size_sector; 
                 Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
                 new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, swap_type, start, end);
-                start = end + swap_size_sector + 1; 
+                start = end + 1; 
                 end  = (uint64) (byte_end / get_unit_size ());
                 var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
                 if (part_num == 0) {
