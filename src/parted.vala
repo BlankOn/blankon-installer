@@ -306,13 +306,50 @@ public class Device : GLib.Object {
             disk.commit_to_os ();
         }
     }
+    
+    // \brief Create a partition
+    // create a partition, either it is a primary, extended, or logical
 
-    // \brief Create a partition 
+    public int create_partition (uint64 byte_start, uint64 byte_end, string fs, string type, string mount) throws DeviceError {
+        // TODO: validate
+        
+        Ped.Partition new_partition = null;
+        Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
+        uint64 start = (uint64) (byte_start / get_unit_size ());
+        uint64 end  = (uint64) (byte_end / get_unit_size ());
+        var new_fs = new Ped.FileSystemType("ext3");
+        new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end);
+        /* if (type == "normal") { */
+        /*   var new = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end); */
+        /* } else if (type == "extended") { */
+        /*   var new = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, new_fs, start, end); */
+        /* } else if (type == "logical") { */
+        /*   var new = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, new_fs, start, end); */
+        /* } */
+        stdout.printf ("New partition %s%d\n", get_path(), new_partition.num);
+        if (new_partition != null) {
+            var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
+            if (part_num == 0) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
+            }
+            disk.commit_to_dev ();
+            disk.commit_to_os ();
+            if (mount == "root") {
+              return new_partition.num;
+            } else {
+              return 0;
+            }
+        } else {
+            throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
+        }
+    }
+
+    // \brief Create a partition (simple)
     //
     // Partition is created either inside a new extended partition
     // or as a new logical partition. The partition list will be
-    // rebuilt.
-    public int create_partition (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size) throws DeviceError {
+    // rebuilt. This function is used when user use simple partitioning interface.
+    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size) throws DeviceError {
         if (device == null) {
             throw new DeviceError.CANT_CREATE_PARTITION ("Invalid device"); 
         }

@@ -75,6 +75,7 @@ public class Installation : GLib.Object {
     public int state { get; set construct; }
     public int progress { get; private set; }
     public string description { get; set construct; }
+    public string steps { get; set construct; }
 
     uint64 installation_size;
     string partition_path;
@@ -132,6 +133,9 @@ public class Installation : GLib.Object {
                     break;
                 case  "advancedMode":
                     advancedMode = (entry[1] == "true");
+                    break;
+                case  "steps":
+                    steps = entry[1];
                     break;
                 }
             }
@@ -282,15 +286,50 @@ public class Installation : GLib.Object {
             description = "Inconsistent partition record";
             return;
         }
-
+        
         var partitions = d.get (device).partitions;
         device_path = d.get (device).get_path ();
+        description = "Partitioning";
+        step = Step.PARTITION; 
         
-        if (!advancedMode) {
-            if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
-                description = "Partitioning";
-                step = Step.PARTITION; 
+        if (advancedMode == true) {
+            Device device = new Device.from_name (device_path);
+            var can_continue = false;
+            Log.instance().log ("Enter advanced partitioning");
+            Log.instance().log (steps);
+            
+            // split steps parameter to an array
+            // this stepsArray is contain step that should be done in partitioning
+            // if a step has root mountPoint option, it should return the partition id to partition_path variable;
+            var stepsArray = steps.split(",");
+            foreach (var s in stepsArray) {
+              // split params
+              var splittedParams = s.split(";");
+              Log.instance().log (splittedParams[0]);
+              
+              switch (splittedParams[0]) {
+              case  "create":
+                  uint64 start = int.parse (splittedParams[3].split("-")[0]) * 4096;
+                  uint64 end = int.parse (splittedParams[3].split("-")[1]) * 4096;
+                  var mount = "none";
+                  if (splittedParams[4] == "root" || splittedParams[4] == "home") {
+                   mount = splittedParams[4]; 
+                  }
+                  var new_partition = device.create_partition (start, end,
+                                                           splittedParams[2], splittedParams[1], mount);
+                  
+                  break;
+              }
+              
+               
+            }
+            last_step = Step.PARTITION;
+            do_next_job ();
+        
+        } else {
     
+            Log.instance().log ("Enter simple partitioning");
+            if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
                 Device device = new Device.from_name (device_path);
                 var can_continue = false;
                 var new_partition = -1;
@@ -303,7 +342,7 @@ public class Installation : GLib.Object {
                          }
                     }
                     swap_size = OneGig;
-                    new_partition = device.create_partition (partitions.get (partition).start,
+                    new_partition = device.create_partition_simple (partitions.get (partition).start,
                                                              partitions.get (partition).end,
                                                              "ext4", swap_size);
     
@@ -328,12 +367,10 @@ public class Installation : GLib.Object {
             } else {
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
-        } else {
-            stdout.printf("Enter andvanced partitioning");
+            last_step = Step.PARTITION;
+            do_next_job ();
         }
 
-        last_step = Step.PARTITION;
-        do_next_job ();
     }
 
     void do_fs() {

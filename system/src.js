@@ -65,6 +65,10 @@ angular.module("install",[])
     params += "&timezone=" + $rootScope.installationData.timezone;
     params += "&keyboard=" + $rootScope.installationData.keyboard;
     params += "&autologin=" + false;
+    params += "&advancedMode=" + $rootScope.advancedPartition;
+    if ($rootScope.advancedPartition) {
+        params += "&steps=" + $rootScope.steps;
+    }
     console.log(params);
     $rootScope.installation = new Installation(params);
     $rootScope.installation.start();
@@ -275,13 +279,16 @@ angular.module("partition",[])
       if (partition.logicalFreespace) var logical = true;
       console.log("apply");
       console.log(partition);
+      var mountPoint;
       if (partition.mountPoint === "/") {
-        $rootScope.partitionState.mountPoint.root = true;
+        $rootScope.partitionState.mountPoint.root = "newly created partition";
+        mountPoint = "root";
       } else if (partition.mountPoint === "/home") {
-        $rootScope.partitionState.mountPoint.home = true;
+        $rootScope.partitionState.mountPoint.home = "newly created partition";
+        mountPoint = "home";
       } else if (partition.mountPoint === "swap") {
-        $rootScope.partitionState.mountPoint.swap = true;
-        var swap = true; 
+        $rootScope.partitionState.mountPoint.swap = "newly created partition";
+        mountPoint = "swap";
       } 
       $scope.selectedDrive.partitionList[partition.index] = angular.copy(partition);
       $scope.selectedDrive.partitionList[partition.index].new = true;
@@ -386,12 +393,15 @@ angular.module("partition",[])
         $rootScope.partitionState.history.splice(index);
       }
       step.state = angular.copy($scope.selectedDrive.partitionList);
-      if (swap) {
+      if (mountPoint === "swap") {
         step.action += ";swap";
       } else {
         step.action += ";ext4";
       }
       step.action += ";" + partition.start + "-" + partition.end;
+      if (mountPoint) {
+        step.action += ";" + mountPoint;
+      }
       $rootScope.partitionState.history.push(step);
       $scope.undoHistory = false;
       $rootScope.partitionState.currentState = angular.copy($scope.selectedDrive.partitionList);
