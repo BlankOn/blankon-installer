@@ -25,7 +25,8 @@
     </div>
     <div class="step-container fade" ng-show="showStepLine">
             <div ng-repeat="state in steps">
-            <div class="step fade" ng-hide="currentState == state.seq" ng-click="goStep(state.seq)"></div>
+            <div class="step fade" ng-hide="currentState == state.seq"></div>
+            <!--div class="step fade" ng-hide="currentState == state.seq" ng-click="goStep(state.seq)"></div-->
             <div class="step-big fade" ng-show="currentState == state.seq">{{state.step}}</div>
             </div>
     </div>

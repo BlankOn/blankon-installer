@@ -312,21 +312,18 @@ public class Device : GLib.Object {
 
     public int create_partition (uint64 byte_start, uint64 byte_end, string fs, string type, string mount) throws DeviceError {
         // TODO: validate
-        
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
         uint64 start = (uint64) (byte_start / get_unit_size ());
         uint64 end  = (uint64) (byte_end / get_unit_size ());
         var new_fs = new Ped.FileSystemType("ext3");
-        new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end);
-        /* if (type == "normal") { */
-        /*   var new = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end); */
-        /* } else if (type == "extended") { */
-        /*   var new = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, new_fs, start, end); */
-        /* } else if (type == "logical") { */
-        /*   var new = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, new_fs, start, end); */
-        /* } */
-        stdout.printf ("New partition %s%d\n", get_path(), new_partition.num);
+        if (type == "normal") {
+          new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end);
+        } else if (type == "extended") {
+          new_partition = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, new_fs, start, end);
+        } else if (type == "logical") {
+          new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, new_fs, start, end);
+        }
         if (new_partition != null) {
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
             if (part_num == 0) {
@@ -334,13 +331,9 @@ public class Device : GLib.Object {
             }
             disk.commit_to_dev ();
             disk.commit_to_os ();
-            if (mount == "root") {
-              return new_partition.num;
-            } else {
-              return 0;
-            }
+            return part_num;
         } else {
-            throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
+            throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create custom partition\n");
         }
     }
 
@@ -435,6 +428,7 @@ public class Device : GLib.Object {
                 var ext_fs = new Ped.FileSystemType("ext3");
                 var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
                 stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
+                stdout.printf ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
                 disk.add_partition (ext, new Ped.Constraint.any (device));
                 disk.commit_to_dev ();
                 if (ext == null) {

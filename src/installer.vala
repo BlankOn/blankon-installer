@@ -295,9 +295,8 @@ public class Installation : GLib.Object {
         if (advancedMode == true) {
             Device device = new Device.from_name (device_path);
             var can_continue = false;
-            Log.instance().log ("Enter advanced partitioning");
+            Log.instance().log ("Enter advanced partitioning ");
             Log.instance().log (steps);
-            
             // split steps parameter to an array
             // this stepsArray is contain step that should be done in partitioning
             // if a step has root mountPoint option, it should return the partition id to partition_path variable;
@@ -309,19 +308,26 @@ public class Installation : GLib.Object {
               
               switch (splittedParams[0]) {
               case  "create":
-                  uint64 start = int.parse (splittedParams[3].split("-")[0]) * 4096;
-                  uint64 end = int.parse (splittedParams[3].split("-")[1]) * 4096;
+                  var range = splittedParams[3].split("-");
+                  Log.instance().log ("range_start :" + range[0]);
+                  Log.instance().log ("range_start :" + range[1]);
                   var mount = "none";
                   if (splittedParams[4] == "root" || splittedParams[4] == "home") {
                    mount = splittedParams[4]; 
                   }
-                  var new_partition = device.create_partition (start, end,
+                  var new_partition = device.create_partition (uint64.parse (range[0]), uint64.parse (range[1]),
                                                            splittedParams[2], splittedParams[1], mount);
-                  
+                  device.commit_changes ();
+                  Log.instance().log ("newly created " + new_partition.to_string ());
+                  if (splittedParams[4] == "root") {
+                      Log.instance().log ("root");
+                      partition_path = device_path + new_partition.to_string ();
+                  } else {
+                      Log.instance().log ("not root");
+                  }
                   break;
               }
-              
-               
+              Log.instance().log ("\nTarget :" + partition_path  + "\n");
             }
             last_step = Step.PARTITION;
             do_next_job ();
