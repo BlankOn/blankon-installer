@@ -4,7 +4,7 @@ angular.module("done",[])
     function ($scope, $window, $rootScope){
       $scope.reboot = function(){
         console.log("reboot");
-        $rootScope.installation.reboot;
+        Installation.reboot;
       };
 
 
@@ -23,7 +23,7 @@ angular.module("hello",[])
       }
       // TODO : language selection
       /* $rootScope.installation = new Installation(params); */
-      /* $rootScope.installation.setLocale("C.UTF-8"); */
+      Installation.setLocale("C.UTF-8");
 }])
 
 angular.module("install",[])
@@ -194,14 +194,15 @@ angular.module("partition",[])
     $rootScope.advancedPartition = false;
     $scope.title = "Installation Target";
   }
-  $scope.selectInstallationTarget = function(deviceId, partition) {
-    console.log(partition.id)
-    if (partition.id < 0) {
-      partition.id = 0;
-      console.log(partition.id)
-    }
-    $rootScope.installationData.device = deviceId;
-    $rootScope.installationData.partition = partition.id;
+  $scope.selectInstallationTarget = function(devicePath, partition) {
+    console.log(partition)
+    /* if (partition.id < 0) { */
+    /*   partition.id = 0; */
+    /*   console.log(partition.id) */
+    /* } */
+
+    $rootScope.installationData.device = devicePath;
+    $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
     if (partition.id > 0) {
       $rootScope.selectedInstallationTarget = $rootScope.selectedDrive.path + partition.id + " ("+partition.sizeGb+" GB)";
     } else {

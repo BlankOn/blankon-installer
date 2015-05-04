@@ -692,6 +692,7 @@ public class Installation : GLib.Object {
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
             Intl.textdomain( Config.GETTEXT_PACKAGE );
             Utils.write_simple_file("/run/locale", "LC_ALL=%s\nLANG=%s\n".printf((string)buffer, (string)buffer));
+            Process.spawn_command_line_sync ("/bin/cp /run/locale /etc/default/locale");
             buffer = null;
         }
 
