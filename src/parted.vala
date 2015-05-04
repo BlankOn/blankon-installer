@@ -307,16 +307,38 @@ public class Device : GLib.Object {
         }
     }
     
+    // \brief Delete existing partition
+    public int delete_partition (uint64 byte_start, uint64 byte_end, string fs, string type) throws DeviceError {
+        uint64 start = (uint64) (byte_start / get_unit_size ());
+        uint64 end  = (uint64) (byte_end / get_unit_size ());
+        var filesystem = new Ped.FileSystemType(fs);
+        var deleted_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, filesystem, start, end);
+        /* if (type == "normal") { */
+        /* } else if (type == "extended") { */
+        /*   var deleted_partition = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, filesystem, start, end); */
+        /* } else if (type == "logical") { */
+        /*   var deleted_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, filesystem, start, end); */
+        /* } */
+        var delete = disk.delete_partition (deleted_partition);
+        if (delete == 0) {
+            throw new DeviceError.CANT_CREATE_PARTITION ("Unable to delete existing partition\n");
+        } else {
+          return delete;
+        }
+    }
+    
     // \brief Create a partition
     // create a partition, either it is a primary, extended, or logical
 
     public int create_partition (uint64 byte_start, uint64 byte_end, string fs, string type, string mount) throws DeviceError {
+        /* Ped.Device device = new Ped.Device.from_name("/dev/sda"); */ 
+        /* var xdisk = new Ped.Disk.from_device (device); */
         // TODO: validate
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
         uint64 start = (uint64) (byte_start / get_unit_size ());
         uint64 end  = (uint64) (byte_end / get_unit_size ());
-        var new_fs = new Ped.FileSystemType("ext3");
+        var new_fs = new Ped.FileSystemType(fs);
         if (type == "normal") {
           new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end);
         } else if (type == "extended") {

@@ -21,6 +21,9 @@ angular.module("hello",[])
         $rootScope.installationData.lang = lang.id;
         $rootScope.selectedLang = lang.title;
       }
+      // TODO : language selection
+      /* $rootScope.installation = new Installation(params); */
+      /* $rootScope.installation.setLocale("C.UTF-8"); */
 }])
 
 angular.module("install",[])
@@ -602,6 +605,7 @@ angular.module("partition",[])
   }
 
   $scope.partitionApply = function() {
+    $rootScope.installationData.device = $rootScope.selectedDrive.model;
     $rootScope.steps = [];
     for (var i = 1; i < $rootScope.partitionState.history.length; i++) {
       $rootScope.steps[i-1] = $rootScope.partitionState.history[i].action;

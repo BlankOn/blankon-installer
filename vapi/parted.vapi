@@ -38,6 +38,7 @@ namespace Ped {
             public int get_last_partition_num();
             public int delete_all();
             public int add_partition(Partition part, Constraint constraint);
+            public int delete_partition(Partition part);
             public int commit_to_dev();
             public int commit_to_os();
             public DiskType type;
