@@ -3,7 +3,7 @@ void add_partition () {
     // nbd0 is created from the transaction-setup.sh script
     // nbdb0 should now is a totally empty and unitialized disk
     // It will produce harmless "unrecognised disk label" message on the screen 
-    Test.add_func("/init", () => {
+    Test.add_func("/add/init", () => {
             // an empty disk would be created with gpt label 
             Device d = new Device.from_name("/dev/nbd0");
             assert(d.get_num_partitions() == -1);
@@ -13,6 +13,19 @@ void add_partition () {
             // reopen again
             d = new Device.from_name("/dev/nbd0");
             assert(d.get_num_partitions() == -1);
+    });
+
+    Test.add_func("/add/add", () => {
+        Device d = new Device.from_name("/dev/nbd0");
+
+        int part_num = d.create_partition(512, 100000, "ext4", "normal", "/"); 
+        assert(d.get_num_partitions() == 1);
+        assert(part_num == 1);
+        part_num = d.create_partition(1000000, 2000000, "ext4", "normal", "/1"); 
+        assert(d.get_num_partitions() == 2);
+        part_num = d.create_partition(2000000, 3000000, "ext4", "normal", "/1"); 
+        assert(d.get_num_partitions() == 3);
+
     });
 }
 
