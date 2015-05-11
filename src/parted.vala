@@ -245,6 +245,8 @@ public class Device : GLib.Object {
                 partitions.add (new_p);
             }
         } else {
+            Ped.DiskType diskType = new Ped.DiskType("gpt");
+            disk = new Ped.Disk(device, diskType);
             Partition new_p     = new Partition.blank_with_size (get_size () - 1);
             partitions.add (new_p);
         }
