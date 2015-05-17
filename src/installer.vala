@@ -264,33 +264,11 @@ public class Installation : GLib.Object {
         }
     }
     
-    void do_partition() {
+    void do_partition() {;
         
         if (advancedMode == true) {
-            /* var d = Parted.get_devices (); */ 
-    
-            /* var inconsistent = false; */
-    
-            /* if (d != null && device > d.size) { */
-            /*     inconsistent = true; */
-            /* } else { */
-            /*     if (d.get (device).partitions != null */ 
-            /*         && partition > d.get (device).partitions.size) { */
-            /*         inconsistent = true; */
-            /*     } */
-            /* } */
-    
-            /* if (inconsistent) { */
-            /*     step = Step.DONE; */
-            /*     last_step = Step.DONE; */
-            /*     state = State.ERROR; */
-            /*     description = "Inconsistent partition record"; */
-            /*     return; */
-            /* } */
-            
-            /* var partitions = d.get (device).partitions; */
-            /* device_path = d.get (device).get_path (); */
-            Device xdevice = new Device.from_name ("/dev/sda");
+            device_path = "/dev/sda";
+            /* Device dev = new Device.from_name(device_path); */
             description = "Partitioning";
             step = Step.PARTITION;
  
@@ -301,42 +279,47 @@ public class Installation : GLib.Object {
             // this stepsArray is contain step that should be done in partitioning
             // if a step has root mountPoint option, it should return the partition id to partition_path variable;
             var stepsArray = steps.split(",");
+            var target = "";
             foreach (var s in stepsArray) {
+              /* int num_partitions = dev.get_num_partitions(); */
+              /* Log.instance().log (num_partitions.to_string ()); */
               // split params
               var splittedParams = s.split(";");
               Log.instance().log (splittedParams[0]);
               
               switch (splittedParams[0]) {
               case  "create":
+                  // reopen again
+                  Device dev = new Device.from_name(device_path);
                   var range = splittedParams[3].split("-");
                   Log.instance().log ("range_start :" + range[0]);
                   Log.instance().log ("range_start :" + range[1]);
                   var mount = "none";
                   if (splittedParams[4] == "root" || splittedParams[4] == "home") {
-                   mount = splittedParams[4]; 
+                      mount = splittedParams[4]; 
                   }
-                  var new_partition = xdevice.create_partition (uint64.parse (range[0]), uint64.parse (range[1]),
-                                                           splittedParams[2], splittedParams[1], mount);
-                  Log.instance().log ("newly created " + new_partition.to_string ());
+                  int new_partition = dev.create_partition (uint64.parse (range[0]), uint64.parse (range[1]), splittedParams[2], splittedParams[1], mount);
                   if (splittedParams[4] == "root") {
                       Log.instance().log ("root");
-                      partition_path = device_path + new_partition.to_string ();
+                      target = new_partition.to_string ();
                   } else {
                       Log.instance().log ("not root");
                   }
+                  Log.instance().log ("newly created " + new_partition.to_string ());
                   break;
               case  "delete":
-                  var range = splittedParams[3].split("-");
-                  Log.instance().log ("range_start :" + range[0]);
-                  Log.instance().log ("range_start :" + range[1]);
-                  var result = xdevice.delete_partition (uint64.parse (range[0]), uint64.parse (range[1]),
-                                                           splittedParams[2], splittedParams[1]);
+                  // reopen again
+                  Device dev = new Device.from_name(device_path);
+                  var id = splittedParams[1];
+                  Log.instance().log ("should delete partition " + splittedParams[1]);
+                  var result = dev.delete_partition (int.parse (splittedParams[1]));
                 Log.instance().log ("\nDeleted :" + result.to_string ()  + "\n");
       
                   break;
               }
-              Log.instance().log ("\nTarget :" + partition_path  + "\n");
             }
+            partition_path = device_path + target;
+            Log.instance().log ("\nTarget :" + partition_path + "\n");
             last_step = Step.PARTITION;
             do_next_job ();
         

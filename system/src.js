@@ -22,7 +22,6 @@ angular.module("hello",[])
         $rootScope.selectedLang = lang.title;
       }
       // TODO : language selection
-      /* $rootScope.installation = new Installation(params); */
       Installation.setLocale("C.UTF-8");
 }])
 
@@ -426,7 +425,7 @@ angular.module("partition",[])
   }
   $scope.partitionDelete = function(partition) {
     var step = {
-      action : "delete;"+ partition.start + "-" + partition.end,
+      action : "delete;"+ partition.id,
     }
     console.log(partition);
     var p = partition;
@@ -606,13 +605,17 @@ angular.module("partition",[])
   }
 
   $scope.partitionApply = function() {
-    $rootScope.installationData.device = $rootScope.selectedDrive.model;
-    $rootScope.steps = [];
-    for (var i = 1; i < $rootScope.partitionState.history.length; i++) {
-      $rootScope.steps[i-1] = $rootScope.partitionState.history[i].action;
+    if ($rootScope.partitionState.mountPoint.root) {
+      $rootScope.installationData.device = $rootScope.selectedDrive.model;
+      $rootScope.steps = [];
+      for (var i = 1; i < $rootScope.partitionState.history.length; i++) {
+        $rootScope.steps[i-1] = $rootScope.partitionState.history[i].action;
+      }
+      console.log($rootScope.steps);
+      $rootScope.next();
+    } else {
+      //should shout a warning 
     }
-    console.log($rootScope.steps);
-    $rootScope.next();
   }
 
   if (!$rootScope.installationData.partition) {

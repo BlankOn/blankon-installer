@@ -336,8 +336,6 @@ public class Device : GLib.Object {
     // create a partition, either it is a primary, extended, or logical
 
     public int create_partition (uint64 byte_start, uint64 byte_end, string fs, string type, string mount) throws DeviceError {
-        /* Ped.Device device = new Ped.Device.from_name("/dev/sda"); */ 
-        /* var xdisk = new Ped.Disk.from_device (device); */
         // TODO: validate
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
@@ -356,8 +354,7 @@ public class Device : GLib.Object {
             if (part_num == 0) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
             }
-            disk.commit_to_dev ();
-            disk.commit_to_os ();
+            commit_changes();
             return part_num;
         } else {
             throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create custom partition\n");
