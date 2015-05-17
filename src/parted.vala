@@ -336,6 +336,8 @@ public class Device : GLib.Object {
     // create a partition, either it is a primary, extended, or logical
 
     public int create_partition (uint64 byte_start, uint64 byte_end, string fs, string type, string mount) throws DeviceError {
+
+
         // TODO: validate
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
@@ -355,31 +357,44 @@ public class Device : GLib.Object {
             int [] p_num_array = {};
             Ped.Partition? p = disk.part_list;
             while ((p = disk.next_partition (p)) != null) {
-                if (p.num > 0) {
+                /* if (p.num > 0) { */
                     p_num_array += p.num;
                     stdout.printf ("origin : " + p.num.to_string () + "\n");
-                }
+                /* } */
             }
 
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
             if (part_num == 0) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
             }
-
             commit_changes();
             
             // collect new part_num array after commit
-            int [] p_num_array_next = {};
+            int [] p_num_array_new = {};
             Ped.Partition? q = disk.part_list;
             while ((q = disk.next_partition (q)) != null) {
-                if (p.num > 0) {
-                    p_num_array_next += q.num;
+                /* if (p.num > 0) { */
+                    p_num_array_new += q.num;
                     stdout.printf ("next : " + q.num.to_string () + "\n");
+                /* } */
+            }
+
+            //find the new part_num
+            foreach (int x in p_num_array_new) {
+                bool is_exists = false;
+                for (int i = 0;i < p_num_array.length;i++) {
+                    if (x == p_num_array[i]) {
+                        is_exists = true;
+                    }
+                }
+                if (is_exists == false) {
+                    part_num = x;
                 }
             }
 
             // should return correct part number
             return part_num;
+
         } else {
             throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create custom partition\n");
         }
