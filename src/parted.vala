@@ -350,16 +350,40 @@ public class Device : GLib.Object {
           new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, new_fs, start, end);
         }
         if (new_partition != null) {
+
+            // collect part_num before commit
+            int [] p_num_array = {};
+            Ped.Partition? p = disk.part_list;
+            while ((p = disk.next_partition (p)) != null) {
+                if (p.num > 0) {
+                    p_num_array += p.num;
+                    stdout.printf ("origin : " + p.num.to_string () + "\n");
+                }
+            }
+
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
             if (part_num == 0) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");
             }
+
             commit_changes();
+            
+            // collect new part_num array after commit
+            int [] p_num_array_next = {};
+            Ped.Partition? q = disk.part_list;
+            while ((q = disk.next_partition (q)) != null) {
+                if (p.num > 0) {
+                    p_num_array_next += q.num;
+                    stdout.printf ("next : " + q.num.to_string () + "\n");
+                }
+            }
+
+            // should return correct part number
             return part_num;
         } else {
             throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create custom partition\n");
         }
-    }
+    }  
 
     // \brief Create a partition (simple)
     //

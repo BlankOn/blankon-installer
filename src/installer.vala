@@ -280,6 +280,7 @@ public class Installation : GLib.Object {
             // if a step has root mountPoint option, it should return the partition id to partition_path variable;
             var stepsArray = steps.split(",");
             var target = "";
+
             foreach (var s in stepsArray) {
               /* int num_partitions = dev.get_num_partitions(); */
               /* Log.instance().log (num_partitions.to_string ()); */
@@ -299,6 +300,7 @@ public class Installation : GLib.Object {
                       mount = splittedParams[4]; 
                   }
                   int new_partition = dev.create_partition (uint64.parse (range[0]), uint64.parse (range[1]), splittedParams[2], splittedParams[1], mount);
+        
                   if (splittedParams[4] == "root") {
                       Log.instance().log ("root");
                       target = new_partition.to_string ();
