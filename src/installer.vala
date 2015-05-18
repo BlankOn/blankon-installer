@@ -70,12 +70,17 @@ public class Installation : GLib.Object {
     public string language { get; set construct; }
     public string region { get; set construct; }
     public string keyboard { get; set construct; }
+    public string home { get; set construct; }
     public bool autologin { get; set construct; }
     public bool advancedMode { get; set construct; }
     public int state { get; set construct; }
     public int progress { get; private set; }
     public string description { get; set construct; }
     public string steps { get; set construct; }
+
+    public string root = "";
+    /* public string home = ""; */
+    public bool separatedHome = false;
 
     uint64 installation_size;
     string partition_path;
@@ -130,6 +135,9 @@ public class Installation : GLib.Object {
                     break;
                 case  "autologin":
                     autologin = (entry[1] == "true");
+                    break;
+                case  "home":
+                    home = entry[1];
                     break;
                 case  "advancedMode":
                     advancedMode = (entry[1] == "true");
@@ -279,7 +287,6 @@ public class Installation : GLib.Object {
             // this stepsArray is contain step that should be done in partitioning
             // if a step has root mountPoint option, it should return the partition id to partition_path variable;
             var stepsArray = steps.split(",");
-            var target = "";
 
             foreach (var s in stepsArray) {
               /* int num_partitions = dev.get_num_partitions(); */
@@ -303,11 +310,30 @@ public class Installation : GLib.Object {
         
                   if (splittedParams[4] == "root") {
                       Log.instance().log ("root");
-                      target = new_partition.to_string ();
+                      root = new_partition.to_string ();
+                  } else if (splittedParams[4] == "home") {
+                      Log.instance().log ("home");
+                      home = new_partition.to_string ();
+                      separatedHome = true;
                   } else {
-                      Log.instance().log ("not root");
+                      Log.instance().log ("neither root or home");
                   }
+                  Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + new_partition.to_string ());
                   Log.instance().log ("newly created " + new_partition.to_string ());
+                  break;
+              case  "format":
+                  var id = splittedParams[1];
+                  Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + splittedParams[1]);
+                  /* string [] c = { "/sbin/mkfs." + splittedParams[2], device_path + splittedParams[1] }; */
+                  /* do_simple_command_with_args (c, Step.FS, "Formatting", "Unable to format partition"); */
+                  Log.instance().log ("should format partition " + splittedParams[1]);
+                  if (splittedParams[3] == "root") {
+                      Log.instance().log ("root");
+                      root = splittedParams[1];
+                  } else if (splittedParams[3] == "home") {
+                      home = splittedParams[1];
+                      separatedHome = true;
+                  }
                   break;
               case  "delete":
                   // reopen again
@@ -320,8 +346,12 @@ public class Installation : GLib.Object {
                   break;
               }
             }
-            partition_path = device_path + target;
+            partition_path = device_path + root;
             Log.instance().log ("\nTarget :" + partition_path + "\n");
+            if (separatedHome == true) {
+                home = device_path + home;
+                Log.instance().log ("\nHome :" + home + "\n");
+            }
             last_step = Step.PARTITION;
             do_next_job ();
         
@@ -394,18 +424,25 @@ public class Installation : GLib.Object {
             last_step = Step.PARTITION;
             do_next_job ();
         }
-
     }
 
     void do_fs() {
-        string [] c = { "/sbin/mkfs.ext4", partition_path };
-        do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
+        if (advancedMode == false) {
+            string [] c = { "/sbin/mkfs.ext4", partition_path };
+            do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
+        }
     }
 
     void do_mount () {
         DirUtils.create ("/target", 0700);
         string [] c = { "/bin/mount", partition_path, "/target" };
         do_simple_command_with_args (c, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
+        if (separatedHome) {
+          DirUtils.create ("/test_home", 0700);
+          string [] c_home = { "/bin/mount", home, "/test_home" };
+          do_simple_command_with_args (c_home, Step.MOUNT, "Mounting home filesystem ", "Unable to mount filesystem");
+
+        }
     }
 
     void do_simple_command (string command_to_run, Step command_step, string command_description, string error_description) {

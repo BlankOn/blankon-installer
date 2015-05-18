@@ -4,7 +4,7 @@ angular.module("done",[])
     function ($scope, $window, $rootScope){
       $scope.reboot = function(){
         console.log("reboot");
-        Installation.reboot;
+        Installation.reboot();
       };
 
 
@@ -22,7 +22,7 @@ angular.module("hello",[])
         $rootScope.selectedLang = lang.title;
       }
       // TODO : language selection
-      Installation.setLocale("C.UTF-8");
+      /* Installation.setLocale("C.UTF-8"); */
 }])
 
 angular.module("install",[])
@@ -66,10 +66,10 @@ angular.module("install",[])
     params += "&language=" + $rootScope.installationData.language;
     params += "&timezone=" + $rootScope.installationData.timezone;
     params += "&keyboard=" + $rootScope.installationData.keyboard;
-    params += "&autologin=" + false;
+    params += "&autologin=" + $rootScope.installationData.autologin;
     params += "&advancedMode=" + $rootScope.advancedPartition;
     if ($rootScope.advancedPartition) {
-        params += "&steps=" + $rootScope.steps;
+        params += "&steps=" + $rootScope.partitionSteps;
     }
     // give time for view transition
     $timeout(function(){
@@ -258,11 +258,12 @@ angular.module("partition",[])
       $scope.createDialogSelected.blockWidthOrigin = angular.copy($scope.createDialogSelected.blockWidth);
     }
   }
+  var percentage;
   $scope.$watch("createSliderValue", function(value){
     console.log(value);
     var val = value.split(";");
     var offset = val[0];
-    var percentage = val[1]-val[0];
+    percentage = val[1]-val[0];
     console.log(percentage);
     var start = $scope.createDialogSelected.startOrigin; 
     var end = $scope.createDialogSelected.endOrigin; 
@@ -299,12 +300,12 @@ angular.module("partition",[])
       $scope.selectedDrive.partitionList[partition.index] = angular.copy(partition);
       $scope.selectedDrive.partitionList[partition.index].new = true;
       if (partition.type != "DEVICE_PARTITION_TYPE_EXTENDED") {
-        // if it created from logicalFreespace, flag them as logical
+        // if it is created from logicalFreespace, flag them as logical
         if (partition.logicalFreespace) {
           step.action += ";logical";
           $scope.selectedDrive.partitionList[partition.index].logical = true;
           // and tell the parent that they has a child
-          if ($rootScope.selectedDrive.hasExtended) {
+          /* if ($rootScope.selectedDrive.hasExtended) { */
             for (var k = 0; k < $rootScope.selectedDrive.partitionList.length; k++) {
               if ($rootScope.selectedDrive.partitionList[k].extended &&
               partition.start >= $rootScope.selectedDrive.partitionList[k].start &&
@@ -314,7 +315,7 @@ angular.module("partition",[])
                 $rootScope.selectedDrive.partitionList[k].hasChild = true;
               }
             }
-          }
+          /* } */
         } else {
           step.action += ";normal";
         }
@@ -333,6 +334,7 @@ angular.module("partition",[])
           type : "DEVICE_PARTITION_TYPE_FREESPACE",
           freespace : true,
           normal : true,
+          new : true,
           logicalFreespace : true,
           hidden : false,
           start : partition.start,
@@ -340,7 +342,10 @@ angular.module("partition",[])
           size : partition.end - partition.start,
           sizeGb : ((partition.end - partition.start)/gbSize).toFixed(2),
           id : -1,
-          blockWidth : partition.blockWidth,
+        }
+        extendedFreespace.blockWidth = parseInt(((partition.size/partition.sizeOrigin)*partition.blockWidth));
+        if (percentage < 100) {
+          extendedFreespace.blockWidth -= 4;
         }
         $scope.selectedDrive.partitionList.splice((partition.index+1),0, extendedFreespace);
         $scope.selectedDrive.partitionList[partition.index].blockWidth = 0;
@@ -430,7 +435,9 @@ angular.module("partition",[])
     console.log(partition);
     var p = partition;
     var index = $scope.selectedDrive.partitionList.indexOf(partition);
+    var extended = false;
     if (p.extended) {
+      extended = true;
       step.action += ";extended";
       partition.extended = false;
       partition.freespace = true;
@@ -470,22 +477,28 @@ angular.module("partition",[])
       }
     }
     if (
-    $scope.selectedDrive.partitionList[(index+1)] && 
-    $scope.selectedDrive.partitionList[(index-1)].type === "DEVICE_PARTITION_TYPE_FREESPACE" && 
-    $scope.selectedDrive.partitionList[(index+1)].type === "DEVICE_PARTITION_TYPE_FREESPACE"
+      $scope.selectedDrive.partitionList[(index+1)] && 
+      $scope.selectedDrive.partitionList[(index-1)] && 
+      $scope.selectedDrive.partitionList[(index-1)].type === "DEVICE_PARTITION_TYPE_FREESPACE" && 
+      $scope.selectedDrive.partitionList[(index+1)].type === "DEVICE_PARTITION_TYPE_FREESPACE"
     ) {
       // the prev and next partition of this partition are freespace. merge them.
-      if (p.extended) {
+      //////////////////////
+      console.log("yoooooooooo1");
+      if (extended) {
+        console.log("yoooooooooo2");
         $scope.selectedDrive.partitionList[(index-1)].size += $scope.selectedDrive.partitionList[index].size;
         $scope.selectedDrive.partitionList[(index-1)].end = $scope.selectedDrive.partitionList[index].end;
       } else {
+        console.log("yoooooooooo3");
         $scope.selectedDrive.partitionList[(index-1)].size += $scope.selectedDrive.partitionList[index].size + $scope.selectedDrive.partitionList[(index+1)].size;
         $scope.selectedDrive.partitionList[(index-1)].end = $scope.selectedDrive.partitionList[(index+1)].end;
       }
       var size = $scope.selectedDrive.partitionList[(index-1)].size;
       $scope.selectedDrive.partitionList[(index-1)].hidden = false;
       $scope.selectedDrive.partitionList[(index-1)].blockWidth = parseInt(((size/$rootScope.selectedDrive.size)*driveBlockWidth));
-      if ($scope.selectedDrive.partitionList[(index-1)].freespace) {
+      if ($scope.selectedDrive.partitionList[(index-1)].freespace & !extended) {
+        console.log("yoooooooooo4");
         $scope.selectedDrive.partitionList[(index-1)].blockWidth += 8;
       }
       if ($scope.selectedDrive.partitionList[(index+1)].freespace) {
@@ -500,11 +513,13 @@ angular.module("partition",[])
       $scope.selectedDrive.partitionList.splice(index,2);
     } else if (
     ($scope.selectedDrive.partitionList[(index+1)] && 
+    $scope.selectedDrive.partitionList[(index-1)] && 
     $scope.selectedDrive.partitionList[(index-1)].type === "DEVICE_PARTITION_TYPE_FREESPACE" && 
     $scope.selectedDrive.partitionList[(index+1)].type != "DEVICE_PARTITION_TYPE_FREESPACE") ||
     (!$scope.selectedDrive.partitionList[(index+1)] && 
     $scope.selectedDrive.partitionList[(index-1)].type === "DEVICE_PARTITION_TYPE_FREESPACE") 
     ) {
+      console.log("yoooooooooo5");
       // the prev partition of this partition is free space
       $scope.selectedDrive.partitionList[(index-1)].end = $scope.selectedDrive.partitionList[index].end;
       $scope.selectedDrive.partitionList[(index-1)].size += $scope.selectedDrive.partitionList[index].size;
@@ -523,17 +538,22 @@ angular.module("partition",[])
       $scope.selectedDrive.partitionList.splice(index,1);
     } else if (
     $scope.selectedDrive.partitionList[(index+1)] && 
+    $scope.selectedDrive.partitionList[(index-1)] && 
     $scope.selectedDrive.partitionList[(index-1)].type != "DEVICE_PARTITION_TYPE_FREESPACE" && 
     $scope.selectedDrive.partitionList[(index+1)].type === "DEVICE_PARTITION_TYPE_FREESPACE"
     ) {
       // the next partition of this partition is free space
+      console.log("yoooooooooo6");
       $scope.selectedDrive.partitionList[(index+1)].start = $scope.selectedDrive.partitionList[index].start;
-      $scope.selectedDrive.partitionList[(index+1)].size += $scope.selectedDrive.partitionList[index].size;
+      // if it is an extended partition, the next is a logical freespace. it should be sliced without merging the size
+      if (!extended) {
+        $scope.selectedDrive.partitionList[(index+1)].size += $scope.selectedDrive.partitionList[index].size;
+      }
       var size = $scope.selectedDrive.partitionList[(index+1)].size;
       $scope.selectedDrive.partitionList[(index+1)].hidden = false;
       $scope.selectedDrive.partitionList[(index+1)].freespace = true;
       $scope.selectedDrive.partitionList[(index+1)].blockWidth = parseInt(((size/$rootScope.selectedDrive.size)*driveBlockWidth));
-      if ($scope.selectedDrive.partitionList[(index+1)].freespace) {
+      if ($scope.selectedDrive.partitionList[(index+1)].freespace && !extended) {
         $scope.selectedDrive.partitionList[(index+1)].blockWidth += 8;
       }
       $scope.selectedDrive.partitionList[(index+1)].sizeGb = (size/gbSize).toFixed(2);
@@ -574,15 +594,16 @@ angular.module("partition",[])
     if ($scope.undoHistory) {
       $rootScope.partitionState.history.splice(formatIndex);
     }
+    // example : "format;2;ext4;/home"
     var step = {
       action:"format", 
       state:angular.copy($scope.selectedDrive.partitionList)
     }
+    step.action += ";" + partition.id;
     if (partition.mountPoint === "swap") {
       step.action += ";swap"; 
     } else {
       step.action += ";ext4";
-      step.action += ";" + partition.start + "-" + partition.end;
       if (partition.mountPoint === "/") {
         $rootScope.partitionState.mountPoint.root = $rootScope.selectedDrive.path + partition.id;
         step.action +=";root";
@@ -603,15 +624,37 @@ angular.module("partition",[])
     $scope.formatDialog = false;
     $scope.actionDialog = false;
   }
+  
+  $scope.partitionMountAsHome = function(partition) {
+    var index = $scope.selectedDrive.partitionList.indexOf(partition);
+    $scope.selectedDrive.partitionList[index] = angular.copy(partition);
+    $scope.selectedDrive.partitionList[index].mountPoint = "/home";
+    if ($scope.undoHistory) {
+      $rootScope.partitionState.history.splice(index);
+    }
+    var step = {
+      action:"home", 
+      state:angular.copy($scope.selectedDrive.partitionList)
+    }
+    $rootScope.partitionState.mountPoint.home = $rootScope.selectedDrive.path + partition.id;
+    step.action += ";" + partition.filesystem;
+    $rootScope.partitionState.history.push(step);
+    $scope.undoHistory = false;
+    $rootScope.partitionState.currentState = angular.copy($scope.selectedDrive.partitionList);
+    $rootScope.partitionState.stateIndex++;
+    console.log($rootScope.partitionState);
+    $scope.formatDialog = false;
+    $scope.actionDialog = false;
+  }
 
   $scope.partitionApply = function() {
     if ($rootScope.partitionState.mountPoint.root) {
       $rootScope.installationData.device = $rootScope.selectedDrive.model;
-      $rootScope.steps = [];
+      $rootScope.partitionSteps = [];
       for (var i = 1; i < $rootScope.partitionState.history.length; i++) {
-        $rootScope.steps[i-1] = $rootScope.partitionState.history[i].action;
+        $rootScope.partitionSteps[i-1] = $rootScope.partitionState.history[i].action;
       }
-      console.log($rootScope.steps);
+      console.log($rootScope.partitionSteps);
       $rootScope.next();
     } else {
       //should shout a warning 
