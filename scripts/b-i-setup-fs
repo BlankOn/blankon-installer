@@ -101,12 +101,20 @@ if [ -f $ROOTFS/usr/share/blankon-repository-setup/sources.list ];then
     cp -f $ROOTFS/usr/share/blankon-repository-setup/sources.list $ROOTFS/target/etc/apt/ 
 fi
 
+###### HOME
+
+if [ -f /tmp/fstab ];then
+    mv /tmp/fstab /target/etc/fstab
+fi
+
+
 ###### Swap
 
 for i in `cat $ROOTFS/tmp/swaps`;do
     mkswap $i
     echo "$i    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
 done
+
 
 ###### OpenSSH server
 if [ -e $ROOTFS/target/var/lib/dpkg/info/openssh-server.postinst ]; then

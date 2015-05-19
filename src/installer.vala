@@ -53,6 +53,7 @@ public class Installation : GLib.Object {
         PARTITION,
         FS,
         MOUNT,
+        MOUNTHOME,
         COPY,
         SETUP,
         GRUB,
@@ -71,6 +72,7 @@ public class Installation : GLib.Object {
     public string region { get; set construct; }
     public string keyboard { get; set construct; }
     public string home { get; set construct; }
+    public string root { get; set construct; }
     public bool autologin { get; set construct; }
     public bool advancedMode { get; set construct; }
     public int state { get; set construct; }
@@ -78,8 +80,6 @@ public class Installation : GLib.Object {
     public string description { get; set construct; }
     public string steps { get; set construct; }
 
-    public string root = "";
-    /* public string home = ""; */
     public bool separatedHome = false;
 
     uint64 installation_size;
@@ -201,6 +201,10 @@ public class Installation : GLib.Object {
             do_mount ();
             break;
         case Step.MOUNT:
+            Log.instance().log ("MOUNTHOME");
+            do_mount_home ();
+            break;
+        case Step.MOUNTHOME:
             progress = 15;
             Log.instance().log ("COPY");
             do_copy ();
@@ -315,10 +319,11 @@ public class Installation : GLib.Object {
                       Log.instance().log ("home");
                       home = new_partition.to_string ();
                       separatedHome = true;
+                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + new_partition.to_string ());
                   } else {
                       Log.instance().log ("neither root or home");
+                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + new_partition.to_string ());
                   }
-                  Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + new_partition.to_string ());
                   Log.instance().log ("newly created " + new_partition.to_string ());
                   break;
               case  "format":
@@ -427,21 +432,37 @@ public class Installation : GLib.Object {
     }
 
     void do_fs() {
-        if (advancedMode == false) {
-            string [] c = { "/sbin/mkfs.ext4", partition_path };
-            do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
-        }
+        string [] c = { "/sbin/mkfs.ext4", partition_path };
+        do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
     }
+    
+
 
     void do_mount () {
+        Log.instance().log ("\nho home\n");
         DirUtils.create ("/target", 0700);
         string [] c = { "/bin/mount", partition_path, "/target" };
         do_simple_command_with_args (c, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
-        if (separatedHome) {
-          DirUtils.create ("/test_home", 0700);
-          string [] c_home = { "/bin/mount", home, "/test_home" };
-          do_simple_command_with_args (c_home, Step.MOUNT, "Mounting home filesystem ", "Unable to mount filesystem");
+    }
+    
+    void do_mount_home () {
+        if (separatedHome == true && advancedMode == true) {
+            // should write fstab configuration to somewhere
+            // then it will be copied in b-i-cleanup, just before umount
+            Log.instance().log ("\nmount separated home partition\n");
+            DirUtils.create ("/target/home", 0700);
+            string [] c = { "/bin/mount", home, "/target/home" };
+            do_simple_command_with_args (c, Step.MOUNTHOME, "Mounting home filesystem ", "Unable to mount home filesystem");
+        
+            // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
+            var content = partition_path + " / ext4 defaults 1 2";
+            Utils.write_simple_file ("/tmp/fstab", content);
+            content = home + " /home ext4 defaults 1 2";
+            Utils.write_simple_file ("/tmp/fstab", content);
 
+        } else {
+            last_step = Step.MOUNTHOME;
+            do_next_job ();
         }
     }
 
@@ -645,6 +666,7 @@ public class Installation : GLib.Object {
 
         var location = "/tmp/post-install.sh";
         Utils.write_simple_file (location, "sudo /sbin/reboot\n");
+        Process.spawn_command_line_sync ("/bin/chmod a+x /tmp/post-install.sh");
         Gtk.main_quit();
 
         return new JSCore.Value.undefined (ctx);

@@ -105,7 +105,6 @@ struct _LogPrivate {
 struct _Installation {
 	GObject parent_instance;
 	InstallationPrivate * priv;
-	gchar* root;
 	gboolean separatedHome;
 };
 
@@ -118,6 +117,7 @@ typedef enum  {
 	INSTALLATION_STEP_PARTITION,
 	INSTALLATION_STEP_FS,
 	INSTALLATION_STEP_MOUNT,
+	INSTALLATION_STEP_MOUNTHOME,
 	INSTALLATION_STEP_COPY,
 	INSTALLATION_STEP_SETUP,
 	INSTALLATION_STEP_GRUB,
@@ -137,6 +137,7 @@ struct _InstallationPrivate {
 	gchar* _region;
 	gchar* _keyboard;
 	gchar* _home;
+	gchar* _root;
 	gboolean _autologin;
 	gboolean _advancedMode;
 	gint _state;
@@ -226,6 +227,7 @@ enum  {
 	INSTALLATION_REGION,
 	INSTALLATION_KEYBOARD,
 	INSTALLATION_HOME,
+	INSTALLATION_ROOT,
 	INSTALLATION_AUTOLOGIN,
 	INSTALLATION_ADVANCED_MODE,
 	INSTALLATION_STATE,
@@ -276,6 +278,7 @@ static void installation_do_next_job (Installation* self);
 static void installation_do_partition (Installation* self);
 static void installation_do_fs (Installation* self);
 static void installation_do_mount (Installation* self);
+static void installation_do_mount_home (Installation* self);
 static void installation_do_copy (Installation* self);
 static void installation_do_setup (Installation* self);
 static void installation_do_grub (Installation* self);
@@ -292,7 +295,9 @@ Device* device_new_from_name (const gchar* s);
 Device* device_construct_from_name (GType object_type, const gchar* s);
 GQuark device_error_quark (void);
 gint device_create_partition (Device* self, guint64 byte_start, guint64 byte_end, const gchar* fs, const gchar* type, const gchar* mount, GError** error);
+void installation_set_root (Installation* self, const gchar* value);
 gint device_delete_partition (Device* self, gint index, GError** error);
+const gchar* installation_get_root (Installation* self);
 const gchar* installation_get_home (Installation* self);
 GeeArrayList* parted_get_devices (gboolean from_cache);
 gint installation_get_device (Installation* self);
@@ -308,10 +313,10 @@ gint device_create_partition_simple (Device* self, guint64 byte_start, guint64 b
 guint64 device_partition_get_start (DevicePartition* self);
 guint64 device_partition_get_end (DevicePartition* self);
 gint device_partition_get_number (DevicePartition* self);
+void utils_write_simple_file (const gchar* path, const gchar* content);
 static void installation_do_simple_command (Installation* self, const gchar* command_to_run, InstallationStep command_step, const gchar* command_description, const gchar* error_description);
 const gchar* installation_get_user_name (Installation* self);
 const gchar* installation_get_password (Installation* self);
-void utils_write_simple_file (const gchar* path, const gchar* content);
 gboolean installation_get_autologin (Installation* self);
 const gchar* installation_get_full_name (Installation* self);
 const gchar* installation_get_host_name (Installation* self);
@@ -552,7 +557,7 @@ GType installation_state_get_type (void) {
 static GType installation_step_get_type (void) {
 	static volatile gsize installation_step_type_id__volatile = 0;
 	if (g_once_init_enter (&installation_step_type_id__volatile)) {
-		static const GEnumValue values[] = {{INSTALLATION_STEP_IDLE, "INSTALLATION_STEP_IDLE", "idle"}, {INSTALLATION_STEP_PARTITION, "INSTALLATION_STEP_PARTITION", "partition"}, {INSTALLATION_STEP_FS, "INSTALLATION_STEP_FS", "fs"}, {INSTALLATION_STEP_MOUNT, "INSTALLATION_STEP_MOUNT", "mount"}, {INSTALLATION_STEP_COPY, "INSTALLATION_STEP_COPY", "copy"}, {INSTALLATION_STEP_SETUP, "INSTALLATION_STEP_SETUP", "setup"}, {INSTALLATION_STEP_GRUB, "INSTALLATION_STEP_GRUB", "grub"}, {INSTALLATION_STEP_CLEANUP, "INSTALLATION_STEP_CLEANUP", "cleanup"}, {INSTALLATION_STEP_DONE, "INSTALLATION_STEP_DONE", "done"}, {0, NULL, NULL}};
+		static const GEnumValue values[] = {{INSTALLATION_STEP_IDLE, "INSTALLATION_STEP_IDLE", "idle"}, {INSTALLATION_STEP_PARTITION, "INSTALLATION_STEP_PARTITION", "partition"}, {INSTALLATION_STEP_FS, "INSTALLATION_STEP_FS", "fs"}, {INSTALLATION_STEP_MOUNT, "INSTALLATION_STEP_MOUNT", "mount"}, {INSTALLATION_STEP_MOUNTHOME, "INSTALLATION_STEP_MOUNTHOME", "mounthome"}, {INSTALLATION_STEP_COPY, "INSTALLATION_STEP_COPY", "copy"}, {INSTALLATION_STEP_SETUP, "INSTALLATION_STEP_SETUP", "setup"}, {INSTALLATION_STEP_GRUB, "INSTALLATION_STEP_GRUB", "grub"}, {INSTALLATION_STEP_CLEANUP, "INSTALLATION_STEP_CLEANUP", "cleanup"}, {INSTALLATION_STEP_DONE, "INSTALLATION_STEP_DONE", "done"}, {0, NULL, NULL}};
 		GType installation_step_type_id;
 		installation_step_type_id = g_enum_register_static ("InstallationStep", values);
 		g_once_init_leave (&installation_step_type_id__volatile, installation_step_type_id);
@@ -1071,80 +1076,91 @@ static void installation_do_next_job (Installation* self) {
 		{
 			Log* _tmp7_ = NULL;
 			Log* _tmp8_ = NULL;
-			installation_set_progress (self, 15);
 			_tmp7_ = log_instance ();
 			_tmp8_ = _tmp7_;
-			log_log (_tmp8_, "COPY");
+			log_log (_tmp8_, "MOUNTHOME");
 			_g_object_unref0 (_tmp8_);
+			installation_do_mount_home (self);
+			break;
+		}
+		case INSTALLATION_STEP_MOUNTHOME:
+		{
+			Log* _tmp9_ = NULL;
+			Log* _tmp10_ = NULL;
+			installation_set_progress (self, 15);
+			_tmp9_ = log_instance ();
+			_tmp10_ = _tmp9_;
+			log_log (_tmp10_, "COPY");
+			_g_object_unref0 (_tmp10_);
 			installation_do_copy (self);
 			break;
 		}
 		case INSTALLATION_STEP_COPY:
 		{
-			Log* _tmp9_ = NULL;
-			Log* _tmp10_ = NULL;
+			Log* _tmp11_ = NULL;
+			Log* _tmp12_ = NULL;
 			installation_set_progress (self, 80);
-			_tmp9_ = log_instance ();
-			_tmp10_ = _tmp9_;
-			log_log (_tmp10_, "SETUP");
-			_g_object_unref0 (_tmp10_);
+			_tmp11_ = log_instance ();
+			_tmp12_ = _tmp11_;
+			log_log (_tmp12_, "SETUP");
+			_g_object_unref0 (_tmp12_);
 			installation_do_setup (self);
 			break;
 		}
 		case INSTALLATION_STEP_SETUP:
 		{
-			Log* _tmp11_ = NULL;
-			Log* _tmp12_ = NULL;
+			Log* _tmp13_ = NULL;
+			Log* _tmp14_ = NULL;
 			installation_set_progress (self, 90);
-			_tmp11_ = log_instance ();
-			_tmp12_ = _tmp11_;
-			log_log (_tmp12_, "GRUB");
-			_g_object_unref0 (_tmp12_);
+			_tmp13_ = log_instance ();
+			_tmp14_ = _tmp13_;
+			log_log (_tmp14_, "GRUB");
+			_g_object_unref0 (_tmp14_);
 			installation_do_grub (self);
 			break;
 		}
 		case INSTALLATION_STEP_GRUB:
 		{
-			Log* _tmp13_ = NULL;
-			Log* _tmp14_ = NULL;
-			_tmp13_ = log_instance ();
-			_tmp14_ = _tmp13_;
-			log_log (_tmp14_, "CLEANUP");
-			_g_object_unref0 (_tmp14_);
+			Log* _tmp15_ = NULL;
+			Log* _tmp16_ = NULL;
+			_tmp15_ = log_instance ();
+			_tmp16_ = _tmp15_;
+			log_log (_tmp16_, "CLEANUP");
+			_g_object_unref0 (_tmp16_);
 			installation_do_cleanup (self);
 			break;
 		}
 		case INSTALLATION_STEP_CLEANUP:
 		{
-			Log* _tmp15_ = NULL;
-			Log* _tmp16_ = NULL;
+			Log* _tmp17_ = NULL;
+			Log* _tmp18_ = NULL;
 			installation_set_progress (self, 100);
-			_tmp15_ = log_instance ();
-			_tmp16_ = _tmp15_;
-			log_log (_tmp16_, "DONE");
-			_g_object_unref0 (_tmp16_);
+			_tmp17_ = log_instance ();
+			_tmp18_ = _tmp17_;
+			log_log (_tmp18_, "DONE");
+			_g_object_unref0 (_tmp18_);
 			installation_do_done (self);
 			break;
 		}
 		case INSTALLATION_STEP_DONE:
 		{
-			gint _tmp17_ = 0;
-			_tmp17_ = self->priv->_state;
-			if (_tmp17_ != ((gint) INSTALLATION_STATE_ERROR)) {
-				Log* _tmp18_ = NULL;
-				Log* _tmp19_ = NULL;
-				_tmp18_ = log_instance ();
-				_tmp19_ = _tmp18_;
-				log_log (_tmp19_, "ERROR");
-				_g_object_unref0 (_tmp19_);
-				installation_set_description (self, "Done");
-			} else {
+			gint _tmp19_ = 0;
+			_tmp19_ = self->priv->_state;
+			if (_tmp19_ != ((gint) INSTALLATION_STATE_ERROR)) {
 				Log* _tmp20_ = NULL;
 				Log* _tmp21_ = NULL;
 				_tmp20_ = log_instance ();
 				_tmp21_ = _tmp20_;
-				log_log (_tmp21_, "DONE");
+				log_log (_tmp21_, "ERROR");
 				_g_object_unref0 (_tmp21_);
+				installation_set_description (self, "Done");
+			} else {
+				Log* _tmp22_ = NULL;
+				Log* _tmp23_ = NULL;
+				_tmp22_ = log_instance ();
+				_tmp23_ = _tmp22_;
+				log_log (_tmp23_, "DONE");
+				_g_object_unref0 (_tmp23_);
 			}
 			break;
 		}
@@ -1331,17 +1347,17 @@ static void installation_do_partition (Installation* self) {
 		gint _stepsArray_size_ = 0;
 		gchar** _tmp10_ = NULL;
 		gint _tmp10__length1 = 0;
-		const gchar* _tmp158_ = NULL;
-		const gchar* _tmp159_ = NULL;
-		gchar* _tmp160_ = NULL;
-		Log* _tmp161_ = NULL;
-		Log* _tmp162_ = NULL;
-		const gchar* _tmp163_ = NULL;
-		gchar* _tmp164_ = NULL;
-		gchar* _tmp165_ = NULL;
-		gchar* _tmp166_ = NULL;
-		gchar* _tmp167_ = NULL;
-		gboolean _tmp168_ = FALSE;
+		const gchar* _tmp172_ = NULL;
+		const gchar* _tmp173_ = NULL;
+		gchar* _tmp174_ = NULL;
+		Log* _tmp175_ = NULL;
+		Log* _tmp176_ = NULL;
+		const gchar* _tmp177_ = NULL;
+		gchar* _tmp178_ = NULL;
+		gchar* _tmp179_ = NULL;
+		gchar* _tmp180_ = NULL;
+		gchar* _tmp181_ = NULL;
+		gboolean _tmp182_ = FALSE;
 		_tmp1_ = g_strdup ("/dev/sda");
 		_g_free0 (self->priv->device_path);
 		self->priv->device_path = _tmp1_;
@@ -1469,28 +1485,13 @@ static void installation_do_partition (Installation* self) {
 								gchar** _tmp64_ = NULL;
 								gint _tmp64__length1 = 0;
 								const gchar* _tmp65_ = NULL;
-								gchar** _tmp79_ = NULL;
-								gint _tmp79__length1 = 0;
-								const gchar* _tmp80_ = NULL;
-								gchar* _tmp81_ = NULL;
-								gchar* _tmp82_ = NULL;
-								gchar* _tmp83_ = NULL;
-								gchar* _tmp84_ = NULL;
-								const gchar* _tmp85_ = NULL;
-								gchar* _tmp86_ = NULL;
-								gchar* _tmp87_ = NULL;
-								gint _tmp88_ = 0;
-								gchar* _tmp89_ = NULL;
-								gchar* _tmp90_ = NULL;
-								gchar* _tmp91_ = NULL;
-								gchar* _tmp92_ = NULL;
-								Log* _tmp93_ = NULL;
-								Log* _tmp94_ = NULL;
-								gint _tmp95_ = 0;
-								gchar* _tmp96_ = NULL;
-								gchar* _tmp97_ = NULL;
-								gchar* _tmp98_ = NULL;
-								gchar* _tmp99_ = NULL;
+								Log* _tmp108_ = NULL;
+								Log* _tmp109_ = NULL;
+								gint _tmp110_ = 0;
+								gchar* _tmp111_ = NULL;
+								gchar* _tmp112_ = NULL;
+								gchar* _tmp113_ = NULL;
+								gchar* _tmp114_ = NULL;
 								_tmp24_ = self->priv->device_path;
 								_tmp25_ = device_new_from_name (_tmp24_);
 								dev = _tmp25_;
@@ -1586,89 +1587,153 @@ static void installation_do_partition (Installation* self) {
 									Log* _tmp67_ = NULL;
 									gint _tmp68_ = 0;
 									gchar* _tmp69_ = NULL;
+									gchar* _tmp70_ = NULL;
 									_tmp66_ = log_instance ();
 									_tmp67_ = _tmp66_;
 									log_log (_tmp67_, "root");
 									_g_object_unref0 (_tmp67_);
 									_tmp68_ = new_partition;
 									_tmp69_ = g_strdup_printf ("%i", _tmp68_);
-									_g_free0 (self->root);
-									self->root = _tmp69_;
+									_tmp70_ = _tmp69_;
+									installation_set_root (self, _tmp70_);
+									_g_free0 (_tmp70_);
 								} else {
-									gchar** _tmp70_ = NULL;
-									gint _tmp70__length1 = 0;
-									const gchar* _tmp71_ = NULL;
-									_tmp70_ = splittedParams;
-									_tmp70__length1 = splittedParams_length1;
-									_tmp71_ = _tmp70_[4];
-									if (g_strcmp0 (_tmp71_, "home") == 0) {
-										Log* _tmp72_ = NULL;
+									gchar** _tmp71_ = NULL;
+									gint _tmp71__length1 = 0;
+									const gchar* _tmp72_ = NULL;
+									_tmp71_ = splittedParams;
+									_tmp71__length1 = splittedParams_length1;
+									_tmp72_ = _tmp71_[4];
+									if (g_strcmp0 (_tmp72_, "home") == 0) {
 										Log* _tmp73_ = NULL;
-										gint _tmp74_ = 0;
-										gchar* _tmp75_ = NULL;
+										Log* _tmp74_ = NULL;
+										gint _tmp75_ = 0;
 										gchar* _tmp76_ = NULL;
-										_tmp72_ = log_instance ();
-										_tmp73_ = _tmp72_;
-										log_log (_tmp73_, "home");
-										_g_object_unref0 (_tmp73_);
-										_tmp74_ = new_partition;
-										_tmp75_ = g_strdup_printf ("%i", _tmp74_);
-										_tmp76_ = _tmp75_;
-										installation_set_home (self, _tmp76_);
-										_g_free0 (_tmp76_);
+										gchar* _tmp77_ = NULL;
+										gchar** _tmp78_ = NULL;
+										gint _tmp78__length1 = 0;
+										const gchar* _tmp79_ = NULL;
+										gchar* _tmp80_ = NULL;
+										gchar* _tmp81_ = NULL;
+										gchar* _tmp82_ = NULL;
+										gchar* _tmp83_ = NULL;
+										const gchar* _tmp84_ = NULL;
+										gchar* _tmp85_ = NULL;
+										gchar* _tmp86_ = NULL;
+										gint _tmp87_ = 0;
+										gchar* _tmp88_ = NULL;
+										gchar* _tmp89_ = NULL;
+										gchar* _tmp90_ = NULL;
+										gchar* _tmp91_ = NULL;
+										_tmp73_ = log_instance ();
+										_tmp74_ = _tmp73_;
+										log_log (_tmp74_, "home");
+										_g_object_unref0 (_tmp74_);
+										_tmp75_ = new_partition;
+										_tmp76_ = g_strdup_printf ("%i", _tmp75_);
+										_tmp77_ = _tmp76_;
+										installation_set_home (self, _tmp77_);
+										_g_free0 (_tmp77_);
 										self->separatedHome = TRUE;
+										_tmp78_ = splittedParams;
+										_tmp78__length1 = splittedParams_length1;
+										_tmp79_ = _tmp78_[2];
+										_tmp80_ = g_strconcat ("/sbin/mkfs.", _tmp79_, NULL);
+										_tmp81_ = _tmp80_;
+										_tmp82_ = g_strconcat (_tmp81_, " ", NULL);
+										_tmp83_ = _tmp82_;
+										_tmp84_ = self->priv->device_path;
+										_tmp85_ = g_strconcat (_tmp83_, _tmp84_, NULL);
+										_tmp86_ = _tmp85_;
+										_tmp87_ = new_partition;
+										_tmp88_ = g_strdup_printf ("%i", _tmp87_);
+										_tmp89_ = _tmp88_;
+										_tmp90_ = g_strconcat (_tmp86_, _tmp89_, NULL);
+										_tmp91_ = _tmp90_;
+										g_spawn_command_line_sync (_tmp91_, NULL, NULL, NULL, &_inner_error_);
+										_g_free0 (_tmp91_);
+										_g_free0 (_tmp89_);
+										_g_free0 (_tmp86_);
+										_g_free0 (_tmp83_);
+										_g_free0 (_tmp81_);
+										if (G_UNLIKELY (_inner_error_ != NULL)) {
+											_g_free0 (mount);
+											range = (_vala_array_free (range, range_length1, (GDestroyNotify) g_free), NULL);
+											_g_object_unref0 (dev);
+											splittedParams = (_vala_array_free (splittedParams, splittedParams_length1, (GDestroyNotify) g_free), NULL);
+											_g_free0 (s);
+											stepsArray = (_vala_array_free (stepsArray, stepsArray_length1, (GDestroyNotify) g_free), NULL);
+											g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+											g_clear_error (&_inner_error_);
+											return;
+										}
 									} else {
-										Log* _tmp77_ = NULL;
-										Log* _tmp78_ = NULL;
-										_tmp77_ = log_instance ();
-										_tmp78_ = _tmp77_;
-										log_log (_tmp78_, "neither root or home");
-										_g_object_unref0 (_tmp78_);
+										Log* _tmp92_ = NULL;
+										Log* _tmp93_ = NULL;
+										gchar** _tmp94_ = NULL;
+										gint _tmp94__length1 = 0;
+										const gchar* _tmp95_ = NULL;
+										gchar* _tmp96_ = NULL;
+										gchar* _tmp97_ = NULL;
+										gchar* _tmp98_ = NULL;
+										gchar* _tmp99_ = NULL;
+										const gchar* _tmp100_ = NULL;
+										gchar* _tmp101_ = NULL;
+										gchar* _tmp102_ = NULL;
+										gint _tmp103_ = 0;
+										gchar* _tmp104_ = NULL;
+										gchar* _tmp105_ = NULL;
+										gchar* _tmp106_ = NULL;
+										gchar* _tmp107_ = NULL;
+										_tmp92_ = log_instance ();
+										_tmp93_ = _tmp92_;
+										log_log (_tmp93_, "neither root or home");
+										_g_object_unref0 (_tmp93_);
+										_tmp94_ = splittedParams;
+										_tmp94__length1 = splittedParams_length1;
+										_tmp95_ = _tmp94_[2];
+										_tmp96_ = g_strconcat ("/sbin/mkfs.", _tmp95_, NULL);
+										_tmp97_ = _tmp96_;
+										_tmp98_ = g_strconcat (_tmp97_, " ", NULL);
+										_tmp99_ = _tmp98_;
+										_tmp100_ = self->priv->device_path;
+										_tmp101_ = g_strconcat (_tmp99_, _tmp100_, NULL);
+										_tmp102_ = _tmp101_;
+										_tmp103_ = new_partition;
+										_tmp104_ = g_strdup_printf ("%i", _tmp103_);
+										_tmp105_ = _tmp104_;
+										_tmp106_ = g_strconcat (_tmp102_, _tmp105_, NULL);
+										_tmp107_ = _tmp106_;
+										g_spawn_command_line_sync (_tmp107_, NULL, NULL, NULL, &_inner_error_);
+										_g_free0 (_tmp107_);
+										_g_free0 (_tmp105_);
+										_g_free0 (_tmp102_);
+										_g_free0 (_tmp99_);
+										_g_free0 (_tmp97_);
+										if (G_UNLIKELY (_inner_error_ != NULL)) {
+											_g_free0 (mount);
+											range = (_vala_array_free (range, range_length1, (GDestroyNotify) g_free), NULL);
+											_g_object_unref0 (dev);
+											splittedParams = (_vala_array_free (splittedParams, splittedParams_length1, (GDestroyNotify) g_free), NULL);
+											_g_free0 (s);
+											stepsArray = (_vala_array_free (stepsArray, stepsArray_length1, (GDestroyNotify) g_free), NULL);
+											g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+											g_clear_error (&_inner_error_);
+											return;
+										}
 									}
 								}
-								_tmp79_ = splittedParams;
-								_tmp79__length1 = splittedParams_length1;
-								_tmp80_ = _tmp79_[2];
-								_tmp81_ = g_strconcat ("/sbin/mkfs.", _tmp80_, NULL);
-								_tmp82_ = _tmp81_;
-								_tmp83_ = g_strconcat (_tmp82_, " ", NULL);
-								_tmp84_ = _tmp83_;
-								_tmp85_ = self->priv->device_path;
-								_tmp86_ = g_strconcat (_tmp84_, _tmp85_, NULL);
-								_tmp87_ = _tmp86_;
-								_tmp88_ = new_partition;
-								_tmp89_ = g_strdup_printf ("%i", _tmp88_);
-								_tmp90_ = _tmp89_;
-								_tmp91_ = g_strconcat (_tmp87_, _tmp90_, NULL);
-								_tmp92_ = _tmp91_;
-								g_spawn_command_line_sync (_tmp92_, NULL, NULL, NULL, &_inner_error_);
-								_g_free0 (_tmp92_);
-								_g_free0 (_tmp90_);
-								_g_free0 (_tmp87_);
-								_g_free0 (_tmp84_);
-								_g_free0 (_tmp82_);
-								if (G_UNLIKELY (_inner_error_ != NULL)) {
-									_g_free0 (mount);
-									range = (_vala_array_free (range, range_length1, (GDestroyNotify) g_free), NULL);
-									_g_object_unref0 (dev);
-									splittedParams = (_vala_array_free (splittedParams, splittedParams_length1, (GDestroyNotify) g_free), NULL);
-									_g_free0 (s);
-									stepsArray = (_vala_array_free (stepsArray, stepsArray_length1, (GDestroyNotify) g_free), NULL);
-									g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-									g_clear_error (&_inner_error_);
-									return;
-								}
-								_tmp93_ = log_instance ();
-								_tmp94_ = _tmp93_;
-								_tmp95_ = new_partition;
-								_tmp96_ = g_strdup_printf ("%i", _tmp95_);
-								_tmp97_ = _tmp96_;
-								_tmp98_ = g_strconcat ("newly created ", _tmp97_, NULL);
-								_tmp99_ = _tmp98_;
-								log_log (_tmp94_, _tmp99_);
-								_g_free0 (_tmp99_);
-								_g_free0 (_tmp97_);
-								_g_object_unref0 (_tmp94_);
+								_tmp108_ = log_instance ();
+								_tmp109_ = _tmp108_;
+								_tmp110_ = new_partition;
+								_tmp111_ = g_strdup_printf ("%i", _tmp110_);
+								_tmp112_ = _tmp111_;
+								_tmp113_ = g_strconcat ("newly created ", _tmp112_, NULL);
+								_tmp114_ = _tmp113_;
+								log_log (_tmp109_, _tmp114_);
+								_g_free0 (_tmp114_);
+								_g_free0 (_tmp112_);
+								_g_object_unref0 (_tmp109_);
 								_g_free0 (mount);
 								range = (_vala_array_free (range, range_length1, (GDestroyNotify) g_free), NULL);
 								_g_object_unref0 (dev);
@@ -1680,60 +1745,60 @@ static void installation_do_partition (Installation* self) {
 							default:
 							{
 								gchar* id = NULL;
-								gchar** _tmp100_ = NULL;
-								gint _tmp100__length1 = 0;
-								const gchar* _tmp101_ = NULL;
-								gchar* _tmp102_ = NULL;
-								gchar** _tmp103_ = NULL;
-								gint _tmp103__length1 = 0;
-								const gchar* _tmp104_ = NULL;
-								gchar* _tmp105_ = NULL;
-								gchar* _tmp106_ = NULL;
-								gchar* _tmp107_ = NULL;
-								gchar* _tmp108_ = NULL;
-								const gchar* _tmp109_ = NULL;
-								gchar* _tmp110_ = NULL;
-								gchar* _tmp111_ = NULL;
-								gchar** _tmp112_ = NULL;
-								gint _tmp112__length1 = 0;
-								const gchar* _tmp113_ = NULL;
-								gchar* _tmp114_ = NULL;
-								gchar* _tmp115_ = NULL;
-								Log* _tmp116_ = NULL;
-								Log* _tmp117_ = NULL;
+								gchar** _tmp115_ = NULL;
+								gint _tmp115__length1 = 0;
+								const gchar* _tmp116_ = NULL;
+								gchar* _tmp117_ = NULL;
 								gchar** _tmp118_ = NULL;
 								gint _tmp118__length1 = 0;
 								const gchar* _tmp119_ = NULL;
 								gchar* _tmp120_ = NULL;
 								gchar* _tmp121_ = NULL;
-								gchar** _tmp122_ = NULL;
-								gint _tmp122__length1 = 0;
-								const gchar* _tmp123_ = NULL;
-								_tmp100_ = splittedParams;
-								_tmp100__length1 = splittedParams_length1;
-								_tmp101_ = _tmp100_[1];
-								_tmp102_ = g_strdup (_tmp101_);
-								id = _tmp102_;
-								_tmp103_ = splittedParams;
-								_tmp103__length1 = splittedParams_length1;
-								_tmp104_ = _tmp103_[2];
-								_tmp105_ = g_strconcat ("/sbin/mkfs.", _tmp104_, NULL);
-								_tmp106_ = _tmp105_;
-								_tmp107_ = g_strconcat (_tmp106_, " ", NULL);
-								_tmp108_ = _tmp107_;
-								_tmp109_ = self->priv->device_path;
-								_tmp110_ = g_strconcat (_tmp108_, _tmp109_, NULL);
-								_tmp111_ = _tmp110_;
-								_tmp112_ = splittedParams;
-								_tmp112__length1 = splittedParams_length1;
-								_tmp113_ = _tmp112_[1];
-								_tmp114_ = g_strconcat (_tmp111_, _tmp113_, NULL);
-								_tmp115_ = _tmp114_;
-								g_spawn_command_line_sync (_tmp115_, NULL, NULL, NULL, &_inner_error_);
-								_g_free0 (_tmp115_);
-								_g_free0 (_tmp111_);
-								_g_free0 (_tmp108_);
-								_g_free0 (_tmp106_);
+								gchar* _tmp122_ = NULL;
+								gchar* _tmp123_ = NULL;
+								const gchar* _tmp124_ = NULL;
+								gchar* _tmp125_ = NULL;
+								gchar* _tmp126_ = NULL;
+								gchar** _tmp127_ = NULL;
+								gint _tmp127__length1 = 0;
+								const gchar* _tmp128_ = NULL;
+								gchar* _tmp129_ = NULL;
+								gchar* _tmp130_ = NULL;
+								Log* _tmp131_ = NULL;
+								Log* _tmp132_ = NULL;
+								gchar** _tmp133_ = NULL;
+								gint _tmp133__length1 = 0;
+								const gchar* _tmp134_ = NULL;
+								gchar* _tmp135_ = NULL;
+								gchar* _tmp136_ = NULL;
+								gchar** _tmp137_ = NULL;
+								gint _tmp137__length1 = 0;
+								const gchar* _tmp138_ = NULL;
+								_tmp115_ = splittedParams;
+								_tmp115__length1 = splittedParams_length1;
+								_tmp116_ = _tmp115_[1];
+								_tmp117_ = g_strdup (_tmp116_);
+								id = _tmp117_;
+								_tmp118_ = splittedParams;
+								_tmp118__length1 = splittedParams_length1;
+								_tmp119_ = _tmp118_[2];
+								_tmp120_ = g_strconcat ("/sbin/mkfs.", _tmp119_, NULL);
+								_tmp121_ = _tmp120_;
+								_tmp122_ = g_strconcat (_tmp121_, " ", NULL);
+								_tmp123_ = _tmp122_;
+								_tmp124_ = self->priv->device_path;
+								_tmp125_ = g_strconcat (_tmp123_, _tmp124_, NULL);
+								_tmp126_ = _tmp125_;
+								_tmp127_ = splittedParams;
+								_tmp127__length1 = splittedParams_length1;
+								_tmp128_ = _tmp127_[1];
+								_tmp129_ = g_strconcat (_tmp126_, _tmp128_, NULL);
+								_tmp130_ = _tmp129_;
+								g_spawn_command_line_sync (_tmp130_, NULL, NULL, NULL, &_inner_error_);
+								_g_free0 (_tmp130_);
+								_g_free0 (_tmp126_);
+								_g_free0 (_tmp123_);
+								_g_free0 (_tmp121_);
 								if (G_UNLIKELY (_inner_error_ != NULL)) {
 									_g_free0 (id);
 									splittedParams = (_vala_array_free (splittedParams, splittedParams_length1, (GDestroyNotify) g_free), NULL);
@@ -1743,51 +1808,48 @@ static void installation_do_partition (Installation* self) {
 									g_clear_error (&_inner_error_);
 									return;
 								}
-								_tmp116_ = log_instance ();
-								_tmp117_ = _tmp116_;
-								_tmp118_ = splittedParams;
-								_tmp118__length1 = splittedParams_length1;
-								_tmp119_ = _tmp118_[1];
-								_tmp120_ = g_strconcat ("should format partition ", _tmp119_, NULL);
-								_tmp121_ = _tmp120_;
-								log_log (_tmp117_, _tmp121_);
-								_g_free0 (_tmp121_);
-								_g_object_unref0 (_tmp117_);
-								_tmp122_ = splittedParams;
-								_tmp122__length1 = splittedParams_length1;
-								_tmp123_ = _tmp122_[3];
-								if (g_strcmp0 (_tmp123_, "root") == 0) {
-									Log* _tmp124_ = NULL;
-									Log* _tmp125_ = NULL;
-									gchar** _tmp126_ = NULL;
-									gint _tmp126__length1 = 0;
-									const gchar* _tmp127_ = NULL;
-									gchar* _tmp128_ = NULL;
-									_tmp124_ = log_instance ();
-									_tmp125_ = _tmp124_;
-									log_log (_tmp125_, "root");
-									_g_object_unref0 (_tmp125_);
-									_tmp126_ = splittedParams;
-									_tmp126__length1 = splittedParams_length1;
-									_tmp127_ = _tmp126_[1];
-									_tmp128_ = g_strdup (_tmp127_);
-									_g_free0 (self->root);
-									self->root = _tmp128_;
+								_tmp131_ = log_instance ();
+								_tmp132_ = _tmp131_;
+								_tmp133_ = splittedParams;
+								_tmp133__length1 = splittedParams_length1;
+								_tmp134_ = _tmp133_[1];
+								_tmp135_ = g_strconcat ("should format partition ", _tmp134_, NULL);
+								_tmp136_ = _tmp135_;
+								log_log (_tmp132_, _tmp136_);
+								_g_free0 (_tmp136_);
+								_g_object_unref0 (_tmp132_);
+								_tmp137_ = splittedParams;
+								_tmp137__length1 = splittedParams_length1;
+								_tmp138_ = _tmp137_[3];
+								if (g_strcmp0 (_tmp138_, "root") == 0) {
+									Log* _tmp139_ = NULL;
+									Log* _tmp140_ = NULL;
+									gchar** _tmp141_ = NULL;
+									gint _tmp141__length1 = 0;
+									const gchar* _tmp142_ = NULL;
+									_tmp139_ = log_instance ();
+									_tmp140_ = _tmp139_;
+									log_log (_tmp140_, "root");
+									_g_object_unref0 (_tmp140_);
+									_tmp141_ = splittedParams;
+									_tmp141__length1 = splittedParams_length1;
+									_tmp142_ = _tmp141_[1];
+									installation_set_root (self, _tmp142_);
 								} else {
-									gchar** _tmp129_ = NULL;
-									gint _tmp129__length1 = 0;
-									const gchar* _tmp130_ = NULL;
-									_tmp129_ = splittedParams;
-									_tmp129__length1 = splittedParams_length1;
-									_tmp130_ = _tmp129_[3];
-									if (g_strcmp0 (_tmp130_, "home") == 0) {
-										gchar** _tmp131_ = NULL;
-										gint _tmp131__length1 = 0;
-										const gchar* _tmp132_ = NULL;
-										_tmp131_ = splittedParams;
-										_tmp131__length1 = splittedParams_length1;
-										_tmp132_ = _tmp131_[1];
-										installation_set_home (self, _tmp132_);
+									gchar** _tmp143_ = NULL;
+									gint _tmp143__length1 = 0;
+									const gchar* _tmp144_ = NULL;
+									_tmp143_ = splittedParams;
+									_tmp143__length1 = splittedParams_length1;
+									_tmp144_ = _tmp143_[3];
+									if (g_strcmp0 (_tmp144_, "home") == 0) {
+										gchar** _tmp145_ = NULL;
+										gint _tmp145__length1 = 0;
+										const gchar* _tmp146_ = NULL;
+										_tmp145_ = splittedParams;
+										_tmp145__length1 = splittedParams_length1;
+										_tmp146_ = _tmp145_[1];
+										installation_set_home (self, _tmp146_);
 										self->separatedHome = TRUE;
 									}
 								}
@@ -1800,61 +1862,61 @@ static void installation_do_partition (Installation* self) {
 							default:
 							{
 								Device* dev = NULL;
-								const gchar* _tmp133_ = NULL;
-								Device* _tmp134_ = NULL;
+								const gchar* _tmp147_ = NULL;
+								Device* _tmp148_ = NULL;
 								gchar* id = NULL;
-								gchar** _tmp135_ = NULL;
-								gint _tmp135__length1 = 0;
-								const gchar* _tmp136_ = NULL;
-								gchar* _tmp137_ = NULL;
-								Log* _tmp138_ = NULL;
-								Log* _tmp139_ = NULL;
-								gchar** _tmp140_ = NULL;
-								gint _tmp140__length1 = 0;
-								const gchar* _tmp141_ = NULL;
-								gchar* _tmp142_ = NULL;
-								gchar* _tmp143_ = NULL;
-								gint _result_ = 0;
-								Device* _tmp144_ = NULL;
-								gchar** _tmp145_ = NULL;
-								gint _tmp145__length1 = 0;
-								const gchar* _tmp146_ = NULL;
-								gint _tmp147_ = 0;
-								gint _tmp148_ = 0;
-								Log* _tmp149_ = NULL;
-								Log* _tmp150_ = NULL;
-								gint _tmp151_ = 0;
-								gchar* _tmp152_ = NULL;
-								gchar* _tmp153_ = NULL;
-								gchar* _tmp154_ = NULL;
-								gchar* _tmp155_ = NULL;
+								gchar** _tmp149_ = NULL;
+								gint _tmp149__length1 = 0;
+								const gchar* _tmp150_ = NULL;
+								gchar* _tmp151_ = NULL;
+								Log* _tmp152_ = NULL;
+								Log* _tmp153_ = NULL;
+								gchar** _tmp154_ = NULL;
+								gint _tmp154__length1 = 0;
+								const gchar* _tmp155_ = NULL;
 								gchar* _tmp156_ = NULL;
 								gchar* _tmp157_ = NULL;
-								_tmp133_ = self->priv->device_path;
-								_tmp134_ = device_new_from_name (_tmp133_);
-								dev = _tmp134_;
-								_tmp135_ = splittedParams;
-								_tmp135__length1 = splittedParams_length1;
-								_tmp136_ = _tmp135_[1];
-								_tmp137_ = g_strdup (_tmp136_);
-								id = _tmp137_;
-								_tmp138_ = log_instance ();
-								_tmp139_ = _tmp138_;
-								_tmp140_ = splittedParams;
-								_tmp140__length1 = splittedParams_length1;
-								_tmp141_ = _tmp140_[1];
-								_tmp142_ = g_strconcat ("should delete partition ", _tmp141_, NULL);
-								_tmp143_ = _tmp142_;
-								log_log (_tmp139_, _tmp143_);
-								_g_free0 (_tmp143_);
-								_g_object_unref0 (_tmp139_);
-								_tmp144_ = dev;
-								_tmp145_ = splittedParams;
-								_tmp145__length1 = splittedParams_length1;
-								_tmp146_ = _tmp145_[1];
-								_tmp147_ = atoi (_tmp146_);
-								_tmp148_ = device_delete_partition (_tmp144_, _tmp147_, &_inner_error_);
-								_result_ = _tmp148_;
+								gint _result_ = 0;
+								Device* _tmp158_ = NULL;
+								gchar** _tmp159_ = NULL;
+								gint _tmp159__length1 = 0;
+								const gchar* _tmp160_ = NULL;
+								gint _tmp161_ = 0;
+								gint _tmp162_ = 0;
+								Log* _tmp163_ = NULL;
+								Log* _tmp164_ = NULL;
+								gint _tmp165_ = 0;
+								gchar* _tmp166_ = NULL;
+								gchar* _tmp167_ = NULL;
+								gchar* _tmp168_ = NULL;
+								gchar* _tmp169_ = NULL;
+								gchar* _tmp170_ = NULL;
+								gchar* _tmp171_ = NULL;
+								_tmp147_ = self->priv->device_path;
+								_tmp148_ = device_new_from_name (_tmp147_);
+								dev = _tmp148_;
+								_tmp149_ = splittedParams;
+								_tmp149__length1 = splittedParams_length1;
+								_tmp150_ = _tmp149_[1];
+								_tmp151_ = g_strdup (_tmp150_);
+								id = _tmp151_;
+								_tmp152_ = log_instance ();
+								_tmp153_ = _tmp152_;
+								_tmp154_ = splittedParams;
+								_tmp154__length1 = splittedParams_length1;
+								_tmp155_ = _tmp154_[1];
+								_tmp156_ = g_strconcat ("should delete partition ", _tmp155_, NULL);
+								_tmp157_ = _tmp156_;
+								log_log (_tmp153_, _tmp157_);
+								_g_free0 (_tmp157_);
+								_g_object_unref0 (_tmp153_);
+								_tmp158_ = dev;
+								_tmp159_ = splittedParams;
+								_tmp159__length1 = splittedParams_length1;
+								_tmp160_ = _tmp159_[1];
+								_tmp161_ = atoi (_tmp160_);
+								_tmp162_ = device_delete_partition (_tmp158_, _tmp161_, &_inner_error_);
+								_result_ = _tmp162_;
 								if (G_UNLIKELY (_inner_error_ != NULL)) {
 									_g_free0 (id);
 									_g_object_unref0 (dev);
@@ -1865,20 +1927,20 @@ static void installation_do_partition (Installation* self) {
 									g_clear_error (&_inner_error_);
 									return;
 								}
-								_tmp149_ = log_instance ();
-								_tmp150_ = _tmp149_;
-								_tmp151_ = _result_;
-								_tmp152_ = g_strdup_printf ("%i", _tmp151_);
-								_tmp153_ = _tmp152_;
-								_tmp154_ = g_strconcat ("\nDeleted :", _tmp153_, NULL);
-								_tmp155_ = _tmp154_;
-								_tmp156_ = g_strconcat (_tmp155_, "\n", NULL);
-								_tmp157_ = _tmp156_;
-								log_log (_tmp150_, _tmp157_);
-								_g_free0 (_tmp157_);
-								_g_free0 (_tmp155_);
-								_g_free0 (_tmp153_);
-								_g_object_unref0 (_tmp150_);
+								_tmp163_ = log_instance ();
+								_tmp164_ = _tmp163_;
+								_tmp165_ = _result_;
+								_tmp166_ = g_strdup_printf ("%i", _tmp165_);
+								_tmp167_ = _tmp166_;
+								_tmp168_ = g_strconcat ("\nDeleted :", _tmp167_, NULL);
+								_tmp169_ = _tmp168_;
+								_tmp170_ = g_strconcat (_tmp169_, "\n", NULL);
+								_tmp171_ = _tmp170_;
+								log_log (_tmp164_, _tmp171_);
+								_g_free0 (_tmp171_);
+								_g_free0 (_tmp169_);
+								_g_free0 (_tmp167_);
+								_g_object_unref0 (_tmp164_);
 								_g_free0 (id);
 								_g_object_unref0 (dev);
 								break;
@@ -1890,152 +1952,152 @@ static void installation_do_partition (Installation* self) {
 				}
 			}
 		}
-		_tmp158_ = self->priv->device_path;
-		_tmp159_ = self->root;
-		_tmp160_ = g_strconcat (_tmp158_, _tmp159_, NULL);
+		_tmp172_ = self->priv->device_path;
+		_tmp173_ = self->priv->_root;
+		_tmp174_ = g_strconcat (_tmp172_, _tmp173_, NULL);
 		_g_free0 (self->priv->partition_path);
-		self->priv->partition_path = _tmp160_;
-		_tmp161_ = log_instance ();
-		_tmp162_ = _tmp161_;
-		_tmp163_ = self->priv->partition_path;
-		_tmp164_ = g_strconcat ("\nTarget :", _tmp163_, NULL);
-		_tmp165_ = _tmp164_;
-		_tmp166_ = g_strconcat (_tmp165_, "\n", NULL);
-		_tmp167_ = _tmp166_;
-		log_log (_tmp162_, _tmp167_);
-		_g_free0 (_tmp167_);
-		_g_free0 (_tmp165_);
-		_g_object_unref0 (_tmp162_);
-		_tmp168_ = self->separatedHome;
-		if (_tmp168_ == TRUE) {
-			const gchar* _tmp169_ = NULL;
-			const gchar* _tmp170_ = NULL;
-			gchar* _tmp171_ = NULL;
-			gchar* _tmp172_ = NULL;
-			Log* _tmp173_ = NULL;
-			Log* _tmp174_ = NULL;
-			const gchar* _tmp175_ = NULL;
-			gchar* _tmp176_ = NULL;
-			gchar* _tmp177_ = NULL;
-			gchar* _tmp178_ = NULL;
-			gchar* _tmp179_ = NULL;
-			_tmp169_ = self->priv->device_path;
-			_tmp170_ = self->priv->_home;
-			_tmp171_ = g_strconcat (_tmp169_, _tmp170_, NULL);
-			_tmp172_ = _tmp171_;
-			installation_set_home (self, _tmp172_);
-			_g_free0 (_tmp172_);
-			_tmp173_ = log_instance ();
-			_tmp174_ = _tmp173_;
-			_tmp175_ = self->priv->_home;
-			_tmp176_ = g_strconcat ("\nHome :", _tmp175_, NULL);
-			_tmp177_ = _tmp176_;
-			_tmp178_ = g_strconcat (_tmp177_, "\n", NULL);
-			_tmp179_ = _tmp178_;
-			log_log (_tmp174_, _tmp179_);
-			_g_free0 (_tmp179_);
-			_g_free0 (_tmp177_);
-			_g_object_unref0 (_tmp174_);
+		self->priv->partition_path = _tmp174_;
+		_tmp175_ = log_instance ();
+		_tmp176_ = _tmp175_;
+		_tmp177_ = self->priv->partition_path;
+		_tmp178_ = g_strconcat ("\nTarget :", _tmp177_, NULL);
+		_tmp179_ = _tmp178_;
+		_tmp180_ = g_strconcat (_tmp179_, "\n", NULL);
+		_tmp181_ = _tmp180_;
+		log_log (_tmp176_, _tmp181_);
+		_g_free0 (_tmp181_);
+		_g_free0 (_tmp179_);
+		_g_object_unref0 (_tmp176_);
+		_tmp182_ = self->separatedHome;
+		if (_tmp182_ == TRUE) {
+			const gchar* _tmp183_ = NULL;
+			const gchar* _tmp184_ = NULL;
+			gchar* _tmp185_ = NULL;
+			gchar* _tmp186_ = NULL;
+			Log* _tmp187_ = NULL;
+			Log* _tmp188_ = NULL;
+			const gchar* _tmp189_ = NULL;
+			gchar* _tmp190_ = NULL;
+			gchar* _tmp191_ = NULL;
+			gchar* _tmp192_ = NULL;
+			gchar* _tmp193_ = NULL;
+			_tmp183_ = self->priv->device_path;
+			_tmp184_ = self->priv->_home;
+			_tmp185_ = g_strconcat (_tmp183_, _tmp184_, NULL);
+			_tmp186_ = _tmp185_;
+			installation_set_home (self, _tmp186_);
+			_g_free0 (_tmp186_);
+			_tmp187_ = log_instance ();
+			_tmp188_ = _tmp187_;
+			_tmp189_ = self->priv->_home;
+			_tmp190_ = g_strconcat ("\nHome :", _tmp189_, NULL);
+			_tmp191_ = _tmp190_;
+			_tmp192_ = g_strconcat (_tmp191_, "\n", NULL);
+			_tmp193_ = _tmp192_;
+			log_log (_tmp188_, _tmp193_);
+			_g_free0 (_tmp193_);
+			_g_free0 (_tmp191_);
+			_g_object_unref0 (_tmp188_);
 		}
 		self->priv->last_step = INSTALLATION_STEP_PARTITION;
 		installation_do_next_job (self);
 		stepsArray = (_vala_array_free (stepsArray, stepsArray_length1, (GDestroyNotify) g_free), NULL);
 	} else {
 		GeeArrayList* d = NULL;
-		GeeArrayList* _tmp180_ = NULL;
+		GeeArrayList* _tmp194_ = NULL;
 		gboolean inconsistent = FALSE;
-		gboolean _tmp181_ = FALSE;
-		GeeArrayList* _tmp182_ = NULL;
-		gboolean _tmp204_ = FALSE;
+		gboolean _tmp195_ = FALSE;
+		GeeArrayList* _tmp196_ = NULL;
+		gboolean _tmp218_ = FALSE;
 		GeeArrayList* partitions = NULL;
-		GeeArrayList* _tmp205_ = NULL;
-		gint _tmp206_ = 0;
-		gpointer _tmp207_ = NULL;
-		Device* _tmp208_ = NULL;
-		GeeArrayList* _tmp209_ = NULL;
-		GeeArrayList* _tmp210_ = NULL;
-		GeeArrayList* _tmp211_ = NULL;
-		GeeArrayList* _tmp212_ = NULL;
-		GeeArrayList* _tmp213_ = NULL;
-		gint _tmp214_ = 0;
-		gpointer _tmp215_ = NULL;
-		Device* _tmp216_ = NULL;
-		gchar* _tmp217_ = NULL;
-		Log* _tmp218_ = NULL;
-		Log* _tmp219_ = NULL;
-		GeeArrayList* _tmp220_ = NULL;
-		gint _tmp221_ = 0;
-		gpointer _tmp222_ = NULL;
-		DevicePartition* _tmp223_ = NULL;
-		DevicePartitionType _tmp224_ = 0;
-		DevicePartitionType _tmp225_ = 0;
-		gboolean _tmp226_ = FALSE;
-		_tmp180_ = parted_get_devices (TRUE);
-		d = _tmp180_;
+		GeeArrayList* _tmp219_ = NULL;
+		gint _tmp220_ = 0;
+		gpointer _tmp221_ = NULL;
+		Device* _tmp222_ = NULL;
+		GeeArrayList* _tmp223_ = NULL;
+		GeeArrayList* _tmp224_ = NULL;
+		GeeArrayList* _tmp225_ = NULL;
+		GeeArrayList* _tmp226_ = NULL;
+		GeeArrayList* _tmp227_ = NULL;
+		gint _tmp228_ = 0;
+		gpointer _tmp229_ = NULL;
+		Device* _tmp230_ = NULL;
+		gchar* _tmp231_ = NULL;
+		Log* _tmp232_ = NULL;
+		Log* _tmp233_ = NULL;
+		GeeArrayList* _tmp234_ = NULL;
+		gint _tmp235_ = 0;
+		gpointer _tmp236_ = NULL;
+		DevicePartition* _tmp237_ = NULL;
+		DevicePartitionType _tmp238_ = 0;
+		DevicePartitionType _tmp239_ = 0;
+		gboolean _tmp240_ = FALSE;
+		_tmp194_ = parted_get_devices (TRUE);
+		d = _tmp194_;
 		inconsistent = FALSE;
-		_tmp182_ = d;
-		if (_tmp182_ != NULL) {
-			gint _tmp183_ = 0;
-			GeeArrayList* _tmp184_ = NULL;
-			gint _tmp185_ = 0;
-			gint _tmp186_ = 0;
-			_tmp183_ = self->priv->_device;
-			_tmp184_ = d;
-			_tmp185_ = gee_abstract_collection_get_size ((GeeCollection*) _tmp184_);
-			_tmp186_ = _tmp185_;
-			_tmp181_ = _tmp183_ > _tmp186_;
+		_tmp196_ = d;
+		if (_tmp196_ != NULL) {
+			gint _tmp197_ = 0;
+			GeeArrayList* _tmp198_ = NULL;
+			gint _tmp199_ = 0;
+			gint _tmp200_ = 0;
+			_tmp197_ = self->priv->_device;
+			_tmp198_ = d;
+			_tmp199_ = gee_abstract_collection_get_size ((GeeCollection*) _tmp198_);
+			_tmp200_ = _tmp199_;
+			_tmp195_ = _tmp197_ > _tmp200_;
 		} else {
-			_tmp181_ = FALSE;
+			_tmp195_ = FALSE;
 		}
-		if (_tmp181_) {
+		if (_tmp195_) {
 			inconsistent = TRUE;
 		} else {
-			gboolean _tmp187_ = FALSE;
-			GeeArrayList* _tmp188_ = NULL;
-			gint _tmp189_ = 0;
-			gpointer _tmp190_ = NULL;
-			Device* _tmp191_ = NULL;
-			GeeArrayList* _tmp192_ = NULL;
-			GeeArrayList* _tmp193_ = NULL;
-			gboolean _tmp194_ = FALSE;
-			_tmp188_ = d;
-			_tmp189_ = self->priv->_device;
-			_tmp190_ = gee_abstract_list_get ((GeeAbstractList*) _tmp188_, _tmp189_);
-			_tmp191_ = (Device*) _tmp190_;
-			_tmp192_ = device_get_partitions (_tmp191_);
-			_tmp193_ = _tmp192_;
-			_tmp194_ = _tmp193_ != NULL;
-			_g_object_unref0 (_tmp191_);
-			if (_tmp194_) {
-				gint _tmp195_ = 0;
-				GeeArrayList* _tmp196_ = NULL;
-				gint _tmp197_ = 0;
-				gpointer _tmp198_ = NULL;
-				Device* _tmp199_ = NULL;
-				GeeArrayList* _tmp200_ = NULL;
-				GeeArrayList* _tmp201_ = NULL;
-				gint _tmp202_ = 0;
-				gint _tmp203_ = 0;
-				_tmp195_ = self->priv->_partition;
-				_tmp196_ = d;
-				_tmp197_ = self->priv->_device;
-				_tmp198_ = gee_abstract_list_get ((GeeAbstractList*) _tmp196_, _tmp197_);
-				_tmp199_ = (Device*) _tmp198_;
-				_tmp200_ = device_get_partitions (_tmp199_);
-				_tmp201_ = _tmp200_;
-				_tmp202_ = gee_abstract_collection_get_size ((GeeCollection*) _tmp201_);
-				_tmp203_ = _tmp202_;
-				_tmp187_ = _tmp195_ > _tmp203_;
-				_g_object_unref0 (_tmp199_);
+			gboolean _tmp201_ = FALSE;
+			GeeArrayList* _tmp202_ = NULL;
+			gint _tmp203_ = 0;
+			gpointer _tmp204_ = NULL;
+			Device* _tmp205_ = NULL;
+			GeeArrayList* _tmp206_ = NULL;
+			GeeArrayList* _tmp207_ = NULL;
+			gboolean _tmp208_ = FALSE;
+			_tmp202_ = d;
+			_tmp203_ = self->priv->_device;
+			_tmp204_ = gee_abstract_list_get ((GeeAbstractList*) _tmp202_, _tmp203_);
+			_tmp205_ = (Device*) _tmp204_;
+			_tmp206_ = device_get_partitions (_tmp205_);
+			_tmp207_ = _tmp206_;
+			_tmp208_ = _tmp207_ != NULL;
+			_g_object_unref0 (_tmp205_);
+			if (_tmp208_) {
+				gint _tmp209_ = 0;
+				GeeArrayList* _tmp210_ = NULL;
+				gint _tmp211_ = 0;
+				gpointer _tmp212_ = NULL;
+				Device* _tmp213_ = NULL;
+				GeeArrayList* _tmp214_ = NULL;
+				GeeArrayList* _tmp215_ = NULL;
+				gint _tmp216_ = 0;
+				gint _tmp217_ = 0;
+				_tmp209_ = self->priv->_partition;
+				_tmp210_ = d;
+				_tmp211_ = self->priv->_device;
+				_tmp212_ = gee_abstract_list_get ((GeeAbstractList*) _tmp210_, _tmp211_);
+				_tmp213_ = (Device*) _tmp212_;
+				_tmp214_ = device_get_partitions (_tmp213_);
+				_tmp215_ = _tmp214_;
+				_tmp216_ = gee_abstract_collection_get_size ((GeeCollection*) _tmp215_);
+				_tmp217_ = _tmp216_;
+				_tmp201_ = _tmp209_ > _tmp217_;
+				_g_object_unref0 (_tmp213_);
 			} else {
-				_tmp187_ = FALSE;
+				_tmp201_ = FALSE;
 			}
-			if (_tmp187_) {
+			if (_tmp201_) {
 				inconsistent = TRUE;
 			}
 		}
-		_tmp204_ = inconsistent;
-		if (_tmp204_) {
+		_tmp218_ = inconsistent;
+		if (_tmp218_) {
 			self->priv->step = INSTALLATION_STEP_DONE;
 			self->priv->last_step = INSTALLATION_STEP_DONE;
 			installation_set_state (self, (gint) INSTALLATION_STATE_ERROR);
@@ -2043,157 +2105,157 @@ static void installation_do_partition (Installation* self) {
 			_g_object_unref0 (d);
 			return;
 		}
-		_tmp205_ = d;
-		_tmp206_ = self->priv->_device;
-		_tmp207_ = gee_abstract_list_get ((GeeAbstractList*) _tmp205_, _tmp206_);
-		_tmp208_ = (Device*) _tmp207_;
-		_tmp209_ = device_get_partitions (_tmp208_);
-		_tmp210_ = _tmp209_;
-		_tmp211_ = _g_object_ref0 (_tmp210_);
-		_tmp212_ = _tmp211_;
-		_g_object_unref0 (_tmp208_);
-		partitions = _tmp212_;
-		_tmp213_ = d;
-		_tmp214_ = self->priv->_device;
-		_tmp215_ = gee_abstract_list_get ((GeeAbstractList*) _tmp213_, _tmp214_);
-		_tmp216_ = (Device*) _tmp215_;
-		_tmp217_ = device_get_path (_tmp216_);
+		_tmp219_ = d;
+		_tmp220_ = self->priv->_device;
+		_tmp221_ = gee_abstract_list_get ((GeeAbstractList*) _tmp219_, _tmp220_);
+		_tmp222_ = (Device*) _tmp221_;
+		_tmp223_ = device_get_partitions (_tmp222_);
+		_tmp224_ = _tmp223_;
+		_tmp225_ = _g_object_ref0 (_tmp224_);
+		_tmp226_ = _tmp225_;
+		_g_object_unref0 (_tmp222_);
+		partitions = _tmp226_;
+		_tmp227_ = d;
+		_tmp228_ = self->priv->_device;
+		_tmp229_ = gee_abstract_list_get ((GeeAbstractList*) _tmp227_, _tmp228_);
+		_tmp230_ = (Device*) _tmp229_;
+		_tmp231_ = device_get_path (_tmp230_);
 		_g_free0 (self->priv->device_path);
-		self->priv->device_path = _tmp217_;
-		_g_object_unref0 (_tmp216_);
+		self->priv->device_path = _tmp231_;
+		_g_object_unref0 (_tmp230_);
 		installation_set_description (self, "Partitioning");
 		self->priv->step = INSTALLATION_STEP_PARTITION;
-		_tmp218_ = log_instance ();
-		_tmp219_ = _tmp218_;
-		log_log (_tmp219_, "Enter simple partitioning");
-		_g_object_unref0 (_tmp219_);
-		_tmp220_ = partitions;
-		_tmp221_ = self->priv->_partition;
-		_tmp222_ = gee_abstract_list_get ((GeeAbstractList*) _tmp220_, _tmp221_);
-		_tmp223_ = (DevicePartition*) _tmp222_;
-		_tmp224_ = device_partition_get_ptype (_tmp223_);
-		_tmp225_ = _tmp224_;
-		_tmp226_ = _tmp225_ == DEVICE_PARTITION_TYPE_FREESPACE;
-		_g_object_unref0 (_tmp223_);
-		if (_tmp226_) {
+		_tmp232_ = log_instance ();
+		_tmp233_ = _tmp232_;
+		log_log (_tmp233_, "Enter simple partitioning");
+		_g_object_unref0 (_tmp233_);
+		_tmp234_ = partitions;
+		_tmp235_ = self->priv->_partition;
+		_tmp236_ = gee_abstract_list_get ((GeeAbstractList*) _tmp234_, _tmp235_);
+		_tmp237_ = (DevicePartition*) _tmp236_;
+		_tmp238_ = device_partition_get_ptype (_tmp237_);
+		_tmp239_ = _tmp238_;
+		_tmp240_ = _tmp239_ == DEVICE_PARTITION_TYPE_FREESPACE;
+		_g_object_unref0 (_tmp237_);
+		if (_tmp240_) {
 			Device* device = NULL;
-			const gchar* _tmp227_ = NULL;
-			Device* _tmp228_ = NULL;
+			const gchar* _tmp241_ = NULL;
+			Device* _tmp242_ = NULL;
 			gboolean can_continue = FALSE;
 			gint new_partition = 0;
-			gboolean _tmp278_ = FALSE;
-			GeeArrayList* _tmp279_ = NULL;
-			GeeArrayList* _tmp280_ = NULL;
-			const gchar* _tmp281_ = NULL;
-			gint _tmp282_ = 0;
-			gchar* _tmp283_ = NULL;
-			gchar* _tmp284_ = NULL;
-			gchar* _tmp285_ = NULL;
-			_tmp227_ = self->priv->device_path;
-			_tmp228_ = device_new_from_name (_tmp227_);
-			device = _tmp228_;
+			gboolean _tmp292_ = FALSE;
+			GeeArrayList* _tmp293_ = NULL;
+			GeeArrayList* _tmp294_ = NULL;
+			const gchar* _tmp295_ = NULL;
+			gint _tmp296_ = 0;
+			gchar* _tmp297_ = NULL;
+			gchar* _tmp298_ = NULL;
+			gchar* _tmp299_ = NULL;
+			_tmp241_ = self->priv->device_path;
+			_tmp242_ = device_new_from_name (_tmp241_);
+			device = _tmp242_;
 			can_continue = FALSE;
 			new_partition = -1;
 			{
 				guint64 swap_size = 0ULL;
-				GeeArrayList* _tmp229_ = NULL;
-				GeeArrayList* _tmp230_ = NULL;
-				gboolean _tmp231_ = FALSE;
-				gboolean _tmp232_ = FALSE;
-				gboolean _tmp233_ = FALSE;
-				gint _tmp249_ = 0;
-				Device* _tmp250_ = NULL;
-				GeeArrayList* _tmp251_ = NULL;
-				gint _tmp252_ = 0;
-				gpointer _tmp253_ = NULL;
-				DevicePartition* _tmp254_ = NULL;
-				guint64 _tmp255_ = 0ULL;
-				guint64 _tmp256_ = 0ULL;
-				GeeArrayList* _tmp257_ = NULL;
-				gint _tmp258_ = 0;
-				gpointer _tmp259_ = NULL;
-				DevicePartition* _tmp260_ = NULL;
-				guint64 _tmp261_ = 0ULL;
-				guint64 _tmp262_ = 0ULL;
-				guint64 _tmp263_ = 0ULL;
-				gint _tmp264_ = 0;
-				gint _tmp265_ = 0;
-				Log* _tmp266_ = NULL;
-				Log* _tmp267_ = NULL;
-				gint _tmp268_ = 0;
-				gchar* _tmp269_ = NULL;
-				gchar* _tmp270_ = NULL;
-				gchar* _tmp271_ = NULL;
-				gchar* _tmp272_ = NULL;
-				gint _tmp273_ = 0;
+				GeeArrayList* _tmp243_ = NULL;
+				GeeArrayList* _tmp244_ = NULL;
+				gboolean _tmp245_ = FALSE;
+				gboolean _tmp246_ = FALSE;
+				gboolean _tmp247_ = FALSE;
+				gint _tmp263_ = 0;
+				Device* _tmp264_ = NULL;
+				GeeArrayList* _tmp265_ = NULL;
+				gint _tmp266_ = 0;
+				gpointer _tmp267_ = NULL;
+				DevicePartition* _tmp268_ = NULL;
+				guint64 _tmp269_ = 0ULL;
+				guint64 _tmp270_ = 0ULL;
+				GeeArrayList* _tmp271_ = NULL;
+				gint _tmp272_ = 0;
+				gpointer _tmp273_ = NULL;
+				DevicePartition* _tmp274_ = NULL;
+				guint64 _tmp275_ = 0ULL;
+				guint64 _tmp276_ = 0ULL;
+				guint64 _tmp277_ = 0ULL;
+				gint _tmp278_ = 0;
+				gint _tmp279_ = 0;
+				Log* _tmp280_ = NULL;
+				Log* _tmp281_ = NULL;
+				gint _tmp282_ = 0;
+				gchar* _tmp283_ = NULL;
+				gchar* _tmp284_ = NULL;
+				gchar* _tmp285_ = NULL;
+				gchar* _tmp286_ = NULL;
+				gint _tmp287_ = 0;
 				swap_size = (guint64) 0;
-				_tmp229_ = swap_collector_get_partitions ();
-				_tmp230_ = _tmp229_;
-				_tmp231_ = gee_abstract_collection_get_is_empty ((GeeAbstractCollection*) _tmp230_);
-				_tmp232_ = _tmp231_;
-				_tmp233_ = _tmp232_;
-				_g_object_unref0 (_tmp230_);
-				if (_tmp233_) {
-					GeeArrayList* _tmp234_ = NULL;
-					gint _tmp235_ = 0;
-					gpointer _tmp236_ = NULL;
-					DevicePartition* _tmp237_ = NULL;
-					guint64 _tmp238_ = 0ULL;
-					guint64 _tmp239_ = 0ULL;
-					guint64 _tmp240_ = 0ULL;
-					gboolean _tmp241_ = FALSE;
-					_tmp234_ = partitions;
-					_tmp235_ = self->priv->_partition;
-					_tmp236_ = gee_abstract_list_get ((GeeAbstractList*) _tmp234_, _tmp235_);
-					_tmp237_ = (DevicePartition*) _tmp236_;
-					_tmp238_ = device_partition_get_size (_tmp237_);
-					_tmp239_ = _tmp238_;
-					_tmp240_ = self->priv->installation_size;
-					_tmp241_ = (_tmp239_ - INSTALLATION_OneGig) > _tmp240_;
-					_g_object_unref0 (_tmp237_);
-					if (_tmp241_) {
-						Log* _tmp242_ = NULL;
-						Log* _tmp243_ = NULL;
-						guint64 _tmp244_ = 0ULL;
-						gchar* _tmp245_ = NULL;
-						gchar* _tmp246_ = NULL;
-						gchar* _tmp247_ = NULL;
-						gchar* _tmp248_ = NULL;
+				_tmp243_ = swap_collector_get_partitions ();
+				_tmp244_ = _tmp243_;
+				_tmp245_ = gee_abstract_collection_get_is_empty ((GeeAbstractCollection*) _tmp244_);
+				_tmp246_ = _tmp245_;
+				_tmp247_ = _tmp246_;
+				_g_object_unref0 (_tmp244_);
+				if (_tmp247_) {
+					GeeArrayList* _tmp248_ = NULL;
+					gint _tmp249_ = 0;
+					gpointer _tmp250_ = NULL;
+					DevicePartition* _tmp251_ = NULL;
+					guint64 _tmp252_ = 0ULL;
+					guint64 _tmp253_ = 0ULL;
+					guint64 _tmp254_ = 0ULL;
+					gboolean _tmp255_ = FALSE;
+					_tmp248_ = partitions;
+					_tmp249_ = self->priv->_partition;
+					_tmp250_ = gee_abstract_list_get ((GeeAbstractList*) _tmp248_, _tmp249_);
+					_tmp251_ = (DevicePartition*) _tmp250_;
+					_tmp252_ = device_partition_get_size (_tmp251_);
+					_tmp253_ = _tmp252_;
+					_tmp254_ = self->priv->installation_size;
+					_tmp255_ = (_tmp253_ - INSTALLATION_OneGig) > _tmp254_;
+					_g_object_unref0 (_tmp251_);
+					if (_tmp255_) {
+						Log* _tmp256_ = NULL;
+						Log* _tmp257_ = NULL;
+						guint64 _tmp258_ = 0ULL;
+						gchar* _tmp259_ = NULL;
+						gchar* _tmp260_ = NULL;
+						gchar* _tmp261_ = NULL;
+						gchar* _tmp262_ = NULL;
 						swap_size = INSTALLATION_OneGig;
-						_tmp242_ = log_instance ();
-						_tmp243_ = _tmp242_;
-						_tmp244_ = swap_size;
-						_tmp245_ = g_strdup_printf ("%" G_GUINT64_FORMAT, _tmp244_);
-						_tmp246_ = _tmp245_;
-						_tmp247_ = g_strconcat ("No swap detected, creating swap along with partition creation, swap si" \
-"ze = ", _tmp246_, NULL);
-						_tmp248_ = _tmp247_;
-						log_log (_tmp243_, _tmp248_);
-						_g_free0 (_tmp248_);
-						_g_free0 (_tmp246_);
-						_g_object_unref0 (_tmp243_);
+						_tmp256_ = log_instance ();
+						_tmp257_ = _tmp256_;
+						_tmp258_ = swap_size;
+						_tmp259_ = g_strdup_printf ("%" G_GUINT64_FORMAT, _tmp258_);
+						_tmp260_ = _tmp259_;
+						_tmp261_ = g_strconcat ("No swap detected, creating swap along with partition creation, swap si" \
+"ze = ", _tmp260_, NULL);
+						_tmp262_ = _tmp261_;
+						log_log (_tmp257_, _tmp262_);
+						_g_free0 (_tmp262_);
+						_g_free0 (_tmp260_);
+						_g_object_unref0 (_tmp257_);
 					}
 				}
 				swap_size = INSTALLATION_OneGig;
-				_tmp250_ = device;
-				_tmp251_ = partitions;
-				_tmp252_ = self->priv->_partition;
-				_tmp253_ = gee_abstract_list_get ((GeeAbstractList*) _tmp251_, _tmp252_);
-				_tmp254_ = (DevicePartition*) _tmp253_;
-				_tmp255_ = device_partition_get_start (_tmp254_);
-				_tmp256_ = _tmp255_;
-				_tmp257_ = partitions;
-				_tmp258_ = self->priv->_partition;
-				_tmp259_ = gee_abstract_list_get ((GeeAbstractList*) _tmp257_, _tmp258_);
-				_tmp260_ = (DevicePartition*) _tmp259_;
-				_tmp261_ = device_partition_get_end (_tmp260_);
-				_tmp262_ = _tmp261_;
-				_tmp263_ = swap_size;
-				_tmp264_ = device_create_partition_simple (_tmp250_, _tmp256_, _tmp262_, "ext4", _tmp263_, &_inner_error_);
-				_tmp265_ = _tmp264_;
-				_g_object_unref0 (_tmp260_);
-				_g_object_unref0 (_tmp254_);
-				_tmp249_ = _tmp265_;
+				_tmp264_ = device;
+				_tmp265_ = partitions;
+				_tmp266_ = self->priv->_partition;
+				_tmp267_ = gee_abstract_list_get ((GeeAbstractList*) _tmp265_, _tmp266_);
+				_tmp268_ = (DevicePartition*) _tmp267_;
+				_tmp269_ = device_partition_get_start (_tmp268_);
+				_tmp270_ = _tmp269_;
+				_tmp271_ = partitions;
+				_tmp272_ = self->priv->_partition;
+				_tmp273_ = gee_abstract_list_get ((GeeAbstractList*) _tmp271_, _tmp272_);
+				_tmp274_ = (DevicePartition*) _tmp273_;
+				_tmp275_ = device_partition_get_end (_tmp274_);
+				_tmp276_ = _tmp275_;
+				_tmp277_ = swap_size;
+				_tmp278_ = device_create_partition_simple (_tmp264_, _tmp270_, _tmp276_, "ext4", _tmp277_, &_inner_error_);
+				_tmp279_ = _tmp278_;
+				_g_object_unref0 (_tmp274_);
+				_g_object_unref0 (_tmp268_);
+				_tmp263_ = _tmp279_;
 				if (G_UNLIKELY (_inner_error_ != NULL)) {
 					if (_inner_error_->domain == DEVICE_ERROR) {
 						goto __catch2_device_error;
@@ -2205,20 +2267,20 @@ static void installation_do_partition (Installation* self) {
 					g_clear_error (&_inner_error_);
 					return;
 				}
-				new_partition = _tmp249_;
-				_tmp266_ = log_instance ();
-				_tmp267_ = _tmp266_;
-				_tmp268_ = new_partition;
-				_tmp269_ = g_strdup_printf ("%i", _tmp268_);
-				_tmp270_ = _tmp269_;
-				_tmp271_ = g_strconcat ("Partition creation returns new partition ID: ", _tmp270_, NULL);
-				_tmp272_ = _tmp271_;
-				log_log (_tmp267_, _tmp272_);
-				_g_free0 (_tmp272_);
-				_g_free0 (_tmp270_);
-				_g_object_unref0 (_tmp267_);
-				_tmp273_ = new_partition;
-				if (_tmp273_ != (-1)) {
+				new_partition = _tmp263_;
+				_tmp280_ = log_instance ();
+				_tmp281_ = _tmp280_;
+				_tmp282_ = new_partition;
+				_tmp283_ = g_strdup_printf ("%i", _tmp282_);
+				_tmp284_ = _tmp283_;
+				_tmp285_ = g_strconcat ("Partition creation returns new partition ID: ", _tmp284_, NULL);
+				_tmp286_ = _tmp285_;
+				log_log (_tmp281_, _tmp286_);
+				_g_free0 (_tmp286_);
+				_g_free0 (_tmp284_);
+				_g_object_unref0 (_tmp281_);
+				_tmp287_ = new_partition;
+				if (_tmp287_ != (-1)) {
 					can_continue = TRUE;
 				}
 			}
@@ -2226,18 +2288,18 @@ static void installation_do_partition (Installation* self) {
 			__catch2_device_error:
 			{
 				GError* e = NULL;
-				Log* _tmp274_ = NULL;
-				Log* _tmp275_ = NULL;
-				GError* _tmp276_ = NULL;
-				const gchar* _tmp277_ = NULL;
+				Log* _tmp288_ = NULL;
+				Log* _tmp289_ = NULL;
+				GError* _tmp290_ = NULL;
+				const gchar* _tmp291_ = NULL;
 				e = _inner_error_;
 				_inner_error_ = NULL;
-				_tmp274_ = log_instance ();
-				_tmp275_ = _tmp274_;
-				_tmp276_ = e;
-				_tmp277_ = _tmp276_->message;
-				log_log_without_newline (_tmp275_, _tmp277_);
-				_g_object_unref0 (_tmp275_);
+				_tmp288_ = log_instance ();
+				_tmp289_ = _tmp288_;
+				_tmp290_ = e;
+				_tmp291_ = _tmp290_->message;
+				log_log_without_newline (_tmp289_, _tmp291_);
+				_g_object_unref0 (_tmp289_);
 				_g_error_free0 (e);
 			}
 			__finally2:
@@ -2249,8 +2311,8 @@ static void installation_do_partition (Installation* self) {
 				g_clear_error (&_inner_error_);
 				return;
 			}
-			_tmp278_ = can_continue;
-			if (_tmp278_ == FALSE) {
+			_tmp292_ = can_continue;
+			if (_tmp292_ == FALSE) {
 				self->priv->step = INSTALLATION_STEP_DONE;
 				self->priv->last_step = INSTALLATION_STEP_DONE;
 				installation_set_state (self, (gint) INSTALLATION_STATE_ERROR);
@@ -2260,55 +2322,55 @@ static void installation_do_partition (Installation* self) {
 				_g_object_unref0 (d);
 				return;
 			}
-			_tmp279_ = parted_get_devices (FALSE);
-			_tmp280_ = _tmp279_;
-			_g_object_unref0 (_tmp280_);
-			_tmp281_ = self->priv->device_path;
-			_tmp282_ = new_partition;
-			_tmp283_ = g_strdup_printf ("%i", _tmp282_);
-			_tmp284_ = _tmp283_;
-			_tmp285_ = g_strconcat (_tmp281_, _tmp284_, NULL);
+			_tmp293_ = parted_get_devices (FALSE);
+			_tmp294_ = _tmp293_;
+			_g_object_unref0 (_tmp294_);
+			_tmp295_ = self->priv->device_path;
+			_tmp296_ = new_partition;
+			_tmp297_ = g_strdup_printf ("%i", _tmp296_);
+			_tmp298_ = _tmp297_;
+			_tmp299_ = g_strconcat (_tmp295_, _tmp298_, NULL);
 			_g_free0 (self->priv->partition_path);
-			self->priv->partition_path = _tmp285_;
-			_g_free0 (_tmp284_);
+			self->priv->partition_path = _tmp299_;
+			_g_free0 (_tmp298_);
 			_g_object_unref0 (device);
 		} else {
-			GeeArrayList* _tmp286_ = NULL;
-			gint _tmp287_ = 0;
-			gpointer _tmp288_ = NULL;
-			Device* _tmp289_ = NULL;
-			gchar* _tmp290_ = NULL;
-			gchar* _tmp291_ = NULL;
-			GeeArrayList* _tmp292_ = NULL;
-			gint _tmp293_ = 0;
-			gpointer _tmp294_ = NULL;
-			DevicePartition* _tmp295_ = NULL;
-			gint _tmp296_ = 0;
-			gint _tmp297_ = 0;
-			gchar* _tmp298_ = NULL;
-			gchar* _tmp299_ = NULL;
-			gchar* _tmp300_ = NULL;
-			_tmp286_ = d;
-			_tmp287_ = self->priv->_device;
-			_tmp288_ = gee_abstract_list_get ((GeeAbstractList*) _tmp286_, _tmp287_);
-			_tmp289_ = (Device*) _tmp288_;
-			_tmp290_ = device_get_path (_tmp289_);
-			_tmp291_ = _tmp290_;
-			_tmp292_ = partitions;
-			_tmp293_ = self->priv->_partition;
-			_tmp294_ = gee_abstract_list_get ((GeeAbstractList*) _tmp292_, _tmp293_);
-			_tmp295_ = (DevicePartition*) _tmp294_;
-			_tmp296_ = device_partition_get_number (_tmp295_);
-			_tmp297_ = _tmp296_;
-			_tmp298_ = g_strdup_printf ("%i", _tmp297_);
-			_tmp299_ = _tmp298_;
-			_tmp300_ = g_strconcat (_tmp291_, _tmp299_, NULL);
+			GeeArrayList* _tmp300_ = NULL;
+			gint _tmp301_ = 0;
+			gpointer _tmp302_ = NULL;
+			Device* _tmp303_ = NULL;
+			gchar* _tmp304_ = NULL;
+			gchar* _tmp305_ = NULL;
+			GeeArrayList* _tmp306_ = NULL;
+			gint _tmp307_ = 0;
+			gpointer _tmp308_ = NULL;
+			DevicePartition* _tmp309_ = NULL;
+			gint _tmp310_ = 0;
+			gint _tmp311_ = 0;
+			gchar* _tmp312_ = NULL;
+			gchar* _tmp313_ = NULL;
+			gchar* _tmp314_ = NULL;
+			_tmp300_ = d;
+			_tmp301_ = self->priv->_device;
+			_tmp302_ = gee_abstract_list_get ((GeeAbstractList*) _tmp300_, _tmp301_);
+			_tmp303_ = (Device*) _tmp302_;
+			_tmp304_ = device_get_path (_tmp303_);
+			_tmp305_ = _tmp304_;
+			_tmp306_ = partitions;
+			_tmp307_ = self->priv->_partition;
+			_tmp308_ = gee_abstract_list_get ((GeeAbstractList*) _tmp306_, _tmp307_);
+			_tmp309_ = (DevicePartition*) _tmp308_;
+			_tmp310_ = device_partition_get_number (_tmp309_);
+			_tmp311_ = _tmp310_;
+			_tmp312_ = g_strdup_printf ("%i", _tmp311_);
+			_tmp313_ = _tmp312_;
+			_tmp314_ = g_strconcat (_tmp305_, _tmp313_, NULL);
 			_g_free0 (self->priv->partition_path);
-			self->priv->partition_path = _tmp300_;
-			_g_free0 (_tmp299_);
-			_g_object_unref0 (_tmp295_);
-			_g_free0 (_tmp291_);
-			_g_object_unref0 (_tmp289_);
+			self->priv->partition_path = _tmp314_;
+			_g_free0 (_tmp313_);
+			_g_object_unref0 (_tmp309_);
+			_g_free0 (_tmp305_);
+			_g_object_unref0 (_tmp303_);
 		}
 		self->priv->last_step = INSTALLATION_STEP_PARTITION;
 		installation_do_next_job (self);
@@ -2319,94 +2381,129 @@ static void installation_do_partition (Installation* self) {
 
 
 static void installation_do_fs (Installation* self) {
-	gboolean _tmp0_ = FALSE;
-	g_return_if_fail (self != NULL);
-	_tmp0_ = self->priv->_advancedMode;
-	if (_tmp0_ == FALSE) {
-		gchar** c = NULL;
-		gchar* _tmp1_ = NULL;
-		const gchar* _tmp2_ = NULL;
-		gchar* _tmp3_ = NULL;
-		gchar** _tmp4_ = NULL;
-		gint c_length1 = 0;
-		gint _c_size_ = 0;
-		gchar** _tmp5_ = NULL;
-		gint _tmp5__length1 = 0;
-		_tmp1_ = g_strdup ("/sbin/mkfs.ext4");
-		_tmp2_ = self->priv->partition_path;
-		_tmp3_ = g_strdup (_tmp2_);
-		_tmp4_ = g_new0 (gchar*, 2 + 1);
-		_tmp4_[0] = _tmp1_;
-		_tmp4_[1] = _tmp3_;
-		c = _tmp4_;
-		c_length1 = 2;
-		_c_size_ = c_length1;
-		_tmp5_ = c;
-		_tmp5__length1 = c_length1;
-		installation_do_simple_command_with_args (self, _tmp5_, _tmp5__length1, INSTALLATION_STEP_FS, "Installing filesystem", "Unable to install filesystem");
-		c = (_vala_array_free (c, c_length1, (GDestroyNotify) g_free), NULL);
-	}
-}
-
-
-static void installation_do_mount (Installation* self) {
 	gchar** c = NULL;
 	gchar* _tmp0_ = NULL;
 	const gchar* _tmp1_ = NULL;
 	gchar* _tmp2_ = NULL;
-	gchar* _tmp3_ = NULL;
-	gchar** _tmp4_ = NULL;
+	gchar** _tmp3_ = NULL;
 	gint c_length1 = 0;
 	gint _c_size_ = 0;
-	gchar** _tmp5_ = NULL;
-	gint _tmp5__length1 = 0;
-	gboolean _tmp6_ = FALSE;
 	g_return_if_fail (self != NULL);
-	g_mkdir ("/target", 0700);
-	_tmp0_ = g_strdup ("/bin/mount");
+	_tmp0_ = g_strdup ("/sbin/mkfs.ext4");
 	_tmp1_ = self->priv->partition_path;
 	_tmp2_ = g_strdup (_tmp1_);
-	_tmp3_ = g_strdup ("/target");
-	_tmp4_ = g_new0 (gchar*, 3 + 1);
-	_tmp4_[0] = _tmp0_;
-	_tmp4_[1] = _tmp2_;
-	_tmp4_[2] = _tmp3_;
-	c = _tmp4_;
+	_tmp3_ = g_new0 (gchar*, 2 + 1);
+	_tmp3_[0] = _tmp0_;
+	_tmp3_[1] = _tmp2_;
+	c = _tmp3_;
+	c_length1 = 2;
+	_c_size_ = c_length1;
+	installation_do_simple_command_with_args (self, c, c_length1, INSTALLATION_STEP_FS, "Installing filesystem", "Unable to install filesystem");
+	c = (_vala_array_free (c, c_length1, (GDestroyNotify) g_free), NULL);
+}
+
+
+static void installation_do_mount (Installation* self) {
+	Log* _tmp0_ = NULL;
+	Log* _tmp1_ = NULL;
+	gchar** c = NULL;
+	gchar* _tmp2_ = NULL;
+	const gchar* _tmp3_ = NULL;
+	gchar* _tmp4_ = NULL;
+	gchar* _tmp5_ = NULL;
+	gchar** _tmp6_ = NULL;
+	gint c_length1 = 0;
+	gint _c_size_ = 0;
+	g_return_if_fail (self != NULL);
+	_tmp0_ = log_instance ();
+	_tmp1_ = _tmp0_;
+	log_log (_tmp1_, "\nho home\n");
+	_g_object_unref0 (_tmp1_);
+	g_mkdir ("/target", 0700);
+	_tmp2_ = g_strdup ("/bin/mount");
+	_tmp3_ = self->priv->partition_path;
+	_tmp4_ = g_strdup (_tmp3_);
+	_tmp5_ = g_strdup ("/target");
+	_tmp6_ = g_new0 (gchar*, 3 + 1);
+	_tmp6_[0] = _tmp2_;
+	_tmp6_[1] = _tmp4_;
+	_tmp6_[2] = _tmp5_;
+	c = _tmp6_;
 	c_length1 = 3;
 	_c_size_ = c_length1;
-	_tmp5_ = c;
-	_tmp5__length1 = c_length1;
-	installation_do_simple_command_with_args (self, _tmp5_, _tmp5__length1, INSTALLATION_STEP_MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
-	_tmp6_ = self->separatedHome;
-	if (_tmp6_) {
-		gchar** c_home = NULL;
-		gchar* _tmp7_ = NULL;
-		const gchar* _tmp8_ = NULL;
-		gchar* _tmp9_ = NULL;
-		gchar* _tmp10_ = NULL;
-		gchar** _tmp11_ = NULL;
-		gint c_home_length1 = 0;
-		gint _c_home_size_ = 0;
-		gchar** _tmp12_ = NULL;
-		gint _tmp12__length1 = 0;
-		g_mkdir ("/test_home", 0700);
-		_tmp7_ = g_strdup ("/bin/mount");
-		_tmp8_ = self->priv->_home;
-		_tmp9_ = g_strdup (_tmp8_);
-		_tmp10_ = g_strdup ("/test_home");
-		_tmp11_ = g_new0 (gchar*, 3 + 1);
-		_tmp11_[0] = _tmp7_;
-		_tmp11_[1] = _tmp9_;
-		_tmp11_[2] = _tmp10_;
-		c_home = _tmp11_;
-		c_home_length1 = 3;
-		_c_home_size_ = c_home_length1;
-		_tmp12_ = c_home;
-		_tmp12__length1 = c_home_length1;
-		installation_do_simple_command_with_args (self, _tmp12_, _tmp12__length1, INSTALLATION_STEP_MOUNT, "Mounting home filesystem ", "Unable to mount filesystem");
-		c_home = (_vala_array_free (c_home, c_home_length1, (GDestroyNotify) g_free), NULL);
-	}
+	installation_do_simple_command_with_args (self, c, c_length1, INSTALLATION_STEP_MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
 	c = (_vala_array_free (c, c_length1, (GDestroyNotify) g_free), NULL);
+}
+
+
+static void installation_do_mount_home (Installation* self) {
+	gboolean _tmp0_ = FALSE;
+	gboolean _tmp1_ = FALSE;
+	g_return_if_fail (self != NULL);
+	_tmp1_ = self->separatedHome;
+	if (_tmp1_ == TRUE) {
+		gboolean _tmp2_ = FALSE;
+		_tmp2_ = self->priv->_advancedMode;
+		_tmp0_ = _tmp2_ == TRUE;
+	} else {
+		_tmp0_ = FALSE;
+	}
+	if (_tmp0_) {
+		Log* _tmp3_ = NULL;
+		Log* _tmp4_ = NULL;
+		gchar** c = NULL;
+		gchar* _tmp5_ = NULL;
+		const gchar* _tmp6_ = NULL;
+		gchar* _tmp7_ = NULL;
+		gchar* _tmp8_ = NULL;
+		gchar** _tmp9_ = NULL;
+		gint c_length1 = 0;
+		gint _c_size_ = 0;
+		gchar** _tmp10_ = NULL;
+		gint _tmp10__length1 = 0;
+		gchar* content = NULL;
+		const gchar* _tmp11_ = NULL;
+		gchar* _tmp12_ = NULL;
+		const gchar* _tmp13_ = NULL;
+		const gchar* _tmp14_ = NULL;
+		gchar* _tmp15_ = NULL;
+		const gchar* _tmp16_ = NULL;
+		_tmp3_ = log_instance ();
+		_tmp4_ = _tmp3_;
+		log_log (_tmp4_, "\nmount separated home partition\n");
+		_g_object_unref0 (_tmp4_);
+		g_mkdir ("/target/home", 0700);
+		_tmp5_ = g_strdup ("/bin/mount");
+		_tmp6_ = self->priv->_home;
+		_tmp7_ = g_strdup (_tmp6_);
+		_tmp8_ = g_strdup ("/target/home");
+		_tmp9_ = g_new0 (gchar*, 3 + 1);
+		_tmp9_[0] = _tmp5_;
+		_tmp9_[1] = _tmp7_;
+		_tmp9_[2] = _tmp8_;
+		c = _tmp9_;
+		c_length1 = 3;
+		_c_size_ = c_length1;
+		_tmp10_ = c;
+		_tmp10__length1 = c_length1;
+		installation_do_simple_command_with_args (self, _tmp10_, _tmp10__length1, INSTALLATION_STEP_MOUNTHOME, "Mounting home filesystem ", "Unable to mount home filesystem");
+		_tmp11_ = self->priv->partition_path;
+		_tmp12_ = g_strconcat (_tmp11_, " / ext4 defaults 1 2", NULL);
+		content = _tmp12_;
+		_tmp13_ = content;
+		utils_write_simple_file ("/tmp/fstab", _tmp13_);
+		_tmp14_ = self->priv->_home;
+		_tmp15_ = g_strconcat (_tmp14_, " /home ext4 defaults 1 2", NULL);
+		_g_free0 (content);
+		content = _tmp15_;
+		_tmp16_ = content;
+		utils_write_simple_file ("/tmp/fstab", _tmp16_);
+		_g_free0 (content);
+		c = (_vala_array_free (c, c_length1, (GDestroyNotify) g_free), NULL);
+	} else {
+		self->priv->last_step = INSTALLATION_STEP_MOUNTHOME;
+		installation_do_next_job (self);
+	}
 }
 
 
@@ -3265,12 +3362,20 @@ void* installation_js_reboot (void* ctx, void* function, void* thisObject, void*
 	gchar* _tmp0_ = NULL;
 	void* _tmp1_ = NULL;
 	void* _tmp2_ = NULL;
+	GError * _inner_error_ = NULL;
 	g_return_val_if_fail (ctx != NULL, NULL);
 	g_return_val_if_fail (function != NULL, NULL);
 	g_return_val_if_fail (thisObject != NULL, NULL);
 	_tmp0_ = g_strdup ("/tmp/post-install.sh");
 	location = _tmp0_;
 	utils_write_simple_file (location, "sudo /sbin/reboot\n");
+	g_spawn_command_line_sync ("/bin/chmod a+x /tmp/post-install.sh", NULL, NULL, NULL, &_inner_error_);
+	if (G_UNLIKELY (_inner_error_ != NULL)) {
+		_g_free0 (location);
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+		g_clear_error (&_inner_error_);
+		return NULL;
+	}
 	gtk_main_quit ();
 	_tmp1_ = ctx;
 	_tmp2_ = JSValueMakeUndefined (_tmp1_);
@@ -4058,6 +4163,28 @@ void installation_set_home (Installation* self, const gchar* value) {
 }
 
 
+const gchar* installation_get_root (Installation* self) {
+	const gchar* result;
+	const gchar* _tmp0_ = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	_tmp0_ = self->priv->_root;
+	result = _tmp0_;
+	return result;
+}
+
+
+void installation_set_root (Installation* self, const gchar* value) {
+	const gchar* _tmp0_ = NULL;
+	gchar* _tmp1_ = NULL;
+	g_return_if_fail (self != NULL);
+	_tmp0_ = value;
+	_tmp1_ = g_strdup (_tmp0_);
+	_g_free0 (self->priv->_root);
+	self->priv->_root = _tmp1_;
+	g_object_notify ((GObject *) self, "root");
+}
+
+
 gboolean installation_get_autologin (Installation* self) {
 	gboolean result;
 	gboolean _tmp0_ = FALSE;
@@ -4195,6 +4322,7 @@ static void installation_class_init (InstallationClass * klass) {
 	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_REGION, g_param_spec_string ("region", "region", "region", NULL, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_KEYBOARD, g_param_spec_string ("keyboard", "keyboard", "keyboard", NULL, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_HOME, g_param_spec_string ("home", "home", "home", NULL, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_ROOT, g_param_spec_string ("root", "root", "root", NULL, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_AUTOLOGIN, g_param_spec_boolean ("autologin", "autologin", "autologin", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_ADVANCED_MODE, g_param_spec_boolean ("advancedMode", "advancedMode", "advancedMode", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), INSTALLATION_STATE, g_param_spec_int ("state", "state", "state", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
@@ -4206,10 +4334,7 @@ static void installation_class_init (InstallationClass * klass) {
 
 
 static void installation_instance_init (Installation * self) {
-	gchar* _tmp0_ = NULL;
 	self->priv = INSTALLATION_GET_PRIVATE (self);
-	_tmp0_ = g_strdup ("");
-	self->root = _tmp0_;
 	self->separatedHome = FALSE;
 	self->priv->step = INSTALLATION_STEP_IDLE;
 	self->priv->last_step = INSTALLATION_STEP_IDLE;
@@ -4228,9 +4353,9 @@ static void installation_finalize (GObject* obj) {
 	_g_free0 (self->priv->_region);
 	_g_free0 (self->priv->_keyboard);
 	_g_free0 (self->priv->_home);
+	_g_free0 (self->priv->_root);
 	_g_free0 (self->priv->_description);
 	_g_free0 (self->priv->_steps);
-	_g_free0 (self->root);
 	_g_free0 (self->priv->partition_path);
 	_g_free0 (self->priv->device_path);
 	_g_io_channel_unref0 (self->priv->io_err);
@@ -4287,6 +4412,9 @@ static void _vala_installation_get_property (GObject * object, guint property_id
 		break;
 		case INSTALLATION_HOME:
 		g_value_set_string (value, installation_get_home (self));
+		break;
+		case INSTALLATION_ROOT:
+		g_value_set_string (value, installation_get_root (self));
 		break;
 		case INSTALLATION_AUTOLOGIN:
 		g_value_set_boolean (value, installation_get_autologin (self));
@@ -4349,6 +4477,9 @@ static void _vala_installation_set_property (GObject * object, guint property_id
 		break;
 		case INSTALLATION_HOME:
 		installation_set_home (self, g_value_get_string (value));
+		break;
+		case INSTALLATION_ROOT:
+		installation_set_root (self, g_value_get_string (value));
 		break;
 		case INSTALLATION_AUTOLOGIN:
 		installation_set_autologin (self, g_value_get_boolean (value));
