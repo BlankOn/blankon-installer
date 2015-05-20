@@ -22,7 +22,14 @@ angular.module("hello",[])
         $rootScope.selectedLang = lang.title;
       }
       // TODO : language selection
-      /* Installation.setLocale("C.UTF-8"); */
+      Installation.setLocale("C.UTF-8");
+
+      // initiate partition state early
+      $rootScope.partitionState = {
+        mountPoint: {},
+        stateIndex : 0,
+        history : [],
+      }
 }])
 
 angular.module("install",[])
@@ -59,6 +66,7 @@ angular.module("install",[])
     var params = "";
     params += "&partition=" + $rootScope.installationData.partition;
     params += "&device=" + $rootScope.installationData.device;
+    params += "&device_path=" + $rootScope.installationData.device_path;
     params += "&hostname=" + $rootScope.installationData.hostname;
     params += "&username=" + $rootScope.installationData.username;
     params += "&fullname=" + $rootScope.installationData.fullname;
@@ -99,19 +107,11 @@ angular.module("partition",[])
   var minimumPartitionSize = 4 * gbSize;
   var driveBlockWidth = 600;
 
-  // there are 4 legal action for current partoedi :
+  // there are 4 legal action for the current version of partoedi :
   // - delete
   // - create
   // - format
   // - mountpoint
-  $rootScope.partitionState = {
-    mountPoint: {},
-    stateIndex : 0,
-    history : [],
-      /* action : "", */
-      /* prevState : [], */
-      /* currentState : [] */
-  }
 
 
   $scope.switchToAdvancedPartition = function(){
@@ -189,18 +189,30 @@ angular.module("partition",[])
       }
     }
   }
+  $scope.switchToSimplePartitionWarning = function(){
+    $scope.exitAdvancedModeMessage = true;
+  }
   $scope.switchToSimplePartition = function(){
+    $rootScope.partitionState.mountPoint.root = false;
+    $rootScope.partitionState.mountPoint.home = false;
+    $scope.exitAdvancedModeMessage = false;
     $rootScope.advancedPartition = false;
     $scope.title = "Installation Target";
+    $rootScope.partitionState.currentState = angular.copy($rootScope.partitionState.history[0].state);
+    $scope.selectedDrive.partitionList = angular.copy($rootScope.partitionState.history[0].state);
+    $rootScope.partitionState.stateIndex = 0;
   }
-  $scope.selectInstallationTarget = function(devicePath, partition) {
+  $scope.hidePartoEdiMessage = function(){
+    $scope.exitAdvancedModeMessage = false;
+    $scope.applyAdvancedModeMessage = false;
+  }
+  $scope.selectInstallationTarget = function(partition) {
     console.log(partition)
     /* if (partition.id < 0) { */
     /*   partition.id = 0; */
     /*   console.log(partition.id) */
     /* } */
 
-    $rootScope.installationData.device = devicePath;
     $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
     if (partition.id > 0) {
       $rootScope.selectedInstallationTarget = $rootScope.selectedDrive.path + partition.id + " ("+partition.sizeGb+" GB)";
@@ -401,7 +413,8 @@ angular.module("partition",[])
   
       var index = $scope.selectedDrive.partitionList.indexOf(partition);
       if ($scope.undoHistory) {
-        $rootScope.partitionState.history.splice(index);
+        $rootScope.partitionState.history.splice($rootScope.partitionState.stateIndex+1);
+        /* $rootScope.partitionState.history.splice(index); */
       }
       step.state = angular.copy($scope.selectedDrive.partitionList);
       if (mountPoint === "swap") {
@@ -484,13 +497,10 @@ angular.module("partition",[])
     ) {
       // the prev and next partition of this partition are freespace. merge them.
       //////////////////////
-      console.log("yoooooooooo1");
       if (extended) {
-        console.log("yoooooooooo2");
         $scope.selectedDrive.partitionList[(index-1)].size += $scope.selectedDrive.partitionList[index].size;
         $scope.selectedDrive.partitionList[(index-1)].end = $scope.selectedDrive.partitionList[index].end;
       } else {
-        console.log("yoooooooooo3");
         $scope.selectedDrive.partitionList[(index-1)].size += $scope.selectedDrive.partitionList[index].size + $scope.selectedDrive.partitionList[(index+1)].size;
         $scope.selectedDrive.partitionList[(index-1)].end = $scope.selectedDrive.partitionList[(index+1)].end;
       }
@@ -498,7 +508,6 @@ angular.module("partition",[])
       $scope.selectedDrive.partitionList[(index-1)].hidden = false;
       $scope.selectedDrive.partitionList[(index-1)].blockWidth = parseInt(((size/$rootScope.selectedDrive.size)*driveBlockWidth));
       if ($scope.selectedDrive.partitionList[(index-1)].freespace & !extended) {
-        console.log("yoooooooooo4");
         $scope.selectedDrive.partitionList[(index-1)].blockWidth += 8;
       }
       if ($scope.selectedDrive.partitionList[(index+1)].freespace) {
@@ -519,7 +528,6 @@ angular.module("partition",[])
     (!$scope.selectedDrive.partitionList[(index+1)] && 
     $scope.selectedDrive.partitionList[(index-1)].type === "DEVICE_PARTITION_TYPE_FREESPACE") 
     ) {
-      console.log("yoooooooooo5");
       // the prev partition of this partition is free space
       $scope.selectedDrive.partitionList[(index-1)].end = $scope.selectedDrive.partitionList[index].end;
       $scope.selectedDrive.partitionList[(index-1)].size += $scope.selectedDrive.partitionList[index].size;
@@ -543,7 +551,6 @@ angular.module("partition",[])
     $scope.selectedDrive.partitionList[(index+1)].type === "DEVICE_PARTITION_TYPE_FREESPACE"
     ) {
       // the next partition of this partition is free space
-      console.log("yoooooooooo6");
       $scope.selectedDrive.partitionList[(index+1)].start = $scope.selectedDrive.partitionList[index].start;
       // if it is an extended partition, the next is a logical freespace. it should be sliced without merging the size
       if (!extended) {
@@ -571,7 +578,8 @@ angular.module("partition",[])
     }
     $timeout(function(){
       if ($scope.undoHistory) {
-        $rootScope.partitionState.history.splice(index);
+        /* $rootScope.partitionState.history.splice(index); */
+        $rootScope.partitionState.history.splice($rootScope.partitionState.stateIndex+1);
       }
       step.state = angular.copy($scope.selectedDrive.partitionList);
       $rootScope.partitionState.history.push(step);
@@ -592,7 +600,8 @@ angular.module("partition",[])
     $scope.selectedDrive.partitionList[formatIndex] = angular.copy(partition);
     $scope.selectedDrive.partitionList[formatIndex].format = true;
     if ($scope.undoHistory) {
-      $rootScope.partitionState.history.splice(formatIndex);
+      /* $rootScope.partitionState.history.splice(formatIndex); */
+      $rootScope.partitionState.history.splice($rootScope.partitionState.stateIndex+1);
     }
     // example : "format;2;ext4;/home"
     var step = {
@@ -612,14 +621,21 @@ angular.module("partition",[])
         step.action +=";home";
       }
     }
-    $rootScope.partitionState.history.push(step);
-    $scope.undoHistory = false;
-    $rootScope.partitionState.currentState = angular.copy($scope.selectedDrive.partitionList);
-    $rootScope.partitionState.stateIndex++;
-    console.log($rootScope.partitionState);
-    $scope.formatDialog = false;
-    $scope.actionDialog = false;
+    $timeout(function(){
+      if ($scope.undoHistory) {
+        $rootScope.partitionState.history.splice($rootScope.partitionState.stateIndex+1);
+      }
+      step.state = angular.copy($scope.selectedDrive.partitionList);
+      $rootScope.partitionState.history.push(step);
+      $scope.undoHistory = false;
+      $rootScope.partitionState.currentState = angular.copy($scope.selectedDrive.partitionList);
+      $rootScope.partitionState.stateIndex++;
+      console.log($rootScope.partitionState);
+      $scope.formatDialog = false;
+      $scope.actionDialog = false;
+    }, 100);
   }
+
   $scope.partitionFormatCancel = function() {
     $scope.formatDialog = false;
     $scope.actionDialog = false;
@@ -637,7 +653,12 @@ angular.module("partition",[])
       state:angular.copy($scope.selectedDrive.partitionList)
     }
     $rootScope.partitionState.mountPoint.home = $rootScope.selectedDrive.path + partition.id;
-    step.action += ";" + partition.filesystem;
+    step.action += ";" + partition.id + ";" + partition.filesystem;
+
+    if ($scope.undoHistory) {
+      $rootScope.partitionState.history.splice($rootScope.partitionState.stateIndex+1);
+    }
+    step.state = angular.copy($scope.selectedDrive.partitionList);
     $rootScope.partitionState.history.push(step);
     $scope.undoHistory = false;
     $rootScope.partitionState.currentState = angular.copy($scope.selectedDrive.partitionList);
@@ -649,15 +670,20 @@ angular.module("partition",[])
 
   $scope.partitionApply = function() {
     if ($rootScope.partitionState.mountPoint.root) {
-      $rootScope.installationData.device = $rootScope.selectedDrive.model;
       $rootScope.partitionSteps = [];
       for (var i = 1; i < $rootScope.partitionState.history.length; i++) {
         $rootScope.partitionSteps[i-1] = $rootScope.partitionState.history[i].action;
       }
       console.log($rootScope.partitionSteps);
       $rootScope.next();
+      /* $timeout(function(){ */
+      /*   $rootScope.partitionState.currentState = angular.copy($rootScope.partitionState.history[0].state); */
+      /*   $scope.selectedDrive.partitionList = angular.copy($rootScope.partitionState.history[0].state); */
+      /*   $rootScope.partitionState.stateIndex = 0; */
+      /* }, 1000); */
     } else {
-      //should shout a warning 
+      //should shout a warning
+      $scope.applyAdvancedModeMessage = true;
     }
   }
 
@@ -669,8 +695,11 @@ angular.module("partition",[])
       $scope.scanning = true;
     }, 1000);
   }
-  $scope.setDrive = function(path) {
+  $scope.setDrive = function(drive) {
     // TODO : reset UI
+    $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
+    var path = drive.path;
+    $rootScope.installationData.device_path = path;
     console.log(JSON.stringify($rootScope.devices));
     $rootScope.validInstallationTarget = false;
     /* $rootScope.devices.forEach(function(drive){ */

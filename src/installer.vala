@@ -105,6 +105,10 @@ public class Installation : GLib.Object {
                 switch (entry [0]) {
                 case "device":
                     device = int.parse (entry[1]);
+                    Log.instance().log ("Selected Drive : " + device.to_string ());
+                    break;
+                case "device_path":
+                    device_path = entry[1];
                     break;
                 case "partition":
                     partition = int.parse (entry[1]);
@@ -279,8 +283,6 @@ public class Installation : GLib.Object {
     void do_partition() {;
         
         if (advancedMode == true) {
-            device_path = "/dev/sda";
-            /* Device dev = new Device.from_name(device_path); */
             description = "Partitioning";
             step = Step.PARTITION;
  
@@ -319,18 +321,16 @@ public class Installation : GLib.Object {
                       Log.instance().log ("home");
                       home = new_partition.to_string ();
                       separatedHome = true;
-                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + new_partition.to_string ());
+                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
                   } else {
                       Log.instance().log ("neither root or home");
-                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + new_partition.to_string ());
+                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
                   }
                   Log.instance().log ("newly created " + new_partition.to_string ());
                   break;
               case  "format":
                   var id = splittedParams[1];
-                  Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " " + device_path + splittedParams[1]);
-                  /* string [] c = { "/sbin/mkfs." + splittedParams[2], device_path + splittedParams[1] }; */
-                  /* do_simple_command_with_args (c, Step.FS, "Formatting", "Unable to format partition"); */
+                  Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + splittedParams[1]);
                   Log.instance().log ("should format partition " + splittedParams[1]);
                   if (splittedParams[3] == "root") {
                       Log.instance().log ("root");
@@ -348,6 +348,10 @@ public class Installation : GLib.Object {
                   var result = dev.delete_partition (int.parse (splittedParams[1]));
                 Log.instance().log ("\nDeleted :" + result.to_string ()  + "\n");
       
+                  break;
+              case  "home":
+                  home = splittedParams[1];
+                  separatedHome = true;
                   break;
               }
             }
