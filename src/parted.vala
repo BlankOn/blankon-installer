@@ -22,7 +22,7 @@ public class EfiCollector {
 
         foreach (var line in normal_output.split("\n")) {
             if ((line.index_of ("/dev/") == 0)
-                && (line.index_of ("EFI System") > 0)) {
+                && (line.index_of ("EFI") > 0)) {
                 efi.add (line.split (" ", 2)[0]);
             }
         }
@@ -48,6 +48,31 @@ public class EfiCollector {
 
     public static bool is_efi_system () {
         return FileUtils.test ("/sys/firmware/efi", FileTest.IS_DIR);
+    }
+
+    public static bool need_format (string partition) {
+        var retval = false;
+        if (is_efi (partition)) {
+            string normal_output;
+            string error_output;
+            int status;
+            string[] args = { "/sbin/blkid", partition };
+            string[] env = { "LC_ALL=C" };
+
+
+            try {
+                Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+            } catch (GLib.Error e) {
+            }
+
+            foreach (var line in normal_output.split("\n")) {
+                if (line.index_of (" TYPE=") > 0) {
+                    retval = true;
+                }
+            }
+        }
+
+        return retval;
     }
 
 }
@@ -534,38 +559,77 @@ public class Device : GLib.Object {
         uint64 start = (uint64) (byte_start / get_unit_size ());
         uint64 end  = (uint64) (byte_end / get_unit_size ());
 
-        if (create_logical) {
-            if (create_extended) {
-                stdout.printf ("Creating extended partition\n");
-                var ext_fs = new Ped.FileSystemType("ext3");
-                var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
-                stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
-                stdout.printf ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
-                disk.add_partition (ext, new Ped.Constraint.any (device));
-                disk.commit_to_dev ();
-                if (ext == null) {
-                    throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
-                }
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+
+        if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
+            stdout.printf ("Creating EFI partition\n");
+            var efi_fs = new Ped.FileSystemType("fat32");
+            var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
+            var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
+            ext.set_flag (Ped.PartitionFlag.ESP, 1);
+            stdout.printf ("Primary partition %s%d\n", get_path(), ext.num);
+            stdout.printf ("\nstart : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
+            disk.add_partition (ext, new Ped.Constraint.any (device));
+            disk.commit_to_dev ();
+            if (ext == null) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
             }
-
-            if (swap_size > 0) {
-                var swap_size_sector = (uint64) (swap_size / get_unit_size ());
-                end  = start + swap_size_sector; 
-                Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
-                new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, swap_type, start, end);
-                start = end + 1; 
-                end  = (uint64) (byte_end / get_unit_size ());
-                var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
-                if (part_num == 0) {
-                    throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
-                }
-
-            }
-
-            new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, fs_type, start, end);
-        } else {
-            new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, fs_type, start, end);
+            EfiCollector.reset ();
+            start = efi_end + get_unit_size (); 
         }
+        bool is_gpt = (disk.type.name == "gpt");
+
+        if (create_extended && !is_gpt) {
+            stdout.printf ("Creating extended partition\n");
+            var ext_fs = new Ped.FileSystemType("ext3");
+            var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
+            stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
+            stdout.printf ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
+            disk.add_partition (ext, new Ped.Constraint.any (device));
+            disk.commit_to_dev ();
+            if (ext == null) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
+            }
+        }
+
+        var first_partition_type = Ped.PartitionType.LOGICAL;
+
+        if (is_gpt) {
+            first_partition_type = Ped.PartitionType.NORMAL;
+            create_extended = false;
+        }
+
+        if (create_extended && !is_gpt) {
+            stdout.printf ("Creating extended partition\n");
+            var ext_fs = new Ped.FileSystemType("ext3");
+            var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
+            stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
+            stdout.printf ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
+            disk.add_partition (ext, new Ped.Constraint.any (device));
+            disk.commit_to_dev ();
+            if (ext == null) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
+            }
+        }
+
+        if (swap_size > 0) {
+            var swap_size_sector = (uint64) (swap_size / get_unit_size ());
+            end  = start + swap_size_sector; 
+            Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
+            if (is_gpt) {
+                new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, swap_type, start, end);
+            } else {
+                new_partition = new Ped.Partition(disk, Ped.PartitionType.LOGICAL, swap_type, start, end);
+            }
+            start = end + 1; 
+            end  = (uint64) (byte_end / get_unit_size ());
+            var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
+            if (part_num == 0) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
+            }
+        }
+
+        new_partition = new Ped.Partition(disk, first_partition_type, fs_type, start, end);
         if (new_partition != null) {
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
             if (part_num == 0) {

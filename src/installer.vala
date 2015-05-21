@@ -509,7 +509,17 @@ public class Installation : GLib.Object {
         if (device == "") {
             device = device_path;
         }
-        string [] c = { "/sbin/b-i-install-grub", device };
+
+        string efi_partition = "";
+        string need_format = "";
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        if (EfiCollector.is_efi_system () && !efi_partitions.is_empty) {
+            efi_partition = efi_partitions.get (0);
+            if (EfiCollector.need_format (efi_partition)) {
+                need_format = "Y";
+            }
+        }
+        string [] c = { "/sbin/b-i-install-grub", device, efi_partition, need_format };
         do_simple_command_with_args (c, Step.GRUB, "Installing GRUB", "Unable to install GRUB");
     }
 
