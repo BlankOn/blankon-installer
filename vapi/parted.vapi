@@ -71,6 +71,29 @@ namespace Ped {
             public FileSystemType fs_type;
             public PartitionType type;
             public string get_name ();
+            public int set_flag (PartitionFlag flag, int state);
+        }
+
+    [CCode (cprefix = "PED_PARTITION_", cname = "PedPartitionFlag")]
+        public enum PartitionFlag {
+            BOOT=1,
+            ROOT=2,
+            SWAP=3,
+            HIDDEN=4,
+            RAID=5,
+            LVM=6,
+            LBA=7,
+            HPSERVICE=8,
+            PALO=9,
+            PREP=10,
+            MSFT_RESERVED=11,
+            BIOS_GRUB=12,
+            APPLE_TV_RECOVERY=13,
+            DIAG=14,
+            LEGACY_BOOT=15,
+            MSFT_DATA=16,
+            IRST=17,
+            ESP=18
         }
 
     [CCode (cprefix = "PED_PARTITION_", cname = "PedPartitionType")]
