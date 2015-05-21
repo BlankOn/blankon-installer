@@ -8,6 +8,7 @@ set -e
 
 DEVICE=$1
 EFI_PARTITION=$2
+NEED_FORMAT=$3
 
 if [ -z "$DEVICE" ];then
     echo "No device given"
@@ -27,6 +28,9 @@ if [ -z "$EFI_PARTITION" ];then
     /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
 else
     mkdir -p /target/boot/efi
+    if [ "x$NEED_FORMAT" = "xY" ];then
+       /sbin/mkfs.fat -F 32 $EFI_PARTITION
+    fi
     mount $EFI_PARTITION /target/boot/efi
     /usr/sbin/grub-install --recheck --efi-directory=/target/boot/efi --root-directory=/target $DEVICE
     umount /target/boot/efi
