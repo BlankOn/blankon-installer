@@ -1,6 +1,56 @@
 using Gee;
 using JSCore;
 
+// EfiCollector
+// collects all EFI partitions in the system
+public class EfiCollector {
+    static ArrayList<string> efi;
+
+    static void reget () {
+        efi = new ArrayList<string> ();
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/sbin/fdisk", "-l" };
+        string[] env = { "LC_ALL=C" };
+
+
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+
+        foreach (var line in normal_output.split("\n")) {
+            if ((line.index_of ("/dev/") == 0)
+                && (line.index_of ("EFI System") > 0)) {
+                efi.add (line.split (" ", 2)[0]);
+            }
+        }
+    }
+
+    public static bool is_efi (string partition) {
+        if (efi == null) {
+            reget ();
+        }
+        return efi.contains (partition); 
+    }
+
+    public static ArrayList<string> get_partitions () {
+        if (efi == null) {
+            reget ();
+        }
+        return efi;
+    }
+
+    public static void reset () {
+        reget (); 
+    } 
+
+    public static bool is_efi_system () {
+        return FileUtils.test ("/sys/firmware/efi", FileTest.IS_DIR);
+    }
+
+}
 public class SwapCollector {
     static ArrayList<string> swaps;
 
@@ -110,7 +160,6 @@ public class Device : GLib.Object {
         PROTECTED,
         INVALID
     }
-
 
     public class Partition : GLib.Object {
         public int number { get;  set; }
