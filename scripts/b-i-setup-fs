@@ -123,3 +123,10 @@ if [ -e $ROOTFS/target/var/lib/dpkg/info/openssh-server.postinst ]; then
         do_chroot /usr/sbin/dpkg-reconfigure --no-reload openssh-server
     fi
 fi
+
+
+###### Write installation-id.txt file
+touch $ROOTFS/target/etc/installation-id.txt
+DIST=$(lsb_release -a | tail -1 | sed -e 's/:/\n/g' | tail -1 | sed -e 's/^[[:space:]]*//'); echo "DIST=$DIST" >> $ROOTFS/target/etc/installation-id.txt
+ARCH=$(uname -m); echo "ARCH=$ARCH" >> $ROOTFS/target/etc/installation-id.txt
+UUID=$(uuidgen); echo "UUID=$UUID" >> $ROOTFS/target/etc/installation-id.txt
