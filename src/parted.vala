@@ -1,6 +1,7 @@
 using Gee;
 using JSCore;
 
+
 // EfiCollector
 // collects all EFI partitions in the system
 public class EfiCollector {
@@ -174,6 +175,7 @@ public class Device : GLib.Object {
     Ped.Device? device;
     Ped.Disk? disk;
     bool valid;
+    bool emptyLabel = false;
     public ArrayList<Partition> partitions { get; set construct; }  
 
     public enum PartitionType {
@@ -324,6 +326,7 @@ public class Device : GLib.Object {
                 partitions.add (new_p);
             }
         } else {
+            emptyLabel = true;
             Ped.DiskType diskType = new Ped.DiskType("gpt");
             disk = new Ped.Disk(device, diskType);
             Partition new_p     = new Partition.blank_with_size (get_size () - 1);
@@ -483,6 +486,8 @@ public class Device : GLib.Object {
         if (device == null) {
             throw new DeviceError.CANT_CREATE_PARTITION ("Invalid device"); 
         }
+        
+        disk = new Ped.Disk.from_device (device);
 
         if (byte_end <= byte_start) {
             throw new DeviceError.CANT_CREATE_PARTITION ("byte_end <= byte_start: %ld < %ld\n", (long) byte_end, (long)byte_start);
@@ -557,6 +562,19 @@ public class Device : GLib.Object {
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
         uint64 start = (uint64) (byte_start / get_unit_size ());
+       
+        // create bios_grub partition
+        if (emptyLabel == true) {
+            start += 10000;
+            var bios_grub_fs = new Ped.FileSystemType("");
+            var bios_grub_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, bios_grub_fs, 1, 10000);
+            bios_grub_partition.set_flag (Ped.PartitionFlag.ESP, 1);
+            var bios_grub_num = disk.add_partition (bios_grub_partition, new Ped.Constraint.any (device));
+            if (bios_grub_num == 0) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Unable to BIOS_GRUB partition\n");
+            }
+        }
+
         uint64 end  = (uint64) (byte_end / get_unit_size ());
 
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
@@ -628,6 +646,8 @@ public class Device : GLib.Object {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
             }
         }
+
+
 
         new_partition = new Ped.Partition(disk, first_partition_type, fs_type, start, end);
         if (new_partition != null) {
