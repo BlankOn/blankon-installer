@@ -22,14 +22,8 @@ angular.module("hello",[])
         $rootScope.selectedLang = lang.title;
       }
       // TODO : language selection
-      Installation.setLocale("C.UTF-8");
+      /* Installation.setLocale("C.UTF-8"); */
 
-      // initiate partition state early
-      $rootScope.partitionState = {
-        mountPoint: {},
-        stateIndex : 0,
-        history : [],
-      }
 }])
 
 angular.module("install",[])
@@ -37,6 +31,9 @@ angular.module("install",[])
     "$scope", "$window", "$rootScope","$timeout","$interval", 
     function ($scope, $window, $rootScope, $timeout, $interval){
     console.log(JSON.stringify($rootScope.installationData));
+        
+    Installation.setTimezone($rootScope.installationData.timezone);
+    
     var showError = function(){
       console.log("error");
       $scope.error = true;
@@ -106,6 +103,12 @@ angular.module("partition",[])
   var gbSize = 1073741824;
   var minimumPartitionSize = 4 * gbSize;
   var driveBlockWidth = 600;
+  
+  $scope.partitionSimpleNext = function(){
+    if ($rootScope.selectedInstallationTarget) {
+      $rootScope.next(); 
+    }
+  }
 
   // there are 4 legal action for the current version of partoedi :
   // - delete
@@ -1010,7 +1013,7 @@ angular.module('Biui', [
       }
     }
 
-$rootScope.installationData = {};
+    $rootScope.installationData = {};
     $rootScope.states = [
       "hello",
       "timezone",
@@ -1030,6 +1033,13 @@ $rootScope.installationData = {};
     $rootScope.simplePartitioning = true;
     $rootScope.back = false;
     $rootScope.forward = true;
+    
+    // initiate partition state early
+    $rootScope.partitionState = {
+      mountPoint: {},
+      stateIndex : 0,
+      history : [],
+    }
     
     $rootScope.next = function() {
       $rootScope.back = false;
