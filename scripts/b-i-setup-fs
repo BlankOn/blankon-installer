@@ -48,15 +48,9 @@ rm -f $ROOTFS/tmp/user-pass
 
 ###### AUTOLOGIN
 
-if [ "x$AUTOLOGIN" = "x1" ];then
+if [ "$AUTOLOGIN" = "1" ];then
     if [ -s $ROOTFS/target/var/lib/dpkg/info/lightdm.list ];then
-        echo "Setting up lightdm autologin"
-        if [ -s $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf ];then
-            touch $ROOTFS/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
-        fi
-        sed -i -r -e "s|^#.*autologin-user=.*\$|autologin-user=$USERNAME|" \
-            -e "s|^#.*autologin-user-timeout=.*\$|autologin-user-timeout=0|" \
-            $ROOTFS/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
+        sed -i -r -e "s/autologin-user=blankon/autologin-user=$USERNAME/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
         if [ ! -s $ROOTFS/target/etc/pam.d/lightdm-autologin ];then
             cat << @@EOF > $ROOTFS/target/etc/pam.d/lightdm-autologin
 auth requisite pam_nologin.so
@@ -71,6 +65,9 @@ session required pam_limits.so
 @@EOF
         fi
     fi
+else 
+    sed -i -r -e "s/autologin-user=blankon/autologin-user=/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
+
 fi
 ###### HOSTNAME
 
