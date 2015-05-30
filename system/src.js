@@ -22,7 +22,7 @@ angular.module("hello",[])
         $rootScope.selectedLang = lang.title;
       }
       // TODO : language selection
-      /* Installation.setLocale("C.UTF-8"); */
+      Installation.setLocale("C.UTF-8");
 
 }])
 
@@ -215,21 +215,22 @@ angular.module("partition",[])
     /*   partition.id = 0; */
     /*   console.log(partition.id) */
     /* } */
-
-    $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
-    if (partition.id > 0) {
-      $rootScope.selectedInstallationTarget = $rootScope.selectedDrive.path + partition.id + " ("+partition.sizeGb+" GB)";
-    } else {
-      $rootScope.selectedInstallationTarget = "a freespace partition";
-    }
-    for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {
-      if ($rootScope.selectedDrive.partitions[j].id === partition.id) {
-        if (!$rootScope.selectedDrive.partitions[j].disallow) {
-          $rootScope.selectedDrive.partitions[j].selected = true;
-          $rootScope.validInstallationTarget = true;
-        }
+    if (!partition.disallow) {
+      $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
+      if (partition.id > 0) {
+        $rootScope.selectedInstallationTarget = $rootScope.selectedDrive.path + partition.id + " ("+partition.sizeGb+" GB)";
       } else {
-        $rootScope.selectedDrive.partitions[j].selected = false;
+        $rootScope.selectedInstallationTarget = "a freespace partition";
+      }
+      for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {
+        if ($rootScope.selectedDrive.partitions[j].id === partition.id) {
+          if (!$rootScope.selectedDrive.partitions[j].disallow) {
+            $rootScope.selectedDrive.partitions[j].selected = true;
+            $rootScope.validInstallationTarget = true;
+          }
+        } else {
+          $rootScope.selectedDrive.partitions[j].selected = false;
+        }
       }
     }
   }

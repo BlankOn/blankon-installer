@@ -8232,9 +8232,9 @@ h1 {
 }
 
 .disallow {
-  background:grey;
+  background:grey !important;
   cursor: default;
-  pointer-events: none;
+  /* pointer-events: none; */
 }
 
 .freespace {
