@@ -66,7 +66,7 @@ session required pam_limits.so
         fi
     fi
 else 
-    sed -i -r -e "s/autologin-user=blankon/autologin-user=/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
+    sed -i -r -e "s/autologin-/#autologin-/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
 
 fi
 ###### HOSTNAME
