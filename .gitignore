@@ -8,3 +8,4 @@ src/installer.o
 src/blankon-installer
 src/utils.c
 src/utils.o
+*~
