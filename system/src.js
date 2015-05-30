@@ -422,7 +422,7 @@ angular.module("partition",[])
       }
       step.state = angular.copy($scope.selectedDrive.partitionList);
       if (mountPoint === "swap") {
-        step.action += ";swap";
+        step.action += ";linux-swap";
       } else {
         step.action += ";ext4";
       }
@@ -614,7 +614,7 @@ angular.module("partition",[])
     }
     step.action += ";" + partition.id;
     if (partition.mountPoint === "swap") {
-      step.action += ";swap"; 
+      step.action += ";linux-swap"; 
     } else {
       step.action += ";ext4";
       if (partition.mountPoint === "/") {

@@ -324,13 +324,21 @@ public class Installation : GLib.Object {
                       Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
                   } else {
                       Log.instance().log ("neither root or home");
-                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
+                      if (splittedParams[2] == "linux-swap") {
+                          Process.spawn_command_line_sync ("/sbin/mkswap " + device_path + new_partition.to_string ());
+                      } else {
+                          Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
+                      }
                   }
                   Log.instance().log ("newly created " + new_partition.to_string ());
                   break;
               case  "format":
                   var id = splittedParams[1];
-                  Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + splittedParams[1]);
+                  if (splittedParams[2] == "linux-swap") {
+                      Process.spawn_command_line_sync ("/sbin/mkswap " + device_path + splittedParams[1]);
+                  } else {
+                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + splittedParams[1]);
+                  }
                   Log.instance().log ("should format partition " + splittedParams[1]);
                   if (splittedParams[3] == "root") {
                       Log.instance().log ("root");

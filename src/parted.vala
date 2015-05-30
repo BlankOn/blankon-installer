@@ -413,14 +413,12 @@ public class Device : GLib.Object {
     // create a partition, either it is a primary, extended, or logical
 
     public int create_partition (uint64 byte_start, uint64 byte_end, string fs, string type, string mount) throws DeviceError {
-
-
+            
         // TODO: validate
         Ped.Partition new_partition = null;
-        Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
+        Ped.FileSystemType new_fs = new Ped.FileSystemType(fs);
         uint64 start = (uint64) (byte_start / get_unit_size ());
         uint64 end  = (uint64) (byte_end / get_unit_size ());
-        var new_fs = new Ped.FileSystemType(fs);
         if (type == "normal") {
           new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, new_fs, start, end);
         } else if (type == "extended") {
