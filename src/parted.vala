@@ -396,6 +396,38 @@ public class Device : GLib.Object {
         }
     }
     
+    public uint64 initialize_esp_bios_grub () {
+        bool is_gpt = (disk.type.name == "gpt");
+        // if this is an uefi system and there is  no partition
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        if ((EfiCollector.is_efi_system () && efi_partitions.is_empty) || emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
+            stdout.printf ("Creating EFI partition\n");
+            var start = (uint64) 1;
+            var efi_fs = new Ped.FileSystemType("");
+            var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
+            var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
+          
+            if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
+                ext.set_flag (Ped.PartitionFlag.ESP, 1);
+            } else if (emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
+                ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
+            }
+            stdout.printf ("Primary partition %s%d\n", get_path(), ext.num);
+            stdout.printf ("\nstart : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
+            disk.add_partition (ext, new Ped.Constraint.any (device));
+            disk.commit_to_dev ();
+            if (ext == null) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
+            }
+            EfiCollector.reset ();
+            start = efi_end + get_unit_size ();
+            return start;
+        } else {
+            return 0;
+        }
+        
+    }
+    
     // \brief Delete existing partition
     public int delete_partition (int index) throws DeviceError {
         Ped.Partition p = disk.get_partition(index);
@@ -408,7 +440,9 @@ public class Device : GLib.Object {
             throw new DeviceError.CANT_CREATE_PARTITION ("Unable to delete existing partition\n");
         }
     }
-    
+   
+
+ 
     // \brief Create a partition
     // create a partition, either it is a primary, extended, or logical
 
@@ -432,10 +466,8 @@ public class Device : GLib.Object {
             int [] p_num_array = {};
             Ped.Partition? p = disk.part_list;
             while ((p = disk.next_partition (p)) != null) {
-                /* if (p.num > 0) { */
-                    p_num_array += p.num;
-                    stdout.printf ("origin : " + p.num.to_string () + "\n");
-                /* } */
+                p_num_array += p.num;
+                stdout.printf ("origin : " + p.num.to_string () + "\n");
             }
 
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
@@ -448,10 +480,8 @@ public class Device : GLib.Object {
             int [] p_num_array_new = {};
             Ped.Partition? q = disk.part_list;
             while ((q = disk.next_partition (q)) != null) {
-                /* if (p.num > 0) { */
-                    p_num_array_new += q.num;
-                    stdout.printf ("next : " + q.num.to_string () + "\n");
-                /* } */
+                p_num_array_new += q.num;
+                stdout.printf ("next : " + q.num.to_string () + "\n");
             }
 
             //find the new part_num
@@ -549,7 +579,7 @@ public class Device : GLib.Object {
         // At this point we will reset the partition list;
         // This will recreate the disk if the device is totally empty
         if (disk == null) {
-            disk = new Ped.Disk (device, new Ped.DiskType("msdos"));
+            disk = new Ped.Disk (device, new Ped.DiskType("gpt"));
             stdout.printf ("Label created\n");
             if (disk != null) {
                 disk.commit_to_dev ();
@@ -560,29 +590,23 @@ public class Device : GLib.Object {
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
         uint64 start = (uint64) (byte_start / get_unit_size ());
-       
-        // create bios_grub partition
-        if (emptyLabel == true) {
-            start += 10000;
-            var bios_grub_fs = new Ped.FileSystemType("");
-            var bios_grub_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, bios_grub_fs, 1, 10000);
-            bios_grub_partition.set_flag (Ped.PartitionFlag.ESP, 1);
-            var bios_grub_num = disk.add_partition (bios_grub_partition, new Ped.Constraint.any (device));
-            if (bios_grub_num == 0) {
-                throw new DeviceError.CANT_CREATE_PARTITION ("Unable to BIOS_GRUB partition\n");
-            }
-        }
-
         uint64 end  = (uint64) (byte_end / get_unit_size ());
+        
+        bool is_gpt = (disk.type.name == "gpt");
 
+        // if this is an uefi system and there is  no partition
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
-
-        if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
+        if ((EfiCollector.is_efi_system () && efi_partitions.is_empty) || emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
             stdout.printf ("Creating EFI partition\n");
-            var efi_fs = new Ped.FileSystemType("fat32");
+            var efi_fs = new Ped.FileSystemType("");
             var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
             var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
-            ext.set_flag (Ped.PartitionFlag.ESP, 1);
+          
+            if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
+                ext.set_flag (Ped.PartitionFlag.ESP, 1);
+            } else if (emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
+                ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
+            }
             stdout.printf ("Primary partition %s%d\n", get_path(), ext.num);
             stdout.printf ("\nstart : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
             disk.add_partition (ext, new Ped.Constraint.any (device));
@@ -593,7 +617,6 @@ public class Device : GLib.Object {
             EfiCollector.reset ();
             start = efi_end + get_unit_size (); 
         }
-        bool is_gpt = (disk.type.name == "gpt");
 
         if (create_extended && !is_gpt) {
             stdout.printf ("Creating extended partition\n");

@@ -21,7 +21,7 @@ GETTEXT_PACKAGE = blankon-installer
 PACKAGE = installer
 VERSION = 0.1.0
 
-SHELL = /bin/sh
+SHELL = /bin/bash
 
 srcdir = .
 top_srcdir = ..

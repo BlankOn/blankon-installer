@@ -181,8 +181,10 @@ configure:5749: checking for archiver @FILE support
 configure:5766: gcc -c -g -O2  conftest.c >&5
 configure:5766: $? = 0
 configure:5769: ar cru libconftest.a @conftest.lst >&5
+ar: `u' modifier ignored since `D' is the default (see `U')
 configure:5772: $? = 0
 configure:5777: ar cru libconftest.a @conftest.lst >&5
+ar: `u' modifier ignored since `D' is the default (see `U')
 ar: conftest.o: No such file or directory
 configure:5780: $? = 1
 configure:5792: result: @
@@ -710,7 +712,7 @@ PO_IN_DATADIR_TRUE=''
 RANLIB='ranlib'
 SED='/bin/sed'
 SET_MAKE=''
-SHELL='/bin/sh'
+SHELL='/bin/bash'
 STRIP='strip'
 SYSTEM_PATH=''
 USE_NLS='yes'

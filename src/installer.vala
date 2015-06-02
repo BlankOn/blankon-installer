@@ -283,8 +283,13 @@ public class Installation : GLib.Object {
     void do_partition() {;
         
         if (advancedMode == true) {
+                  
+            
             description = "Partitioning";
             step = Step.PARTITION;
+            
+            Device dev_init = new Device.from_name(device_path);
+            var start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
  
             var can_continue = false;
             Log.instance().log ("Enter advanced partitioning ");
@@ -306,6 +311,10 @@ public class Installation : GLib.Object {
                   // reopen again
                   Device dev = new Device.from_name(device_path);
                   var range = splittedParams[3].split("-");
+                  if (start_after_esp_bios_grub > 0) {
+                    range[0] = start_after_esp_bios_grub.to_string ();
+                    start_after_esp_bios_grub = 0;
+                  }
                   Log.instance().log ("range_start :" + range[0]);
                   Log.instance().log ("range_start :" + range[1]);
                   var mount = "none";
@@ -313,6 +322,8 @@ public class Installation : GLib.Object {
                       mount = splittedParams[4]; 
                   }
                   int new_partition = dev.create_partition (uint64.parse (range[0]), uint64.parse (range[1]), splittedParams[2], splittedParams[1], mount);
+                  
+                  Log.instance().log ("=================" + new_partition.to_string ());
         
                   if (splittedParams[4] == "root") {
                       Log.instance().log ("root");
