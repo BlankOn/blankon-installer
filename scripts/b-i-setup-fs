@@ -99,6 +99,10 @@ if [ -f $ROOTFS/usr/share/blankon-repository-setup/sources.list ];then
     cp -f $ROOTFS/usr/share/blankon-repository-setup/sources.list $ROOTFS/target/etc/apt/ 
 fi
 
+if [ -f $ROOTFS/target/etc/apt/sources.list.d/local.list ];then
+    rm -f $ROOTFS/target/etc/apt/sources.list.d/local.list
+fi
+
 ###### HOME
 
 if [ -f /tmp/fstab ];then
