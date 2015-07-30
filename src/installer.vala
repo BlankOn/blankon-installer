@@ -52,7 +52,8 @@ public class Installation : GLib.Object {
         IDLE,
         PARTITION,
         FS,
-        MOUNT,
+        MOUNT1,
+        MOUNT2,
         MOUNTHOME,
         COPY,
         SETUP,
@@ -209,10 +210,14 @@ public class Installation : GLib.Object {
             do_fs ();
             break;
         case Step.FS:
-            Log.instance().log ("MOUNT");
-            do_mount ();
+            Log.instance().log ("MOUNT1");
+            do_mount1 ();
             break;
-        case Step.MOUNT:
+        case Step.MOUNT1:
+            Log.instance().log ("MOUNT2");
+            do_mount2 ();
+            break;
+        case Step.MOUNT2:
             Log.instance().log ("MOUNTHOME");
             do_mount_home ();
             break;
@@ -470,16 +475,19 @@ public class Installation : GLib.Object {
     
 
 
-    void do_mount () {
+    void do_mount1 () {
         Log.instance().log ("\nho home\n");
         DirUtils.create ("/target", 0700);
-        //string [] c = { "/bin/mount", partition_path, "/target" };
+        //string [V] c = { "/bin/mount", partition_path, "/target" };
         string [] c = { "/bin/mount", "/dev/mapper/root", "/target" };
-        do_simple_command_with_args (c, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
+        do_simple_command_with_args (c, Step.MOUNT1, "Mounting filesystem ", "Unable to mount filesystem");
+    }
+    void do_mount2 () {
+        Log.instance().log ("\nho home\n");
         DirUtils.create ("/target/boot", 0700);
         string boot_device = "/dev/" + device_name + "1";
         string [] b = { "/bin/mount", boot_device, "/target/boot" };
-        do_simple_command_with_args (b, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
+        do_simple_command_with_args (b, Step.MOUNT2, "Mounting filesystem ", "Unable to mount filesystem");
     }
     
     void do_mount_home () {
