@@ -24,6 +24,8 @@ if [ "x$P" != "x" ];then
     do_chroot /usr/bin/apt-get --yes purge $P
 fi
 
+do_chroot /usr/bin/apt-get --yes purge live-tools
+
 echo "Updating initramfs"
 do_chroot /usr/sbin/update-initramfs -k all -u
 
