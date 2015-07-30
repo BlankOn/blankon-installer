@@ -18,7 +18,7 @@ fi
 grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
 mv /tmp/grub /target/etc/default/grub
 cat << @@EOF >> /target/etc/default/grub
-GRUB_CMDLINE_LINUX_DEFAULT="rw quiet console=tty2"
+GRUB_CMDLINE_LINUX_DEFAULT="rw quiet cryptopts=target=root,source=/dev/lvm/root,lvm=root"
 @@EOF
 
 /bin/mount --bind /dev /target/dev
