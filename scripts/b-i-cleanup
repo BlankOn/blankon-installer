@@ -8,4 +8,5 @@ if cat /proc/mounts | grep -F " /target/home " > /dev/null; then
 fi
 
 umount /target
+umount /target/boot
 rm -rf /rofs
