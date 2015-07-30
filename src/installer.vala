@@ -79,6 +79,8 @@ public class Installation : GLib.Object {
     public int progress { get; private set; }
     public string description { get; set construct; }
     public string steps { get; set construct; }
+    public string device_name { get; set construct; }
+    public string passphrase { get; set construct; }
 
     public bool separatedHome = false;
 
@@ -103,6 +105,9 @@ public class Installation : GLib.Object {
             var entry = param.split("=");
             if (entry.length == 2) { // handle only valid key-value entry
                 switch (entry [0]) {
+                case "device_name":
+                    device_name = entry[1];
+                    break;
                 case "device":
                     device = int.parse (entry[1]);
                     Log.instance().log ("Selected Drive : " + device.to_string ());
@@ -118,6 +123,9 @@ public class Installation : GLib.Object {
                     break;
                 case "password":
                     password = entry[1];
+                    break;
+                case "passphrase":
+                    passphrase = entry[1];
                     break;
                 case  "hostname":
                     host_name = entry[1];
@@ -455,7 +463,8 @@ public class Installation : GLib.Object {
     }
 
     void do_fs() {
-        string [] c = { "/sbin/mkfs.ext4", partition_path };
+        Utils.write_simple_file ("/tmp/pass", passphrase);
+        string [] c = { "/sbin/b-i-fs", partition_path };
         do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
     }
     
@@ -464,8 +473,13 @@ public class Installation : GLib.Object {
     void do_mount () {
         Log.instance().log ("\nho home\n");
         DirUtils.create ("/target", 0700);
-        string [] c = { "/bin/mount", partition_path, "/target" };
+        //string [] c = { "/bin/mount", partition_path, "/target" };
+        string [] c = { "/bin/mount", "/dev/mapper/root", "/target" };
         do_simple_command_with_args (c, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
+        DirUtils.create ("/target/boot", 0700);
+        string boot_device = "/dev/" + device_name + "1";
+        string [] b = { "/bin/mount", boot_device, "/target/boot" };
+        do_simple_command_with_args (b, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
     }
     
     void do_mount_home () {
