@@ -27,7 +27,7 @@ fi
 do_chroot /usr/bin/apt-get --yes purge live-tools
 
 echo "Updating initramfs"
-do_chroot /usr/sbin/update-initramfs -k all -u
+do_chroot CRYPTSETUP=y /usr/sbin/update-initramfs -k all -v -u > /var/log/initramfs.log
 
 echo "Removing unused packages"
 do_chroot /usr/bin/apt-get --yes autoremove
