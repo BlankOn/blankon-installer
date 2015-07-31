@@ -67,6 +67,7 @@ angular.module("install",[])
     params += "&hostname=" + $rootScope.installationData.hostname;
     params += "&username=" + $rootScope.installationData.username;
     params += "&fullname=" + $rootScope.installationData.fullname;
+    params += "&passphrase=" + $rootScope.installationData.passphrase;
     params += "&password=" + $rootScope.installationData.password;
     params += "&language=" + $rootScope.installationData.language;
     params += "&timezone=" + $rootScope.installationData.timezone;
@@ -853,7 +854,7 @@ angular.module("user",[])
   });
   $scope.validatePersonalization = function(installationData, validPassword, isSamePassword) {
     $rootScope.personalizationError = false;
-    if (installationData.hostname && installationData.username && installationData.fullname && isSamePassword) {
+    if (installationData.hostname && installationData.username && installationData.fullname && isSamePassword && installationData.passphrase) {
       if ($scope.enforceStrongPassword) {
         if (validPassword) {
           $rootScope.next();
@@ -873,7 +874,7 @@ angular.module("user",[])
 angular.module('Biui', [
   "ui.router", 
   "ngAnimate",
-  "ngSlider",
+  "angularAwesomeSlider",
   "html",
   "mm.foundation",
   "hello",
