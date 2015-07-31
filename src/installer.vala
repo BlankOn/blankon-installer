@@ -87,6 +87,7 @@ public class Installation : GLib.Object {
 
     uint64 installation_size;
     string partition_path;
+    string boot_partition_path;
     string device_path;
 
     Step step = Step.IDLE;
@@ -462,6 +463,7 @@ public class Installation : GLib.Object {
             } else {
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
+            boot_partition_path = d.get (device).get_path () + "1";
             last_step = Step.PARTITION;
             do_next_job ();
         }
@@ -485,7 +487,7 @@ public class Installation : GLib.Object {
     void do_mount2 () {
         Log.instance().log ("\nho home\n");
         DirUtils.create ("/target/boot", 0700);
-        string boot_device = "/dev/" + device_name + "1";
+        string boot_device = boot_partition_path;
         string [] b = { "/bin/mount", boot_device, "/target/boot" };
         do_simple_command_with_args (b, Step.MOUNT2, "Mounting filesystem ", "Unable to mount filesystem");
     }
