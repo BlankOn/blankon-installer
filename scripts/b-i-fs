@@ -4,8 +4,8 @@ TARGET=$1
 X1=1
 X2=2
 DOT=.
-BOOT=$TARGET$X1
-LVM=$TARGET$X2
+##BOOT=$TARGET$X1
+LVM=$TARGET
 
 grep $TARGET$DOT /proc/partitions|sed -e 's/ \+/ /g'|cut -f5 -d' '|sed -e "s/$TARGET//" > /tmp/removed-partitions
 
@@ -26,10 +26,10 @@ mkpart primary ext4 302 -1
 
 parted -s < /tmp/parted
 
-mkfs.vfat /dev/$BOOT
+##mkfs.vfat /dev/$BOOT
 
-lvm pvcreate -ff -y /dev/$LVM
-lvm vgcreate -y lvm /dev/$LVM
+lvm pvcreate -ff -y $LVM
+lvm vgcreate -y lvm $LVM
 lvm lvcreate -y -L 4G -n swap lvm
 lvm lvcreate -y -l 100%FREE -n root lvm
 
