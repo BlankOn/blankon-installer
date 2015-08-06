@@ -2,7 +2,7 @@
 
 set -e
 
-## check if there is mounted-separated home partition. if true, unmoun
+## check if there is mounted-separated home partition. if true, unmount
 if cat /proc/mounts | grep -F " /target/home " > /dev/null; then
   umount /target/home
 fi

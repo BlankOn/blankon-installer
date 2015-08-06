@@ -26,6 +26,19 @@ fi
 
 do_chroot /usr/bin/apt-get --yes purge live-tools
 
+echo "Setup encryption configuration"
+touch $ROOTFS/target/etc/crypttab
+echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
+echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
+touch $ROOTFS/target/etc/fstab
+echo "/dev/sda1 ext4 relatime 0 2" >> $ROOTFS/target/etc/fstab
+
+echo "Adding more module to initramfs"
+##echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
+echo "dm-crypt" >> $ROOTFS/target/etc/initramfs-tools/modules
+echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules
+##echo "sha256" >> $ROOTFS/target/etc/initramfs-tools/modules
+
 echo "Updating initramfs"
 do_chroot CRYPTSETUP=y /usr/sbin/update-initramfs -k all -v -u > /var/log/initramfs.log
 

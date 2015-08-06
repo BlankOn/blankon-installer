@@ -1,30 +1,30 @@
 #!/bin/bash
 
 TARGET=$1
-X1=1
-X2=2
-DOT=.
+#X1=1
+#X2=2
+#DOT=.
 ##BOOT=$TARGET$X1
 LVM=$TARGET
 
-grep $TARGET$DOT /proc/partitions|sed -e 's/ \+/ /g'|cut -f5 -d' '|sed -e "s/$TARGET//" > /tmp/removed-partitions
+##grep $TARGET$DOT /proc/partitions|sed -e 's/ \+/ /g'|cut -f5 -d' '|sed -e "s/$TARGET//" > /tmp/removed-partitions
 
-cat << @@EOF > /tmp/parted
-select /dev/$TARGET
-@@EOF
+##cat << @@EOF > /tmp/parted
+##select /dev/$TARGET
+##@@EOF
 
-for i in `cat /tmp/removed-partitions`;do
-cat << @@EOF >> /tmp/parted
-rm $i
-@@EOF
-done
+##for i in `cat /tmp/removed-partitions`;do
+##cat << @@EOF >> /tmp/parted
+##rm $i
+##@@EOF
+##done
 
-cat << @@EOF >> /tmp/parted
-mkpart primary ext4 1 301
-mkpart primary ext4 302 -1
-@@EOF
+##cat << @@EOF >> /tmp/parted
+##mkpart primary ext4 1 301
+##mkpart primary ext4 302 -1
+##@@EOF
 
-parted -s < /tmp/parted
+#parted -s < /tmp/parted
 
 ##mkfs.vfat /dev/$BOOT
 
@@ -32,7 +32,7 @@ lvm pvcreate -ff -y $LVM
 lvm vgcreate -y lvm $LVM
 lvm lvcreate -y -L 4G -n swap lvm
 lvm lvcreate -y -l 100%FREE -n root lvm
-
+badblocks -c 10240 -s -w -t random -v /dev/lvm/root
 cat /tmp/pass | cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 /dev/lvm/root
 cat /tmp/pass | cryptsetup luksOpen /dev/lvm/root root
 /lib/cryptsetup/scripts/decrypt_derived root > /tmp/derived

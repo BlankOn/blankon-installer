@@ -19,9 +19,11 @@ grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
 mv /tmp/grub /target/etc/default/grub
 cat << @@EOF >> /target/etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="rw quiet cryptopts=target=root,source=/dev/lvm/root,lvm=root"
+GRUB_ENABLE_CRYPTODISK=1
 @@EOF
 
 /bin/mount --bind /dev /target/dev
+/bin/mount --bind /dev/pts /target/dev/pts
 /bin/mount --bind /proc /target/proc
 /bin/mount --bind /sys /target/sys
 if [ -z "$EFI_PARTITION" ];then
@@ -38,6 +40,7 @@ else
     umount /target/boot/efi
 fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
+/bin/umount /target/dev/pts
 /bin/umount /target/dev
 /bin/umount /target/proc
 /bin/umount /target/sys
