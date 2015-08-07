@@ -106,7 +106,7 @@ angular.module("partition",[])
   var driveBlockWidth = 600;
   
   $scope.partitionSimpleNext = function(){
-    if ($rootScope.selectedInstallationTarget) {
+    if ($rootScope.validInstallationTarget) {
       $rootScope.next(); 
     }
   }
@@ -705,71 +705,73 @@ angular.module("partition",[])
     $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
     var path = drive.path;
     $rootScope.installationData.device_path = path;
-    console.log(JSON.stringify($rootScope.devices));
-    $rootScope.validInstallationTarget = false;
-    /* $rootScope.devices.forEach(function(drive){ */
-    for (i = 0; i < $rootScope.devices.length; i++)
+    $rootScope.validInstallationTarget = true;
+    for (i = 0; i < $rootScope.devices.length; i++) {
       if ($rootScope.devices[i].path === path) {
         $rootScope.selectedDrive = $rootScope.devices[i];
-        $rootScope.selectedDrive.id = i;
-        $rootScope.selectedDrive.partitionList = [];
-        $rootScope.selectedDrive.driveWidth = 8;
-        $rootScope.selectedDrive.sizeGb = $rootScope.selectedDrive.size * gbSize;
-        $rootScope.selectedDrive.hasExtended = false;
-        /* $rootScope.selectedDrive.partitions.forEach(function(p){ */
-        for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {
-          var p = $rootScope.selectedDrive.partitions[j];
-          $rootScope.selectedDrive.partitionList.push(p);
-          // filter partition to fit requirements
-          if ( 
-            (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0) && p.size > (0.01*gbSize)) {
-            p.blockWidth = parseInt(((p.size/$rootScope.selectedDrive.size)*driveBlockWidth));
-            $rootScope.selectedDrive.driveWidth += (8+p.blockWidth);
-            p.sizeGb = (p.size/gbSize).toFixed(2);
-            p.selected = false;
-            p.normal = true;
-            if (p.type.indexOf("LOGICAL") > 0) {
-              p.logical = true;
-              if ($rootScope.selectedDrive.hasExtended) {
-                for (var k = 0; k < $rootScope.selectedDrive.partitionList.length; k++) {
-                  if ($rootScope.selectedDrive.partitionList[k].extended &&
-                  p.start >= $rootScope.selectedDrive.partitionList[k].start &&
-                  p.end <= $rootScope.selectedDrive.partitionList[k].end) {
-                    // tell it that it has child(s);
-                    $rootScope.selectedDrive.partitionList[k].hasChild = true;
-                  }
-                }
-              }
-            } 
-            if (p.size < minimumPartitionSize) {
-              p.disallow = true;
-            }
-            if (p.id < 1 && p.type.indexOf("FREESPACE") > 0) {
-              p.freespace = true;
-              // is this freespace a child of extended partition?
-              if ($rootScope.selectedDrive.hasExtended) {
-                for (var k = 0; k < $rootScope.selectedDrive.partitionList.length; k++) {
-                  if ($rootScope.selectedDrive.partitionList[k].extended &&
-                  p.start >= $rootScope.selectedDrive.partitionList[k].start &&
-                  p.end <= $rootScope.selectedDrive.partitionList[k].end) {
-                    p.logicalFreespace = true;
-                  }
-                }
-              }
-            }
-          } else {
-            if (p.type.indexOf("EXTENDED") > 0) {
-              p.extended = true;
-              $rootScope.selectedDrive.hasExtended = true;
-            } else {
-              p.hidden = true;
-            } 
-          }
-        }
+        console.log($rootScope.selectedDrive);
       }
+    }
+    /* $rootScope.validInstallationTarget = false; */
+    /* for (i = 0; i < $rootScope.devices.length; i++) */
+    /*   if ($rootScope.devices[i].path === path) { */
+    /*     $rootScope.selectedDrive = $rootScope.devices[i]; */
+    /*     $rootScope.selectedDrive.id = i; */
+    /*     $rootScope.selectedDrive.partitionList = []; */
+    /*     $rootScope.selectedDrive.driveWidth = 8; */
+    /*     $rootScope.selectedDrive.sizeGb = $rootScope.selectedDrive.size * gbSize; */
+    /*     $rootScope.selectedDrive.hasExtended = false; */
+    /*     for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) { */
+    /*       var p = $rootScope.selectedDrive.partitions[j]; */
+    /*       $rootScope.selectedDrive.partitionList.push(p); */
+    /*       if ( */ 
+    /*         (p.type.indexOf("NORMAL") > 0 || p.type.indexOf("LOGICAL") > 0 || p.type.indexOf("FREESPACE") > 0) && p.size > (0.01*gbSize)) { */
+    /*         p.blockWidth = parseInt(((p.size/$rootScope.selectedDrive.size)*driveBlockWidth)); */
+    /*         $rootScope.selectedDrive.driveWidth += (8+p.blockWidth); */
+    /*         p.sizeGb = (p.size/gbSize).toFixed(2); */
+    /*         p.selected = false; */
+    /*         p.normal = true; */
+    /*         if (p.type.indexOf("LOGICAL") > 0) { */
+    /*           p.logical = true; */
+    /*           if ($rootScope.selectedDrive.hasExtended) { */
+    /*             for (var k = 0; k < $rootScope.selectedDrive.partitionList.length; k++) { */
+    /*               if ($rootScope.selectedDrive.partitionList[k].extended && */
+    /*               p.start >= $rootScope.selectedDrive.partitionList[k].start && */
+    /*               p.end <= $rootScope.selectedDrive.partitionList[k].end) { */
+    /*                 // tell it that it has child(s); */
+    /*                 $rootScope.selectedDrive.partitionList[k].hasChild = true; */
+    /*               } */
+    /*             } */
+    /*           } */
+    /*         } */ 
+    /*         if (p.size < minimumPartitionSize) { */
+    /*           p.disallow = true; */
+    /*         } */
+    /*         if (p.id < 1 && p.type.indexOf("FREESPACE") > 0) { */
+    /*           p.freespace = true; */
+    /*           // is this freespace a child of extended partition? */
+    /*           if ($rootScope.selectedDrive.hasExtended) { */
+    /*             for (var k = 0; k < $rootScope.selectedDrive.partitionList.length; k++) { */
+    /*               if ($rootScope.selectedDrive.partitionList[k].extended && */
+    /*               p.start >= $rootScope.selectedDrive.partitionList[k].start && */
+    /*               p.end <= $rootScope.selectedDrive.partitionList[k].end) { */
+    /*                 p.logicalFreespace = true; */
+    /*               } */
+    /*             } */
+    /*           } */
+    /*         } */
+    /*       } else { */
+    /*         if (p.type.indexOf("EXTENDED") > 0) { */
+    /*           p.extended = true; */
+    /*           $rootScope.selectedDrive.hasExtended = true; */
+    /*         } else { */
+    /*           p.hidden = true; */
+    /*         } */ 
+    /*       } */
+    /*     } */
+    /*   } */
     } 
-  }
-])
+}])
 
 angular.module("summary",[])
 .controller("SummaryCtrl", [
