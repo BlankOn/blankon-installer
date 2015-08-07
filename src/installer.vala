@@ -50,6 +50,7 @@ public class Installation : GLib.Object {
 
     enum Step {
         IDLE,
+        /* WIPE, */
         PARTITION,
         FS,
         MOUNT1,
@@ -201,6 +202,11 @@ public class Installation : GLib.Object {
     void do_next_job () {
         switch (last_step) {
         case Step.IDLE:
+            /* progress = 3; */
+            /* Log.instance().log ("WIPE"); */
+            /* do_wipe (); */
+            /* break; */
+        /* case Step.WIPE: */
             progress = 5;
             Log.instance().log ("PARTITION");
             do_partition ();
@@ -294,184 +300,85 @@ public class Installation : GLib.Object {
         }
     }
     
-    void do_partition() {;
+    /* void do_wipe() { */
+    /*     description = "Wiping the drive"; */
+    /*     step = Step.WIPE; */
+        /* last_step = Step.WIPE; */
+    /* } */
+    
+    void do_partition() {
+        // Wiping the drive
+        /* string [] c = { "/sbin/parted", "-s", device_path, "mklabel msdos"}; */
+        /* do_simple_command_with_args (c, Step.FS, "Wiping drive", "Unable to wipe the drive"); */
+        /* c = { "/sbin/partprobe"}; */
+        /* do_simple_command_with_args (c, Step.FS, "Partprobe", "Unable to partprobe"); */
         
-        if (advancedMode == true) {
-                  
-            
-            description = "Partitioning";
-            step = Step.PARTITION;
-            
-            Device dev_init = new Device.from_name(device_path);
-            var start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
- 
-            var can_continue = false;
-            Log.instance().log ("Enter advanced partitioning ");
-            Log.instance().log (steps);
-            // split steps parameter to an array
-            // this stepsArray is contain step that should be done in partitioning
-            // if a step has root mountPoint option, it should return the partition id to partition_path variable;
-            var stepsArray = steps.split(",");
+        var d = Parted.get_devices (true); 
 
-            foreach (var s in stepsArray) {
-              /* int num_partitions = dev.get_num_partitions(); */
-              /* Log.instance().log (num_partitions.to_string ()); */
-              // split params
-              var splittedParams = s.split(";");
-              Log.instance().log (splittedParams[0]);
-              
-              switch (splittedParams[0]) {
-              case  "create":
-                  // reopen again
-                  Device dev = new Device.from_name(device_path);
-                  var range = splittedParams[3].split("-");
-                  if (start_after_esp_bios_grub > 0) {
-                    range[0] = start_after_esp_bios_grub.to_string ();
-                    start_after_esp_bios_grub = 0;
-                  }
-                  Log.instance().log ("range_start :" + range[0]);
-                  Log.instance().log ("range_start :" + range[1]);
-                  var mount = "none";
-                  if (splittedParams[4] == "root" || splittedParams[4] == "home") {
-                      mount = splittedParams[4]; 
-                  }
-                  int new_partition = dev.create_partition (uint64.parse (range[0]), uint64.parse (range[1]), splittedParams[2], splittedParams[1], mount);
-                  
-                  Log.instance().log ("=================" + new_partition.to_string ());
-        
-                  if (splittedParams[4] == "root") {
-                      Log.instance().log ("root");
-                      root = new_partition.to_string ();
-                  } else if (splittedParams[4] == "home") {
-                      Log.instance().log ("home");
-                      home = new_partition.to_string ();
-                      separatedHome = true;
-                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
-                  } else {
-                      Log.instance().log ("neither root or home");
-                      if (splittedParams[2] == "linux-swap") {
-                          Process.spawn_command_line_sync ("/sbin/mkswap " + device_path + new_partition.to_string ());
-                      } else {
-                          Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + new_partition.to_string ());
-                      }
-                  }
-                  Log.instance().log ("newly created " + new_partition.to_string ());
-                  break;
-              case  "format":
-                  var id = splittedParams[1];
-                  if (splittedParams[2] == "linux-swap") {
-                      Process.spawn_command_line_sync ("/sbin/mkswap " + device_path + splittedParams[1]);
-                  } else {
-                      Process.spawn_command_line_sync ("/sbin/mkfs." + splittedParams[2] + " -F " + device_path + splittedParams[1]);
-                  }
-                  Log.instance().log ("should format partition " + splittedParams[1]);
-                  if (splittedParams[3] == "root") {
-                      Log.instance().log ("root");
-                      root = splittedParams[1];
-                  } else if (splittedParams[3] == "home") {
-                      home = splittedParams[1];
-                      separatedHome = true;
-                  }
-                  break;
-              case  "delete":
-                  // reopen again
-                  Device dev = new Device.from_name(device_path);
-                  var id = splittedParams[1];
-                  Log.instance().log ("should delete partition " + splittedParams[1]);
-                  var result = dev.delete_partition (int.parse (splittedParams[1]));
-                Log.instance().log ("\nDeleted :" + result.to_string ()  + "\n");
-      
-                  break;
-              case  "home":
-                  home = splittedParams[1];
-                  separatedHome = true;
-                  break;
-              }
-            }
-            partition_path = device_path + root;
-            Log.instance().log ("\nTarget :" + partition_path + "\n");
-            if (separatedHome == true) {
-                home = device_path + home;
-                Log.instance().log ("\nHome :" + home + "\n");
-            }
-            last_step = Step.PARTITION;
-            do_next_job ();
-        
+        var inconsistent = false;
+
+        if (d != null && device > d.size) {
+            inconsistent = true;
         } else {
-            var d = Parted.get_devices (true); 
-    
-            var inconsistent = false;
-    
-            if (d != null && device > d.size) {
+            if (d.get (device).partitions != null 
+                && partition > d.get (device).partitions.size) {
                 inconsistent = true;
-            } else {
-                if (d.get (device).partitions != null 
-                    && partition > d.get (device).partitions.size) {
-                    inconsistent = true;
-                }
             }
-    
-            if (inconsistent) {
+        }
+
+        if (inconsistent) {
+            step = Step.DONE;
+            last_step = Step.DONE;
+            state = State.ERROR;
+            description = "Inconsistent partition record";
+            return;
+        }
+        
+        var partitions = d.get (device).partitions;
+        device_path = d.get (device).get_path ();
+        description = "Partitioning";
+        step = Step.PARTITION; 
+
+        var new_partition = -1;
+        Log.instance().log ("Enter simple partitioning");
+        if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
+            Device device = new Device.from_name (device_path);
+            var can_continue = false;
+            try {
+                uint64 boot_size = OneGig;
+                new_partition = device.create_partition_simple (partitions.get (partition).start,
+                                                         partitions.get (partition).end,
+                                                         "ext4", boot_size);
+
+                Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
+                if (new_partition != -1) {
+                    can_continue = true;
+                }
+            } catch (DeviceError e) {
+                Log.instance().log_without_newline (e.message);
+            }
+          
+
+            if (can_continue == false) {
                 step = Step.DONE;
                 last_step = Step.DONE;
                 state = State.ERROR;
-                description = "Inconsistent partition record";
+                description = "Error while doing partition";
                 return;
-            }
-            
-            var partitions = d.get (device).partitions;
-            device_path = d.get (device).get_path ();
-            description = "Partitioning";
-            step = Step.PARTITION; 
-    
-            Log.instance().log ("Enter simple partitioning");
-            if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
-                Device device = new Device.from_name (device_path);
-                var can_continue = false;
-                var new_partition = -1;
-                try {
-                    uint64 swap_size = 0;
-                    if (SwapCollector.get_partitions().is_empty) {
-                         if (partitions.get(partition).size - OneGig > installation_size) {
-                            swap_size = OneGig;
-                            Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
-                         }
-                    }
-                    swap_size = OneGig;
-                    new_partition = device.create_partition_simple (partitions.get (partition).start,
-                                                             partitions.get (partition).end,
-                                                             "ext4", swap_size);
-    
-                    Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
-                    if (new_partition != -1) {
-                        can_continue = true;
-                    }
-                } catch (DeviceError e) {
-                    Log.instance().log_without_newline (e.message);
-                }
-              
-    
-                if (can_continue == false) {
-                    step = Step.DONE;
-                    last_step = Step.DONE;
-                    state = State.ERROR;
-                    description = "Error while doing partition";
-                    return;
-                } 
-                Parted.get_devices (false); // re-read devices and partitions
-                partition_path = device_path + new_partition.to_string ();
-            } else {
-                partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
-            }
-            boot_partition_path = d.get (device).get_path () + "1";
-            last_step = Step.PARTITION;
-            do_next_job ();
+            } 
+            Parted.get_devices (false); // re-read devices and partitions
+            partition_path = device_path + new_partition.to_string ();
+        } else {
+            partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
         }
+        boot_partition_path = d.get (device).get_path () + (new_partition - 1).to_string ();
+        last_step = Step.PARTITION;
+        do_next_job ();
     }
 
     void do_fs() {
         Utils.write_simple_file ("/tmp/pass", passphrase);
-        string [] c = { "/sbin/b-i-fs", partition_path };
+        string [] c = { "/sbin/b-i-fs", partition_path , boot_partition_path};
         do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
     }
     
