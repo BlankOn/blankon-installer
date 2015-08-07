@@ -1,11 +1,10 @@
 #!/bin/bash
 
 TARGET=$1
+BOOT=$2
 #X1=1
 #X2=2
 #DOT=.
-##BOOT=$TARGET$X1
-LVM=$TARGET
 
 ##grep $TARGET$DOT /proc/partitions|sed -e 's/ \+/ /g'|cut -f5 -d' '|sed -e "s/$TARGET//" > /tmp/removed-partitions
 
@@ -26,10 +25,10 @@ LVM=$TARGET
 
 #parted -s < /tmp/parted
 
-##mkfs.vfat /dev/$BOOT
+mkfs.vfat $BOOT
 
-lvm pvcreate -ff -y $LVM
-lvm vgcreate -y lvm $LVM
+lvm pvcreate -ff -y $TARGET
+lvm vgcreate -y lvm $TARGET
 lvm lvcreate -y -L 4G -n swap lvm
 lvm lvcreate -y -l 100%FREE -n root lvm
 badblocks -c 10240 -s -w -t random -v /dev/lvm/root
