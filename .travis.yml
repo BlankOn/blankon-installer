@@ -6,8 +6,10 @@ before_script:
 - sudo apt-get update -qq
 - sudo apt-get install -qq gnome-common libglib2.0-dev libgtk-3-dev
 - sudo apt-get install -qq libsqlite3-dev libvala-0.26-dev valac-0.26 gobject-introspection
-- sudo apt-get install -qq libwebkitgtk-3.0-dev libparted-dev libgee-dev
+- sudo apt-get install -qq libwebkitgtk-3.0-dev libgee-dev
 - sudo apt-get install -qq gcc-4.9
+- wget https://launchpad.net/ubuntu/+archive/primary/+files/libparted-dev_3.2-7ubuntu1_i386.deb
+- sudo dpkg --force-all -i *deb
 - ./autogen.sh
 - ./configure
 
