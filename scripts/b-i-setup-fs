@@ -50,7 +50,7 @@ rm -f $ROOTFS/tmp/user-pass
 
 if [ "$AUTOLOGIN" = "1" ];then
     if [ -s $ROOTFS/target/var/lib/dpkg/info/lightdm.list ];then
-        sed -i -r -e "s/autologin-user=blankon/autologin-user=$USERNAME/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
+        sed -i -r -e "s/autologin-user=blankon/autologin-user=$USERNAME/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-lightdm-webkit-greeter.conf
         if [ ! -s $ROOTFS/target/etc/pam.d/lightdm-autologin ];then
             cat << @@EOF > $ROOTFS/target/etc/pam.d/lightdm-autologin
 auth requisite pam_nologin.so
@@ -66,7 +66,7 @@ session required pam_limits.so
         fi
     fi
 else 
-    sed -i -r -e "s/autologin-/#autologin-/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-pantheon-greeter.conf 
+    sed -i -r -e "s/autologin-/#autologin-/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-lightdm-webkit-greeter.conf
 
 fi
 ###### HOSTNAME
