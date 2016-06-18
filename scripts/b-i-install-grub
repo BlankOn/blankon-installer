@@ -40,4 +40,11 @@ fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
 /bin/umount /target/dev
 /bin/umount /target/proc
+
+# Umount fuse under /target/sys
+SYS_MOUNTED=`/bin/mount | grep target/sys/fs/fuse/connections`
+if [ $SYS_MOUNTED -eq 1 ];then
+  /bin/umount /target/sys/fs/fuse/connections
+fi
+
 /bin/umount /target/sys
