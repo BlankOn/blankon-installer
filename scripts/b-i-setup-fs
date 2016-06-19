@@ -48,14 +48,9 @@ rm -f $ROOTFS/tmp/user-pass
 
 ###### AUTOLOGIN
 
-if [ "x$AUTOLOGIN" = "x1" ];then
+if [ "$AUTOLOGIN" = "1" ];then
     if [ -s $ROOTFS/target/var/lib/dpkg/info/lightdm.list ];then
-        echo "Setting up lightdm autologin"
-        if [ -s $ROOTFS/target/etc/lightdm/lightdm.conf ];then
-            sed -i -r -e "s|^#.*autologin-user=.*\$|autologin-user=$USERNAME|" \
-                      -e "s|^#.*autologin-user-timeout=.*\$|autologin-user-timeout=0|" \
-                      $ROOTFS/target/etc/lightdm/lightdm.conf
-        fi
+        sed -i -r -e "s/autologin-user=blankon/autologin-user=$USERNAME/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-lightdm-webkit-greeter.conf
         if [ ! -s $ROOTFS/target/etc/pam.d/lightdm-autologin ];then
             cat << @@EOF > $ROOTFS/target/etc/pam.d/lightdm-autologin
 auth requisite pam_nologin.so
@@ -70,6 +65,9 @@ session required pam_limits.so
 @@EOF
         fi
     fi
+else 
+    sed -i -r -e "s/autologin-/#autologin-/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-lightdm-webkit-greeter.conf
+
 fi
 ###### HOSTNAME
 
@@ -101,12 +99,24 @@ if [ -f $ROOTFS/usr/share/blankon-repository-setup/sources.list ];then
     cp -f $ROOTFS/usr/share/blankon-repository-setup/sources.list $ROOTFS/target/etc/apt/ 
 fi
 
+if [ -f $ROOTFS/target/etc/apt/sources.list.d/local.list ];then
+    rm -f $ROOTFS/target/etc/apt/sources.list.d/local.list
+fi
+
+###### HOME
+
+if [ -f /tmp/fstab ];then
+    mv /tmp/fstab /target/etc/fstab
+fi
+
+
 ###### Swap
 
 for i in `cat $ROOTFS/tmp/swaps`;do
     mkswap $i
     echo "$i    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
 done
+
 
 ###### OpenSSH server
 if [ -e $ROOTFS/target/var/lib/dpkg/info/openssh-server.postinst ]; then
@@ -115,3 +125,11 @@ if [ -e $ROOTFS/target/var/lib/dpkg/info/openssh-server.postinst ]; then
         do_chroot /usr/sbin/dpkg-reconfigure --no-reload openssh-server
     fi
 fi
+
+
+###### Write installation-id.txt file
+touch $ROOTFS/target/etc/installation-id.txt
+DIST=$(lsb_release -a | tail -1 | sed -e 's/:/\n/g' | tail -1 | sed -e 's/^[[:space:]]*//');
+ARCH=$(uname -m);
+UUID=$(uuidgen); 
+echo "$DIST-$ARCH-$UUID" >> $ROOTFS/target/etc/installation-id.txt

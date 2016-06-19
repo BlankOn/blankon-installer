@@ -1,1 +1,11 @@
 debian
+autom4te.cache
+src/.deps
+src/parted.c
+src/parted.o
+src/installer.c
+src/installer.o
+src/blankon-installer
+src/utils.c
+src/utils.o
+*~
