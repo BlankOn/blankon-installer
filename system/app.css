@@ -8097,6 +8097,14 @@ h1 {
   height:auto;
   background:#ccc">
 }
+.button:focus,
+.button:active,
+.button.active{
+  background-color: #008CBA;
+}
+.button:hover{
+  background-color: #ff4C2E;
+}
 
 .fade.ng-enter, .fade.ng-leave {
   position: absolute;
