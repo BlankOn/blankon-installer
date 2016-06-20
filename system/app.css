@@ -8095,7 +8095,6 @@ h1 {
 .wrapper {
   position:relative;
   height:auto;
-  background:#ccc">
 }
 .button:focus,
 .button:active,
@@ -8624,4 +8623,27 @@ h1 {
     border-radius: 50%}
 .jslider.sliderCSS div.jslider-bg i, .jslider.sliderCSS div.jslider-pointer {
     background: 0 0;
+}
+.checkbox {
+  display:inline-block;
+  width:20px;
+  height:20px;
+  background:white;
+  border:1px solid black;
+  margin-top:8px
+}
+
+.checkbox-dot {
+  width:14px;
+  height:14px;
+  background:#008CBA !important;
+}
+.checkbox-checked {
+  padding:2px;
+  border:1px solid white;
+}
+.checkbox-label {
+  margin-left:10px;
+  position:absolute;
+  font-size:small;
 }
