@@ -33585,10 +33585,9 @@ BiLanguageMock = function() {
 
 BiLanguageMock.prototype.available = function() {
   var langs = [
-  { id: "id", title: "Bahasa Indonesia" },
-  { id: "bew", title: "Base Betawi" },
-  { id: "enUS", title: "English US" }
-    ];
+    { id: "id", title: "Bahasa Indonesia" },
+    { id: "enUS", title: "English US" }
+  ];
 
   return langs;
 }
