@@ -1171,6 +1171,7 @@ var en = {
   partition_type : "Partition Type",
   target_device : "Target device",
   target_partition : "Target partition",
+  your_system_is_ready : "Your sistem is ready. Please continue to reboot into your newly installed system.",
 }
 
 var id = {
@@ -1238,4 +1239,5 @@ var id = {
   partition_type : "Jenis Partisi",
   target_device : "Diska tujuan",
   target_partition : "Partisi tujuan",
+  your_system_is_ready : "Sistem Anda sudah siap. Silakan memula ulang untuk masuk ke sistem Anda yang baru.",
 }
