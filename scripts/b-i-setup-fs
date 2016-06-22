@@ -13,8 +13,8 @@ rm -f $ROOTFS/target/etc/fstab
 ###### REMOVE PACKAGES
 
 P=""
-if [ -f $ROOTFS/live/image/live/packages-to-remove ];then
-    for i in `cat $ROOTFS/$PACKAGE_TO_REMOVE`;do
+if [ -f $ROOTFS/lib/live/mount/medium/live/packages-to-remove ];then
+    for i in `cat $ROOTFS/lib/live/mount/medium/live/packages-to-remove`;do
         P="$P $i"
     done
     echo "Removing packages: $P"
