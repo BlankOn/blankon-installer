@@ -1,5 +1,10 @@
 #!/bin/bash
 
+/bin/mount --bind /dev /target/dev
+/bin/mount --bind /dev/pts /target/dev/pts
+/bin/mount --bind /proc /target/proc
+/bin/mount --bind /sys /target/sys
+
 set -e
 
 PATH=$PATH:/usr/sbin:/usr/bin
@@ -38,6 +43,7 @@ do_chroot /usr/bin/apt-get --yes clean
 read AUTOLOGIN USERNAME < $ROOTFS/tmp/user-setup
 echo "Configuring user $USERNAME"
 echo "Auto-login: $AUTOLIGIN"
+echo "LOG ========================== 1"
 rm -f $ROOTFS/tmp/user-setup
 USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
 do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
@@ -45,6 +51,7 @@ do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
 do_chroot /usr/bin/chfn < $ROOTFS/tmp/user-info
 rm -f $ROOTFS/tmp/user-pass
+echo "LOG ========================== 2"
 
 ###### AUTOLOGIN
 
@@ -69,6 +76,7 @@ else
     sed -i -r -e "s/autologin-/#autologin-/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-lightdm-webkit-greeter.conf
 
 fi
+echo "LOG ========================== 3"
 ###### HOSTNAME
 
 read HOSTNAME < $ROOTFS/tmp/hostname
@@ -85,10 +93,12 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 @@EOF
 
+echo "LOG ========================== 4"
 ###### Locale
 if [ -f /run/locale ];then
     cp /run/locale /target/etc/default/
 fi
+echo "LOG ========================== 5"
 
 ###### Timezone
 cp -f $ROOTFS/etc/localtime $ROOTFS/target/etc/localtime
@@ -112,10 +122,10 @@ fi
 
 ###### Swap
 
-for i in `cat $ROOTFS/tmp/swaps`;do
-    mkswap $i
-    echo "$i    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
-done
+#for i in `cat $ROOTFS/tmp/swaps`;do
+#    mkswap $i
+#    echo "$i    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
+#done
 
 
 ###### OpenSSH server
@@ -129,7 +139,7 @@ fi
 
 ###### Write installation-id.txt file
 touch $ROOTFS/target/etc/installation-id.txt
-DIST=$(lsb_release -a | tail -1 | sed -e 's/:/\n/g' | tail -1 | sed -e 's/^[[:space:]]*//');
+DIST=$(lsb_release -c | tail -1 | sed -e 's/:/\n/g' | tail -1 | sed -e 's/^[[:space:]]*//');
 ARCH=$(uname -m);
 UUID=$(uuidgen); 
 echo "$DIST-$ARCH-$UUID" >> $ROOTFS/target/etc/installation-id.txt
