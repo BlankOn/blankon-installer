@@ -22,20 +22,16 @@ GRUB_CMDLINE_LINUX_DEFAULT="rw quiet console=tty2"
 @@EOF
 
 if [ -z "$EFI_PARTITION" ];then
-    echo "LOG ===================== 8"
     /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
 else
-    echo "LOG ===================== 9"
     # grub-efi must be available 
     apt --yes --force-yes install grub-efi
     mkdir -p /target/boot/efi
     if [ "x$NEED_FORMAT" = "xY" ];then
-      echo "LOG ===================== 10"
        /sbin/mkfs.fat -F 32 $EFI_PARTITION
     fi
     mount $EFI_PARTITION /target/boot/efi
     /usr/sbin/grub-install --recheck --efi-directory=/target/boot/efi --root-directory=/target $DEVICE
-    echo "LOG ===================== 11"
     umount /target/boot/efi
 fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
