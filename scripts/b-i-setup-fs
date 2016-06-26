@@ -97,7 +97,9 @@ fi
 
 ###### Timezone
 TZ=`cat /tmp/timezone`
-cp $ROOTFS/usr/share/zoneinfo/$TZ $ROOTFS/target/etc/localtime
+pushd $ROOTFS/target/etc
+ln -s $ROOTFS/usr/share/zoneinfo/$TZ localtime
+popd
 cp /tmp/timezone $ROOTFS/target/etc/timezone
 
 ###### Repository
