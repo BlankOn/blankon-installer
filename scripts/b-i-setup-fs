@@ -92,7 +92,13 @@ ff02::2 ip6-allrouters
 
 ###### Locale
 if [ -f /run/locale ];then
-    cp /run/locale /target/etc/default/
+    cp /run/locale $ROOTFS/target/etc/default/
+fi
+
+###### gnome settings overrides
+if [ -f /usr/share/glib-2.0/schemas/blankon.gschema.override ];then
+  cp /usr/share/glib-2.0/schemas/blankon.gschema.override $ROOTFS/target/usr/share/glib-2.0/schemas/blankon.gschema.override 
+  do_chroot /usr/bin/glib-compile-schemas /usr/share/glib-2.0/schemas/
 fi
 
 ###### Timezone
