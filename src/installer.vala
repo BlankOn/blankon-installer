@@ -775,7 +775,13 @@ public class Installation : GLib.Object {
             Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
             Intl.textdomain( Config.GETTEXT_PACKAGE );
-            Utils.write_simple_file("/run/locale", "LC_ALL=%s\nLANG=%s\n".printf((string)buffer, (string)buffer));
+
+            // This is necessary to have gnome-control-center displaying currently selected locale
+            Utils.write_simple_file("/usr/share/glib-2.0/schemas/blankon.gschema.override", "[org.gnome.system.locale]\nregion='%s'\n".printf((string)buffer));
+            Process.spawn_command_line_sync ("/usr/bin/glib-compile-schemas /usr/share/glib-2.0/schemas/");
+
+            // This is so it will be copied by setup script to target
+            Utils.write_simple_file("/run/locale", "LC_ALL=%s\nLANG=%s\nLC_TIME=%s\nexport LC_ALL LANG".printf((string)buffer, (string)buffer, (string)buffer));
             Process.spawn_command_line_sync ("/bin/cp /run/locale /etc/default/locale");
             buffer = null;
         }
