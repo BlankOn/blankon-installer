@@ -18,7 +18,8 @@ fi
 grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
 mv /tmp/grub /target/etc/default/grub
 cat << @@EOF >> /target/etc/default/grub
-GRUB_CMDLINE_LINUX_DEFAULT="rw quiet console=tty2"
+GRUB_CMDLINE_LINUX_DEFAULT="rw quiet splash"
+GRUB_GFXPAYLOAD_LINUX="keep"
 @@EOF
 
 if [ -z "$EFI_PARTITION" ];then
