@@ -8,19 +8,21 @@ angular.module("done",[])
 }])
 
 angular.module("hello",[])
-.controller("HelloCtrl", ["$scope", "$window", "$rootScope", "$translate", 
+.controller("HelloCtrl", ["$scope", "$window", "$rootScope", "$translate",
   function ($scope, $window, $rootScope, $translate){
-    
-    $scope.languages = $window.BiLanguage.available();
+
+    $scope.languages = [
+      { id: "en_US.utf8", title: "English US" },
+      { id: "id_ID.utf8", title: "Bahasa Indonesia" },
+    ];
     $scope.setLanguage = function(lang) {
       console.log(lang);
       $rootScope.installationData.lang = lang.id;
       $rootScope.selectedLang = lang.title;
       $translate.use(lang.id);
+      Installation.setLocale(lang.id);
     }
-    // TODO : language selection
-    /* Installation.setLocale("C.UTF-8"); */
-
+    $scope.setLanguage($scope.languages[0]);
 }])
 
 angular.module("install",[])
@@ -878,7 +880,7 @@ angular.module("user",[])
 
 'use strict';
 angular.module('Biui', [
-  "ui.router", 
+  "ui.router",
   "ngAnimate",
   "pascalprecht.translate",
   "angularAwesomeSlider",
@@ -893,9 +895,9 @@ angular.module('Biui', [
   "done"
 ])
 .config(function ($translateProvider) {
-  $translateProvider.translations("enUS", en);
-  $translateProvider.translations("id", id);
-  $translateProvider.preferredLanguage("enUS");
+  $translateProvider.translations("en_US.utf8", en);
+  $translateProvider.translations("id_ID.utf8", id);
+  $translateProvider.preferredLanguage("en_US.utf8");
 })
 .config(function($stateProvider) {
   $stateProvider
@@ -1048,21 +1050,21 @@ angular.module('Biui', [
     $rootScope.simplePartitioning = true;
     $rootScope.back = false;
     $rootScope.forward = true;
-    
+
     // initiate partition state early
     $rootScope.partitionState = {
       mountPoint: {},
       stateIndex : 0,
       history : [],
     }
-    
+
     $rootScope.next = function() {
       $rootScope.back = false;
       $rootScope.forward = true;
       $timeout(function(){
         if ($rootScope.currentState + 1 < $rootScope.states.length) {
           $rootScope.currentState ++;
-  
+
           var state = $rootScope.states[$rootScope.currentState];
           console.log(state);
           $state.go(state);
