@@ -38,6 +38,7 @@ namespace Ped {
             public int get_last_partition_num();
             public int delete_all();
             public int add_partition(Partition part, Constraint constraint);
+            public int delete_partition(Partition part);
             public int commit_to_dev();
             public int commit_to_os();
             public DiskType type;
@@ -70,6 +71,29 @@ namespace Ped {
             public FileSystemType fs_type;
             public PartitionType type;
             public string get_name ();
+            public int set_flag (PartitionFlag flag, int state);
+        }
+
+    [CCode (cprefix = "PED_PARTITION_", cname = "PedPartitionFlag")]
+        public enum PartitionFlag {
+            BOOT=1,
+            ROOT=2,
+            SWAP=3,
+            HIDDEN=4,
+            RAID=5,
+            LVM=6,
+            LBA=7,
+            HPSERVICE=8,
+            PALO=9,
+            PREP=10,
+            MSFT_RESERVED=11,
+            BIOS_GRUB=12,
+            APPLE_TV_RECOVERY=13,
+            DIAG=14,
+            LEGACY_BOOT=15,
+            MSFT_DATA=16,
+            IRST=17,
+            ESP=18
         }
 
     [CCode (cprefix = "PED_PARTITION_", cname = "PedPartitionType")]
@@ -99,15 +123,6 @@ namespace Ped {
             GIBIBYTE,
             TEBIBYTE
     }
-
-    [CCode (unref_function = "")]
-        public class FileSystem {
-            [CCode (cname = "ped_file_system_create")]
-                public FileSystem.create(Geometry geom,
-                        FileSystemType type,
-                        Timer? timer);
-            public FileSystemType? type;
-        }
 
     [CCode (unref_function = "")]
         public class FileSystemType {
