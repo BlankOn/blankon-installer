@@ -19,7 +19,7 @@ grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
 mv /tmp/grub /target/etc/default/grub
 cat << @@EOF >> /target/etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="rw quiet splash"
-GRUB_GFXPAYLOAD_LINUX="keep"
+GRUB_GFXPAYLOAD_LINUX=1024x768
 @@EOF
 
 if [ -z "$EFI_PARTITION" ];then
