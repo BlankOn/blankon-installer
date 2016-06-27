@@ -891,7 +891,10 @@ public class Installer : WebView {
         if (debug == "1") {
           settings.enable_developer_extras = true;
           web_inspector.inspect_web_view.connect(getInspectorView);
+        } else {
+          settings.enable_default_context_menu = false;
         }
+
         settings.enable_file_access_from_file_uris = true;
         settings.enable_universal_access_from_file_uris = true;
         set_settings(settings);
