@@ -2,7 +2,14 @@
 
 set -e
 
+# If this is an EFI system, this script will be called with two parameters,
+# being the first is the installation device and the second is the EFI partition,
+# otherwise, only first parameter is given
+
 DEVICE=$1
+EFI_PARTITION=$2
+NEED_FORMAT=$3
+
 if [ -z "$DEVICE" ];then
     echo "No device given"
     exit 1
@@ -11,14 +18,26 @@ fi
 grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
 mv /tmp/grub /target/etc/default/grub
 cat << @@EOF >> /target/etc/default/grub
-GRUB_CMDLINE_LINUX_DEFAULT="rw quiet console=tty2"
+GRUB_CMDLINE_LINUX_DEFAULT="rw quiet splash"
+GRUB_GFXPAYLOAD_LINUX=1024x768
 @@EOF
 
-/bin/mount --bind /dev /target/dev
-/bin/mount --bind /proc /target/proc
-/bin/mount --bind /sys /target/sys
-/usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
+if [ -z "$EFI_PARTITION" ];then
+    /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
+else
+    # grub-efi must be available 
+    apt --yes --force-yes install grub-efi
+    mkdir -p /target/boot/efi
+    if [ "x$NEED_FORMAT" = "xY" ];then
+       /sbin/mkfs.fat -F 32 $EFI_PARTITION
+    fi
+    mount $EFI_PARTITION /target/boot/efi
+    /usr/sbin/grub-install --recheck --efi-directory=/target/boot/efi --root-directory=/target $DEVICE
+    umount /target/boot/efi
+fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
+/bin/umount /target/dev/pts
 /bin/umount /target/dev
 /bin/umount /target/proc
-/bin/umount /target/sys
+
+/bin/umount --recursive /target/sys
