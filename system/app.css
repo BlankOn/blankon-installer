@@ -8653,3 +8653,6 @@ h1 {
   position:absolute;
   font-size:small;
 }
+label {
+  color: white !important;
+}

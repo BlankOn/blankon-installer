@@ -1,6 +1,9 @@
 angular.module("done",[])
 .controller("DoneCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
     $scope.reboot = function(){
       console.log("reboot");
       Installation.reboot();
@@ -10,6 +13,9 @@ angular.module("done",[])
 angular.module("hello",[])
 .controller("HelloCtrl", ["$scope", "$window", "$rootScope", "$translate",
   function ($scope, $window, $rootScope, $translate){
+    
+    $rootScope.contentHeight = $rootScope.contentHeight || ($(window).height()*(87/100)).toString() + "px"; 
+    $(".content").css("height", $rootScope.contentHeight);
 
     $scope.languages = [
       { id: "en_US.utf8", title: "English US" },
@@ -28,6 +34,8 @@ angular.module("hello",[])
 angular.module("install",[])
 .controller("InstallCtrl", ["$scope", "$window", "$rootScope","$timeout","$interval",
   function ($scope, $window, $rootScope, $timeout, $interval){
+    
+    $(".content").css("height", $rootScope.contentHeight);
 
     console.log(JSON.stringify($rootScope.installationData));
     Installation.setTimezone($rootScope.installationData.timezone);
@@ -89,6 +97,8 @@ angular.module("install",[])
 angular.module("partition",[])
 .controller("PartitionCtrl", ["$scope", "$window", "$timeout", "$rootScope", 
   function ($scope, $window, $timeout, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
     
     /*
 
@@ -786,12 +796,17 @@ angular.module("partition",[])
 angular.module("summary",[])
 .controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
 
 }])
 
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope, $watch){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
     $("area, timezone-next").click(function(){
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
@@ -801,6 +816,9 @@ angular.module("timezone",[])
 angular.module("user",[])
 .controller("UserCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
     $scope.enforceStrongPassword = false;
     $rootScope.installationData.autologin = false;
     $scope.$watch("installationData.hostname", function(value){
@@ -1091,7 +1109,6 @@ angular.module('Biui', [
       // Fix layout according to screen size
       $(".page").css("width", ($(window).width()*(70/100)).toString() + "px");
       $(".page").css("margin-left", ($(window).width()*(3/100)).toString() + "px");
-      $(".content").css("height", ($(window).height()*(87/100)).toString() + "px");
       $(".line").css("height", ($(window).height()*(72/100)).toString() + "px");
       $(".line").css("margin-top", ($(window).height()*(10/100)).toString() + "px");
       $(".step-container").css("margin-top", ($(window).height()*(10/100)).toString() + "px");
