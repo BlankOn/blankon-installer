@@ -149,3 +149,18 @@ DIST=$(lsb_release -c | tail -1 | sed -e 's/:/\n/g' | tail -1 | sed -e 's/^[[:sp
 ARCH=$(uname -m);
 UUID=$(uuidgen); 
 echo "$DIST-$ARCH-$UUID" >> $ROOTFS/target/etc/installation-id.txt
+
+##### Remove ISO Image ID from $ROOTFS/target/etc/lsb-release
+set +e
+LSB_DEVELOPMENT=`lsb_release -d | grep Development`
+echo $LSB_DEVELOPMENT
+if [ "x$LSB_DEVELOPMENT" != "x1" ];then
+		LSB_DIST_ID=`cat $ROOTFS/target/etc/lsb-release | sed -n 2p | cut -d"=" -f2 | cut -d'-' -f2-3`
+		LSB_DESC=`cat $ROOTFS/target/etc/lsb-release | sed -n 4p | cut -d"-" -f2 | cut -d"\"" -f2`
+		sed -i "4s/.*/DISTRIB_DESCRIPTION=\"$LSB_DESC $LSB_DIST_ID\"/" $ROOTFS/target/etc/lsb-release
+fi
+set -e
+
+LSB_RELEASE=`cat $ROOTFS/target/etc/lsb-release | sed -n 2p | cut -d"-" -f1`
+sed -i "2s/.*/$LSB_RELEASE/" $ROOTFS/target/etc/lsb-release
+
