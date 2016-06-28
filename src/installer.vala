@@ -460,7 +460,7 @@ public class Installation : GLib.Object {
 
     void do_fs() {
         string [] c = { "/sbin/mkfs.ext4", partition_path };
-        do_simple_command_with_args (c, Step.FS, "Installing filesystem", "Unable to install filesystem");
+        do_simple_command_with_args (c, Step.FS, "installing_filesystem", "Unable to install filesystem");
     }
     
 
@@ -469,7 +469,7 @@ public class Installation : GLib.Object {
         Log.instance().log ("\nho home\n");
         DirUtils.create ("/target", 0700);
         string [] c = { "/bin/mount", partition_path, "/target" };
-        do_simple_command_with_args (c, Step.MOUNT, "Mounting filesystem ", "Unable to mount filesystem");
+        do_simple_command_with_args (c, Step.MOUNT, "mounting_filesystem ", "Unable to mount filesystem");
     }
     
     void do_mount_home () {
@@ -479,7 +479,7 @@ public class Installation : GLib.Object {
             Log.instance().log ("\nmount separated home partition\n");
             DirUtils.create ("/target/home", 0700);
             string [] c = { "/bin/mount", home, "/target/home" };
-            do_simple_command_with_args (c, Step.MOUNTHOME, "Mounting home filesystem ", "Unable to mount home filesystem");
+            do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
             var content = partition_path + " / ext4 defaults 1 2";
@@ -499,7 +499,7 @@ public class Installation : GLib.Object {
     }
     
     void do_copy() {
-        do_simple_command ("/sbin/b-i-copy-fs", Step.COPY, "Copying filesystem", "Unable to copy filesystem");
+        do_simple_command ("/sbin/b-i-copy-fs", Step.COPY, "copying_filesystem", "Unable to copy filesystem");
     }
 
     void do_setup () {
@@ -527,7 +527,7 @@ public class Installation : GLib.Object {
         content = ("%s").printf(swaps);
         Utils.write_simple_file ("/tmp/swaps", content);
 
-        do_simple_command ("/sbin/b-i-setup-fs", Step.SETUP, "Setting up", "Unable to setup installation");
+        do_simple_command ("/sbin/b-i-setup-fs", Step.SETUP, "setting_up", "Unable to setup installation");
     }
 
     void do_grub () {
@@ -546,11 +546,11 @@ public class Installation : GLib.Object {
             }
         }
         string [] c = { "/sbin/b-i-install-grub", device, efi_partition, need_format };
-        do_simple_command_with_args (c, Step.GRUB, "Installing GRUB", "Unable to install GRUB");
+        do_simple_command_with_args (c, Step.GRUB, "installing_grub", "Unable to install GRUB");
     }
 
     void do_cleanup() {
-        do_simple_command ("/sbin/b-i-cleanup", Step.CLEANUP, "Cleaning up", "Unable to properly clean up");
+        do_simple_command ("/sbin/b-i-cleanup", Step.CLEANUP, "cleaning_up", "Unable to properly clean up");
     }
 
     void do_done () {
