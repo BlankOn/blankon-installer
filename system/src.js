@@ -866,6 +866,7 @@ angular.module("user",[])
         }
         if (value.match(/(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/g) && value.length >= 8) {
           $scope.passwordStrength = "veryStrong"; 
+          $scope.validPassword = true;
         }
         console.log($scope.passwordStrength);
       }
