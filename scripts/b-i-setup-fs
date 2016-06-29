@@ -101,6 +101,13 @@ if [ -f /usr/share/glib-2.0/schemas/blankon.gschema.override ];then
   do_chroot /usr/bin/glib-compile-schemas /usr/share/glib-2.0/schemas/
 fi
 
+###### Accounts service
+if [ -f /run/accounts-service ];then
+  mkdir -p $ROOTFS/target/var/lib/AccountsService/users/$USERNAME
+  cp /run/accounts-service $ROOTFS/target/var/lib/AccountsService/users/$USERNAME
+fi
+
+
 ###### Timezone
 TZ=`cat /tmp/timezone`
 pushd $ROOTFS/target/etc
