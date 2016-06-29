@@ -779,6 +779,7 @@ public class Installation : GLib.Object {
             // This is necessary to have gnome-control-center displaying currently selected locale
             Utils.write_simple_file("/usr/share/glib-2.0/schemas/blankon.gschema.override", "[org.gnome.system.locale]\nregion='%s'\n".printf((string)buffer));
             Process.spawn_command_line_sync ("/usr/bin/glib-compile-schemas /usr/share/glib-2.0/schemas/");
+            Utils.write_simple_file("/run/accounts-service", "[User]\nLanguage=%s\nXSession=blankon\nSystemAccount=false\n".printf((string)buffer));
 
             // This is so it will be copied by setup script to target
             Utils.write_simple_file("/run/locale", "LC_ALL=%s\nLANG=%s\nLC_TIME=%s\nexport LC_ALL LANG".printf((string)buffer, (string)buffer, (string)buffer));
