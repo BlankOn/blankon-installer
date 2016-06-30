@@ -820,6 +820,32 @@ public class Installation : GLib.Object {
         var s = new String.with_utf8_c_string (result);
         return ctx.evaluate_script (s, null, null, 0, null);
     }
+    
+    public static JSCore.Value js_get_release (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/usr/bin/lsb_release",  "-r" };
+        string[] env = { "LC_ALL=C" };
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
+        /* var release = "['" + normal_output; */
+        /* stdout.printf(release); */
+        /* releasex = release + "']"; */
+        /* stdout.printf(releasex); */
+        /* var s = new String.with_utf8_c_string (releasex); */
+        /* return ctx.evaluate_script (s, null, null, 0, null); */
+    }
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -828,6 +854,7 @@ public class Installation : GLib.Object {
         { "setLocale", js_set_locale, PropertyAttribute.ReadOnly },
         { "setTimezone", js_set_timezone, PropertyAttribute.ReadOnly },
         { "getLocaleList", js_get_locale_list, PropertyAttribute.ReadOnly },
+        { "getRelease", js_get_release, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 

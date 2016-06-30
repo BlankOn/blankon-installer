@@ -996,6 +996,7 @@ angular.module('Biui', [
 
 .run([ "$rootScope", "$state", "$stateParams", "$timeout", "$location", "$translate",
   function ($rootScope, $state, $stateParams, $timeout, $location, $translate) {
+    $rootScope.release = Installation.getRelease();
     $translate.use("enUS");
     $rootScope.steps = [
       {
@@ -1192,13 +1193,6 @@ var en = {
   target_device : "Target device",
   target_partition : "Target partition",
   your_system_is_ready : "Your sistem is ready. Please continue to reboot into your newly installed system.",
-  installing_filesystem : "Installing filesystem",
-  mounting_filesystem : "Mounting filesystem",
-  mounting_home_filesystem : "Mounting home filesystem",
-  copying_filesystem : "Copying filesystem",
-  setting_up : "Setting up",
-  installing_grub : "Installing GRUB",
-  cleaning_up : "Cleaning up",
 }
 
 var id = {
@@ -1267,11 +1261,4 @@ var id = {
   target_device : "Diska tujuan",
   target_partition : "Partisi tujuan",
   your_system_is_ready : "Sistem Anda sudah siap. Silakan memula ulang untuk masuk ke sistem Anda yang baru.",
-  installing_filesystem : "Memasang sistem berkas",
-  mounting_filesystem : "Mengkaitkan sistem berkas",
-  mounting_home_filesystem : "Mengkaitkan sistem berkas /home",
-  copying_filesystem : "Menyalin berkas",
-  setting_up : "Menerapkan pengaturan awal",
-  installing_grub : "Memasang GRUB",
-  cleaning_up : "Merapikan sistem",
 }
