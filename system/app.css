@@ -8147,15 +8147,12 @@ h1 {
   position:absolute;
   background:#6D6D6D;
   width:2px;
-  /* margin-top:10vh; */
-  /* height:75vh; */
   z-index:1000;
 }
 
 .step-container {
   position:absolute;
   z-index:2001;
-  /* margin-top:10vh; */
 }
 
 .step-container.ng-hide-add.ng-hide-add-active,
@@ -8173,7 +8170,6 @@ h1 {
   height:10px;
   margin-left:15px; 
   border-radius:5px;
-  /* margin-bottom:calc(15vh - 10px); */
 }
 .step:hover {
   border : 5px solid;
@@ -8185,7 +8181,6 @@ h1 {
   width:30px;
   height:30px; 
   border-radius:15px;
-  /* margin-bottom:calc(15vh - 30px); */
   margin-left:5px;
   padding-top:4px;
   text-align:center;
@@ -8397,10 +8392,6 @@ h1 {
   -webkit-animation: enter_sequence 0.25s linear; /* Safari/Chrome */
   animation: enter_sequence 0.25s linear; /* IE10+ and Future Browsers */
 }
-/* .fade.ng-hide-add { */
-  /* -webkit-animation: leave_sequence 1s linear; /1* Safari/Chrome *1/ */
-  /* animation: leave_sequence 1s linear; /1* IE10+ and Future Browsers *1/ */
-/* } */
 
 @-webkit-keyframes enter_sequence {
   0% { opacity:0; }
@@ -8420,23 +8411,6 @@ h1 {
   0% { opacity:1; }
   100% { opacity:0; }
 }
-
-/* page specific animations ------------------------ */
-
-/* home -------------------------- */
-/* .page-home.ng-leave         {
-    -webkit-transform-origin: 0% 0%;
-  -webkit-animation: rotateFall 1s both ease-in;
-  -moz-transform-origin: 0% 0%;
-  -moz-animation: rotateFall 1s both ease-in;
-  transform-origin: 0% 0%;
-  animation: rotateFall 1s both ease-in;
-}
-.page-home.ng-enter     {  
-    -webkit-animation:scaleUp 0.5s both ease-in;
-  -moz-animation:scaleUp 0.5s both ease-in;
-  animation:scaleUp 0.5s both ease-in;    
-} */
 
 /** 
 * @license ng-slider - v2.2.5
@@ -8659,9 +8633,29 @@ label {
 }
 .release-tag {
 	color: grey;
-  /* right: 0; */
-  /* bottom: 0; */
-  /* position: absolute; */
   float:right;
   margin: 10px;
+}
+
+#bar-container{
+  width:500px;
+  height:35px;
+  position:relative;
+	background:grey;
+	padding:5px;
+}
+#bar{
+  width:490px;
+  height:25px;
+  position:relative;
+	background:lightgrey;
+}
+#slider{
+  width:0%;
+  height:100%;
+  background-color:#568FB6;
+  top:0px;
+  left:0px;
+  position:absolute;
+  cursor:pointer;
 }
