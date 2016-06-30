@@ -8656,3 +8656,11 @@ h1 {
 label {
   color: white !important;
 }
+.release-tag {
+	color: grey;
+  /* right: 0; */
+  /* bottom: 0; */
+  /* position: absolute; */
+  float:right;
+  margin: 10px;
+}
