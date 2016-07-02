@@ -1446,6 +1446,8 @@ var en = {
   setting_up : "Setting up",
   installing_grub : "Installing GRUB",
   cleaning_up : "Cleaning up",
+  create_partition : "Create partition",
+  format_partition : "Format Partition",
 }
 
 var id = {
@@ -1521,4 +1523,6 @@ var id = {
   setting_up : "Menerapkan pengaturan awal",
   installing_grub : "Memasang GRUB",
   cleaning_up : "Merapikan sistem",
+  create_partition : "Buat partisi",
+  format_partition : "Format Partisi",
 }
