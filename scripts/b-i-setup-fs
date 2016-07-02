@@ -111,7 +111,9 @@ fi
 ###### Timezone
 TZ=`cat /tmp/timezone`
 pushd $ROOTFS/target/etc
+set +
 rm -f localtime
+set -
 ln -s $ROOTFS/usr/share/zoneinfo/$TZ localtime
 popd
 cp /tmp/timezone $ROOTFS/target/etc/timezone
