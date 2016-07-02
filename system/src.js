@@ -936,6 +936,15 @@ angular.module("partition",[])
     $scope.partitionApply = function() {
       if ($rootScope.partitionState.mountPoint.root) {
         $rootScope.partitionSteps = [];
+        // Remove duplicated step
+        var tmp = [];
+        for (var i in $rootScope.partitionState.history) {
+          if (tmp.indexOf($rootScope.partitionState.history[i].action) > -1) {
+            $rootScope.partitionState.history.splice(i, 1);
+          } else {
+            tmp.push($rootScope.partitionState.history[i].action);
+          }
+        }
         for (var i = 1; i < $rootScope.partitionState.history.length; i++) {
           $rootScope.partitionSteps[i-1] = $rootScope.partitionState.history[i].action;
         }
