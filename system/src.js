@@ -31,7 +31,6 @@ angular.module("hello",[])
       }
     }
     $scope.setLanguage($scope.languages[0]);
-    $rootScope.next();
 }])
 
 angular.module("install",[])
@@ -1054,7 +1053,6 @@ angular.module("timezone",[])
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
     });
-    $rootScope.next();
 }])
 
 angular.module("user",[])
