@@ -2,12 +2,10 @@
 
 LIVEDEVICE=`mount | grep \/lib\/live\/mount\/medium | cut -d" " -f1 | cut -d"/" -f3`
 
-
 # Check for mounted partition
-MOUNTED=($(mount | grep '/dev/sd' | cut -d' ' -f1 | cut -d'/' -f3))
-for i in "${MOUNTED[@]}"
+for i in `mount | grep '/dev/sd' | cut -d' ' -f1 | cut -d'/' -f3`
 do
-    if [ ! $i = $LIVEDEVICE ];then
+    if [ ! "x$i" = "x$LIVEDEVICE" ];then
         zenity --info --text="/dev/$i still mounted.\n Please unmount it first." --title="Mounted Partition"
         exit
     fi
