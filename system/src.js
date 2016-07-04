@@ -936,7 +936,7 @@ angular.module("partition",[])
     $scope.partitionApply = function() {
       if ($rootScope.partitionState.mountPoint.root) {
         $rootScope.partitionSteps = [];
-        // Remove duplicated step
+        // Avoid duplicated step
         var tmp = [];
         for (var i in $rootScope.partitionState.history) {
           if (tmp.indexOf($rootScope.partitionState.history[i].action) > -1) {
@@ -950,11 +950,6 @@ angular.module("partition",[])
         }
         console.log($rootScope.partitionSteps);
         $rootScope.next();
-        /* $timeout(function(){ */
-        /*   $rootScope.partitionState.currentState = angular.copy($rootScope.partitionState.history[0].state); */
-        /*   $scope.selectedDrive.partitionList = angular.copy($rootScope.partitionState.history[0].state); */
-        /*   $rootScope.partitionState.stateIndex = 0; */
-        /* }, 1000); */
       } else {
         //should shout a warning
         $scope.applyAdvancedModeMessage = true;
@@ -987,7 +982,7 @@ angular.module("partition",[])
           $rootScope.selectedDrive = $rootScope.devices[i];
           $rootScope.selectedDrive.id = i;
           $rootScope.selectedDrive.partitionList = [];
-          $rootScope.selectedDrive.driveWidth = 16 + 1; // Add 1 pixel tolerance
+          $rootScope.selectedDrive.driveWidth = 8 + 1; // Add 1 pixel tolerance
           $rootScope.selectedDrive.sizeGb = $rootScope.selectedDrive.size * gbSize;
           $rootScope.selectedDrive.hasExtended = false;
           for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {

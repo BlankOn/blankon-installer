@@ -1,9 +1,5 @@
 #!/bin/bash
 
-if [ -z "$TRY_B_I" ];then
-    exit
-fi
-
 grep "boot=live" /proc/cmdline
 if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
 
@@ -16,7 +12,7 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
 
         CDROOMDEVICE=`cat /proc/sys/dev/cdrom/info | grep "drive name" | cut -d":" -f2 | tr -cd "[[:alnum:]]"`
         LIVEDEVICE=`mount | grep \/lib\/live\/mount\/medium | cut -d" " -f1 | cut -d"/" -f3`
-        if [ "x$CDROOMDEVICE"=="x$LIVEDEVICE" ];then
+        if [ $CDROOMDEVICE = $LIVEDEVICE ];then
             /usr/bin/eject -m 
         fi
         /tmp/post-install.sh
