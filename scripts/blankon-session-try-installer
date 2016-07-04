@@ -1,9 +1,5 @@
 #!/bin/bash
 
-if [ -z "$TRY_B_I" ];then
-    exit
-fi
-
 grep "boot=live" /proc/cmdline
 if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
 
