@@ -1,5 +1,18 @@
 #!/bin/bash
 
+LIVEDEVICE=`mount | grep \/lib\/live\/mount\/medium | cut -d" " -f1 | cut -d"/" -f3`
+
+
+# Check for mounted partition
+MOUNTED=($(mount | grep '/dev/sd' | cut -d' ' -f1 | cut -d'/' -f3))
+for i in "${MOUNTED[@]}"
+do
+    if [ ! $i = $LIVEDEVICE ];then
+        zenity --info --text="/dev/$i still mounted.\n Please unmount it first." --title="Mounted Partition"
+        exit
+    fi
+done
+
 grep "boot=live" /proc/cmdline
 if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
 
@@ -11,7 +24,6 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
     if [ -f /tmp/post-install.sh ];then
 
         CDROOMDEVICE=`cat /proc/sys/dev/cdrom/info | grep "drive name" | cut -d":" -f2 | tr -cd "[[:alnum:]]"`
-        LIVEDEVICE=`mount | grep \/lib\/live\/mount\/medium | cut -d" " -f1 | cut -d"/" -f3`
         if [ $CDROOMDEVICE = $LIVEDEVICE ];then
             /usr/bin/eject -m 
         fi
