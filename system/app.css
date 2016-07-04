@@ -8204,13 +8204,20 @@ h1 {
 }
 .drive-block {
   background:#494949;
-  padding:8px;
+  padding:8px 8px 8px 0px;
   height:50px;
 }
 .partition-block {
   float:left;
   height:34px;
-  width:auto
+  width:auto;
+}
+
+.partition-block-separator {
+  width:8px;
+  height:100%;
+  background:#494949;
+  float:left;
 }
 
 .partition-block:hover {
@@ -8631,7 +8638,7 @@ h1 {
   font-size:small;
 }
 label {
-  color: white !important;
+  color: grey !important;
 }
 .release-tag {
 	color: grey;
