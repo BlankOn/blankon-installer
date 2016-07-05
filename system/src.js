@@ -1367,7 +1367,7 @@ angular.module('Biui', [
       $(".step-big").css("margin-bottom", (($(window).height()*(12/100))-30).toString() + "px");
       $state.go($rootScope.states[$rootScope.currentState]);
       $rootScope.started = true;
-    }, 100);
+    }, 250);
     $timeout(function(){
       $rootScope.showStepLine = true;
     }, 1000);
