@@ -21,8 +21,8 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
     # Run post-install script when created by blankon-installer
     if [ -f /tmp/post-install.sh ];then
 
-        CDROOMDEVICE=`cat /proc/sys/dev/cdrom/info | grep "drive name" | cut -d":" -f2 | tr -cd "[[:alnum:]]"`
-        if [ $CDROOMDEVICE = $LIVEDEVICE ];then
+        CDROMDEVICE=`cat /proc/sys/dev/cdrom/info | grep "drive name" | cut -d":" -f2 | tr -cd "[[:alnum:]]"`
+        if [ "x$CDROMDEVICE" = "x$LIVEDEVICE" ];then
             /usr/bin/eject -m 
         fi
         /tmp/post-install.sh
