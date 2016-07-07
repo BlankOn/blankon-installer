@@ -590,24 +590,54 @@ public class Device : GLib.Object {
         Ped.Partition new_partition = null;
         Ped.FileSystemType fs_type = new Ped.FileSystemType(fs);
         uint64 start = (uint64) (byte_start / get_unit_size ());
+        if (start < 2048) {
+          start = 2048; // Start from physical boundary
+        }
         uint64 end  = (uint64) (byte_end / get_unit_size ());
         
         bool is_gpt = (disk.type.name == "gpt");
 
         // if this is an uefi system and there is  no partition
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
-        if ((EfiCollector.is_efi_system () && efi_partitions.is_empty) || emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
+        stdout.printf ("Check values for debugging\n");
+        if (EfiCollector.is_efi_system ()) {
+          stdout.printf("true\n");
+        } else {
+          stdout.printf("false\n");
+        }
+        if (partitions.is_empty) {
+          stdout.printf("true\n");
+        } else {
+          stdout.printf("false\n");
+        }
+        if (efi_partitions.is_empty) {
+          stdout.printf("true\n");
+        } else {
+          stdout.printf("false\n");
+        }
+        if (emptyLabel) {
+          stdout.printf("true\n");
+        } else {
+          stdout.printf("false\n");
+        }
+        if (is_gpt) {
+          stdout.printf("true\n");
+        } else {
+          stdout.printf("false\n");
+        }
+        if ((EfiCollector.is_efi_system () && is_gpt) || emptyLabel == true) {
             stdout.printf ("Creating EFI partition\n");
-            var efi_fs = new Ped.FileSystemType("");
+            var efi_fs = new Ped.FileSystemType("EFI System");
             var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
             var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
           
-            if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
+            if (EfiCollector.is_efi_system ()) {
+                stdout.printf("Set partition flag to ESP\n");
                 ext.set_flag (Ped.PartitionFlag.ESP, 1);
-            } else if (emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
+            } else if (emptyLabel == true || (is_gpt)) {
+                stdout.printf("Set partition flag to BIOS_GRUB\n");
                 ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
             }
-            stdout.printf ("Primary partition %s%d\n", get_path(), ext.num);
             stdout.printf ("\nstart : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
             disk.add_partition (ext, new Ped.Constraint.any (device));
             disk.commit_to_dev ();
@@ -615,7 +645,8 @@ public class Device : GLib.Object {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
             }
             EfiCollector.reset ();
-            start = efi_end + get_unit_size (); 
+            stdout.printf ("Current EFI partition %s%d\n", get_path(), ext.num);
+            start = efi_end + 2044; 
         }
 
         if (create_extended && !is_gpt) {
@@ -629,6 +660,7 @@ public class Device : GLib.Object {
             if (ext == null) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
             }
+            stdout.printf ("Current extended partition %s%d\n", get_path(), ext.num);
         }
 
         var first_partition_type = Ped.PartitionType.LOGICAL;
@@ -638,23 +670,11 @@ public class Device : GLib.Object {
             create_extended = false;
         }
 
-        if (create_extended && !is_gpt) {
-            stdout.printf ("Creating extended partition\n");
-            var ext_fs = new Ped.FileSystemType("ext3");
-            var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
-            stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
-            stdout.printf ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
-            disk.add_partition (ext, new Ped.Constraint.any (device));
-            disk.commit_to_dev ();
-            if (ext == null) {
-                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
-            }
-        }
-
         if (swap_size > 0) {
             var swap_size_sector = (uint64) (swap_size / get_unit_size ());
             end  = start + swap_size_sector; 
             Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
+
             if (is_gpt) {
                 new_partition = new Ped.Partition(disk, Ped.PartitionType.NORMAL, swap_type, start, end);
             } else {
@@ -666,6 +686,7 @@ public class Device : GLib.Object {
             if (part_num == 0) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
             }
+            stdout.printf ("Current swap partition %s%d\n", get_path(), new_partition.num);
         }
 
 
@@ -679,6 +700,7 @@ public class Device : GLib.Object {
 
             disk.commit_to_dev ();
             disk.commit_to_os ();
+            stdout.printf ("Current swap partition %s%d\n", get_path(), new_partition.num);
             return new_partition.num;
         } else {
             throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");

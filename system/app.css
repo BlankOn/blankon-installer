@@ -8258,6 +8258,9 @@ h1 {
 .freespace {
   background:white;
 }
+.efi {
+  background:red !important;
+}
 .extended {
  margin-left:0px !important;
 }
@@ -8293,6 +8296,12 @@ h1 {
   padding:1px 4px 1px 4px;
   font-size:12px;
   color:black;
+}
+.legend-partition-efi {
+  background-color:red;
+  padding:1px 4px 1px 4px;
+  font-size:12px;
+  color:white;
 }
 
 .partition-block:hover span {
@@ -8638,7 +8647,7 @@ h1 {
   font-size:small;
 }
 label {
-  color: white !important;
+  color: grey !important;
 }
 .release-tag {
 	color: grey;
