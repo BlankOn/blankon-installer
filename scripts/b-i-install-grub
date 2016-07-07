@@ -29,8 +29,14 @@ GRUB_GFXPAYLOAD_LINUX=1024x768
 if [ -z "$EFI_PARTITION" ];then
     /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
 else
+    # If EFI_PARTITION was a false, then the instaler.vala has create one. Find it.
+    if [ "x$EFI_PARTITION" = "xfalse" ];then
+        set +e
+        EFI_PARTITION=`/sbin/fdisk -l $DEVICE 2> /dev/null | grep "EFI System" | cut -d" " -f1`
+        set -e
+    fi
     # grub-efi must be available 
-    apt --yes --force-yes install grub-efi
+    apt-get --assume-yes install grub-efi
     mkdir -p /target/boot/efi
     if [ "x$NEED_FORMAT" = "xY" ];then
        /sbin/mkfs.fat -F 32 $EFI_PARTITION
@@ -40,8 +46,3 @@ else
     umount /target/boot/efi
 fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
-/bin/umount /target/dev/pts
-/bin/umount /target/dev
-/bin/umount /target/proc
-
-/bin/umount --recursive /target/sys

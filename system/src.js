@@ -31,6 +31,11 @@ angular.module("hello",[])
       }
     }
     $scope.setLanguage($scope.languages[0]);
+
+    // Leave this here for quick debugging
+    /* setTimeout(function(){ */
+    /*   $rootScope.next(); */
+    /* }, 1000) */
 }])
 
 angular.module("install",[])
@@ -46,10 +51,22 @@ angular.module("install",[])
       console.log("error");
       $scope.error = true;
     }
+    var currentProgress;
     var updateStatus = function(){
       var status = $rootScope.installation.getStatus();
       console.log(status.status + ":" + status.description);
       $scope.currentStep = status.description;
+      $scope.progressBarWidth = status.progress;
+      if ($scope.currentStep === 'copying_filesystem') {
+        if (!currentProgress) {
+          currentProgress = 20;
+        }
+        if (currentProgress < 80) {
+          currentProgress += 0.5;
+        }
+        status.progress = currentProgress;
+        console.log(status.progress);
+      }
       $scope.progressBarWidth = status.progress;
       if (status.status > 1) {
         $interval.cancel(statusUpdater);
@@ -69,6 +86,7 @@ angular.module("install",[])
       }
     }, 500);
 
+
     var params = "";
     params += "&partition=" + $rootScope.installationData.partition;
     params += "&device=" + $rootScope.installationData.device;
@@ -84,6 +102,15 @@ angular.module("install",[])
     params += "&advancedMode=" + $rootScope.advancedPartition;
     if ($rootScope.advancedPartition) {
         params += "&steps=" + $rootScope.partitionSteps;
+    }
+    if ($rootScope.isEfi) {
+        params += "&isEfi=" + true;
+        params += "&efiPartition=" + $rootScope.selectedEfiPartition;
+        params += "&efiNeedFormat=" + $rootScope.efiNeedFormat;
+    }  else {
+        params += "&isEfi=" + "";
+        params += "&efiPartition=" + "";
+        params += "&efiNeedFormat=" + "";
     }
     // give time for view transition
     $timeout(function(){
@@ -101,6 +128,8 @@ angular.module("partition",[])
   function ($scope, $window, $timeout, $rootScope){
     
     $(".content").css("height", $rootScope.contentHeight);
+
+
    
     $scope.slider = {
     	start : 0,
@@ -330,7 +359,19 @@ angular.module("partition",[])
       $scope.exitAdvancedModeMessage = false;
       $scope.applyAdvancedModeMessage = false;
     }
+
+    $scope.unselectEfiPartition = function() {
+      $rootScope.selectedEfiPartition = false;
+      $rootScope.validInstallationTarget = false;
+    }
     $scope.selectInstallationTarget = function(partition) {
+      
+      // TODO :Is EFI partition selection?
+      /* if ($rootScope.isEfi && !$rootScope.isEfiReady && !$rootScope.selectedEfiPartition) { */
+      /*   $rootScope.selectedEfiPartition = $rootScope.selectedDrive.path + partition.id; */ 
+      /*   return; */
+      /* } */
+      
       console.log(partition)
       if (!partition.disallow) {
         $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
@@ -972,6 +1013,21 @@ angular.module("partition",[])
     }
     $scope.setDrive = function(drive) {
       // TODO : reset UI
+      $rootScope.isEfiReady = false;
+      $rootScope.selectedEfiPartition = false;
+      $rootScope.isEfi = parseInt(Installation.isEfi());
+      if ($rootScope.isEfi === 1) {
+        $rootScope.whichEfi = Installation.whichEfi();
+        $rootScope.efiPartition = $rootScope.whichEfi.split(",")[0];
+        $rootScope.efiNeedFormat = $rootScope.whichEfi.split(",")[1];
+        if ($rootScope.efiNeedFormat === "N") {
+          $rootScope.selectedEfiPartition = $rootScope.efiPartition;
+        }
+        if ($rootScope.efiPartition.indexOf(drive.path) > -1) {
+          $rootScope.isEfiReady = true;
+          $rootScope.selectedEfiPartition = $rootScope.efiPartition;
+        }
+      }
       $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
       var path = drive.path;
       $rootScope.installationData.device_path = path;
@@ -1057,6 +1113,10 @@ angular.module("timezone",[])
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
     });
+    // Leave this here for quick debugging
+    /* setTimeout(function(){ */
+    /*   $rootScope.next(); */
+    /* }, 1000) */
 }])
 
 angular.module("user",[])
@@ -1392,7 +1452,7 @@ var en = {
   computer_name : "Computer Name",
   full_name : "Your Name",
   username : "Username",
-  password : "password",
+  password : "Password",
   repeat_password : "Repeat Password",
   automatically_login : "Automatically login",
   enforced_password : "Enforce strong password",

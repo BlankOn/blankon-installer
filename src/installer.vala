@@ -76,6 +76,9 @@ public class Installation : GLib.Object {
     public string root { get; set construct; }
     public bool autologin { get; set construct; }
     public bool advancedMode { get; set construct; }
+    public bool isEfi { get; set construct; }
+    public string efiPartition { get; set construct; }
+    public string efiNeedFormat { get; set construct; }
     public int state { get; set construct; }
     public int progress { get; private set; }
     public string description { get; set construct; }
@@ -149,6 +152,15 @@ public class Installation : GLib.Object {
                     break;
                 case  "advancedMode":
                     advancedMode = (entry[1] == "true");
+                    break;
+                case  "isEfi":
+                    isEfi = (entry[1] == "true");
+                    break;
+                case  "efiNeedFormat":
+                    efiNeedFormat = entry[1];
+                    break;
+                case  "efiPartition":
+                    efiPartition = entry[1];
                     break;
                 case  "steps":
                     steps = entry[1];
@@ -289,7 +301,7 @@ public class Installation : GLib.Object {
         if (advancedMode == true) {
                   
             
-            description = "Partitioning";
+            description = "Partitioning in advancedMode";
             step = Step.PARTITION;
             
             Device dev_init = new Device.from_name(device_path);
@@ -411,7 +423,7 @@ public class Installation : GLib.Object {
             
             var partitions = d.get (device).partitions;
             device_path = d.get (device).get_path ();
-            description = "Partitioning";
+            description = "Partitioning in simpleMode";
             step = Step.PARTITION; 
     
             Log.instance().log ("Enter simple partitioning");
@@ -423,11 +435,13 @@ public class Installation : GLib.Object {
                     uint64 swap_size = 0;
                     if (SwapCollector.get_partitions().is_empty) {
                          if (partitions.get(partition).size - OneGig > installation_size) {
-                            swap_size = OneGig;
+                            // Fix for "doesnt start on physical sector boundary". Give 1MB margin.
+                            swap_size = OneGig - 1024;
                             Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
                          }
                     }
                     swap_size = OneGig;
+                    
                     new_partition = device.create_partition_simple (partitions.get (partition).start,
                                                              partitions.get (partition).end,
                                                              "ext4", swap_size);
@@ -536,16 +550,7 @@ public class Installation : GLib.Object {
             device = device_path;
         }
 
-        string efi_partition = "";
-        string need_format = "";
-        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
-        if (EfiCollector.is_efi_system () && !efi_partitions.is_empty) {
-            efi_partition = efi_partitions.get (0);
-            if (EfiCollector.need_format (efi_partition)) {
-                need_format = "Y";
-            }
-        }
-        string [] c = { "/sbin/b-i-install-grub", device, efi_partition, need_format };
+        string [] c = { "/sbin/b-i-install-grub", device, efiPartition, efiNeedFormat };
         do_simple_command_with_args (c, Step.GRUB, "installing_grub", "Unable to install GRUB");
     }
 
@@ -839,13 +844,68 @@ public class Installation : GLib.Object {
         } catch (GLib.Error e) {
         }
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
-        /* var release = "['" + normal_output; */
-        /* stdout.printf(release); */
-        /* releasex = release + "']"; */
-        /* stdout.printf(releasex); */
-        /* var s = new String.with_utf8_c_string (releasex); */
-        /* return ctx.evaluate_script (s, null, null, 0, null); */
     }
+    
+    public static JSCore.Value js_get_copying_progress (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/usr/bin/tail", "-n", "5", "/tmp/b-i-copy-fs-progress" };
+        string[] env = { "LC_ALL=C" };
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
+    } 
+    
+    public static JSCore.Value js_which_efi (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+
+        string efi_partition = "";
+        string need_format = "";
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        if (EfiCollector.is_efi_system () && !efi_partitions.is_empty) {
+            efi_partition = efi_partitions.get (0);
+            if (EfiCollector.need_format (efi_partition)) {
+                need_format = "Y";
+            }
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(efi_partition + "," + need_format));
+    } 
+    
+    public static JSCore.Value js_is_efi (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        exception = null;
+        
+        string normal_output;
+        string error_output;
+        int status;
+
+        string [] args = { "/sbin/b-i-is-efi"};
+        string[] env = { "LC_ALL=C" };
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
+    } 
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -855,6 +915,9 @@ public class Installation : GLib.Object {
         { "setTimezone", js_set_timezone, PropertyAttribute.ReadOnly },
         { "getLocaleList", js_get_locale_list, PropertyAttribute.ReadOnly },
         { "getRelease", js_get_release, PropertyAttribute.ReadOnly },
+        { "whichEfi", js_which_efi, PropertyAttribute.ReadOnly },
+        { "isEfi", js_is_efi, PropertyAttribute.ReadOnly },
+        { "getCopyingProgress", js_get_copying_progress, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 

@@ -2,10 +2,16 @@
 
 set -e
 
-## check if there is mounted-separated home partition. if true, unmoun
+/bin/umount /target/dev/pts
+/bin/umount /target/dev
+/bin/umount /target/proc
+
+/bin/umount --recursive /target/sys
+
+## check if there is mounted-separated home partition. if true, unmount
 if cat /proc/mounts | grep -F " /target/home " > /dev/null; then
-  umount /target/home
+  /bin/umount /target/home
 fi
 
-umount /target
+/bin/umount /target
 rm -rf /rofs

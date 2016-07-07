@@ -4,6 +4,6 @@ set -e
 
 mkdir /rofs
 mount -o loop /lib/live/mount/medium/live/filesystem.squashfs /rofs
-rsync -aAXv --progress /rofs/* /target > /tmp/b-i-copy-fs-progress
+rsync -aAXv --info=progress2 /rofs/* /target > /tmp/b-i-copy-fs-progress
 cp -a /usr/lib/locale/locale-archive /target/usr/lib/locale/
 umount /rofs
