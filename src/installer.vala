@@ -298,14 +298,14 @@ public class Installation : GLib.Object {
     
     void do_partition() {;
         
+        Device dev_init = new Device.from_name(device_path);
+        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
         if (advancedMode == true) {
                   
             
             description = "Partitioning in advancedMode";
             step = Step.PARTITION;
             
-            Device dev_init = new Device.from_name(device_path);
-            var start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
  
             var can_continue = false;
             Log.instance().log ("Enter advanced partitioning ");

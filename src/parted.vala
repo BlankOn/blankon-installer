@@ -511,6 +511,36 @@ public class Device : GLib.Object {
     // or as a new logical partition. The partition list will be
     // rebuilt. This function is used when user use simple partitioning interface.
     public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size) throws DeviceError {
+
+        uint64 after_esp_start = (uint64) 1;
+        // Initialize ESP boot partition
+        bool isgpt = (disk.type.name == "gpt");
+        // if this is an uefi system and there is  no partition
+        ArrayList<string> efipartitions = EfiCollector.get_partitions ();
+        if ((EfiCollector.is_efi_system () && efipartitions.is_empty) || emptyLabel == true || (isgpt && efipartitions.is_empty)) {
+            stdout.printf ("Creating EFI partition\n");
+            var start = (uint64) 1;
+            var efi_fs = new Ped.FileSystemType("");
+            var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
+            var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
+          
+            if (EfiCollector.is_efi_system () && efipartitions.is_empty) {
+                ext.set_flag (Ped.PartitionFlag.ESP, 1);
+            } else if (emptyLabel == true || (isgpt && efipartitions.is_empty)) {
+                ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
+            }
+            stdout.printf ("Primary partition %s%d\n", get_path(), ext.num);
+            stdout.printf ("\nstart : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
+            disk.add_partition (ext, new Ped.Constraint.any (device));
+            disk.commit_to_dev ();
+            if (ext == null) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
+            }
+            EfiCollector.reset ();
+            start = efi_end + get_unit_size ();
+            after_esp_start = start;
+        }
+
         if (device == null) {
             throw new DeviceError.CANT_CREATE_PARTITION ("Invalid device"); 
         }
