@@ -103,7 +103,7 @@ fi
 
 ###### Accounts service
 if [ -f /run/accounts-service ];then
-  mkdir -p $ROOTFS/target/var/lib/AccountsService/users/$USERNAME
+  mkdir -p $ROOTFS/target/var/lib/AccountsService/users/
   cp /run/accounts-service $ROOTFS/target/var/lib/AccountsService/users/$USERNAME
 fi
 
