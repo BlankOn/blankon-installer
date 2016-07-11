@@ -4886,7 +4886,6 @@ th.hide-for-touch {
     display: table-cell !important; } }
 
 /*# sourceMappingURL=foundation.css.map */
-
 @charset "UTF-8";
 
 /*!
@@ -8258,9 +8257,6 @@ h1 {
 .freespace {
   background:white;
 }
-.efi {
-  background:red !important;
-}
 .extended {
  margin-left:0px !important;
 }
@@ -8296,12 +8292,6 @@ h1 {
   padding:1px 4px 1px 4px;
   font-size:12px;
   color:black;
-}
-.legend-partition-efi {
-  background-color:red;
-  padding:1px 4px 1px 4px;
-  font-size:12px;
-  color:white;
 }
 
 .partition-block:hover span {

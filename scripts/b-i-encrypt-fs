@@ -1,0 +1,18 @@
+#!/bin/bash
+
+TARGET=$1
+BOOT=$2
+
+mkfs.vfat $BOOT
+
+lvm pvcreate -ff -y $TARGET
+lvm vgcreate -y lvm $TARGET
+lvm lvcreate -y -L 4G -n swap lvm
+lvm lvcreate -y -l 100%FREE -n root lvm
+#badblocks -c 10240 -s -w -t random -v /dev/lvm/root
+cat $ROOTFS/tmp/pass | cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 /dev/lvm/root
+cat $ROOTFS/tmp/pass | cryptsetup luksOpen /dev/lvm/root root
+/lib/cryptsetup/scripts/decrypt_derived root > /tmp/derived
+cat $ROOTFS/tmp/pass | cryptsetup luksAddKey /dev/lvm/swap /tmp/derived
+
+mkfs.ext4 /dev/mapper/root

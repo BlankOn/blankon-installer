@@ -31,11 +31,12 @@ angular.module("hello",[])
       }
     }
     $scope.setLanguage($scope.languages[0]);
-
-    // Leave this here for quick debugging
-    /* setTimeout(function(){ */
-    /*   $rootScope.next(); */
-    /* }, 1000) */
+    
+    if ($rootScope.quickDebug) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000);
+    }
 }])
 
 angular.module("install",[])
@@ -56,7 +57,6 @@ angular.module("install",[])
       var status = $rootScope.installation.getStatus();
       console.log(status.status + ":" + status.description);
       $scope.currentStep = status.description;
-      $scope.progressBarWidth = status.progress;
       if ($scope.currentStep === 'copying_filesystem') {
         if (!currentProgress) {
           currentProgress = 20;
@@ -86,8 +86,12 @@ angular.module("install",[])
       }
     }, 500);
 
-
     var params = "";
+    if ($rootScope.installationData.secureInstall) {
+        $rootScope.installationData.partition = 0;
+        params += "&secureInstall=" + $rootScope.installationData.secureInstall;
+        params += "&secureInstallPassphrase=" + $rootScope.installationData.secureInstallPassphrase;
+    }
     params += "&partition=" + $rootScope.installationData.partition;
     params += "&device=" + $rootScope.installationData.device;
     params += "&device_path=" + $rootScope.installationData.device_path;
@@ -103,15 +107,7 @@ angular.module("install",[])
     if ($rootScope.advancedPartition) {
         params += "&steps=" + $rootScope.partitionSteps;
     }
-    if ($rootScope.isEfi) {
-        params += "&isEfi=" + true;
-        params += "&efiPartition=" + $rootScope.selectedEfiPartition;
-        params += "&efiNeedFormat=" + $rootScope.efiNeedFormat;
-    }  else {
-        params += "&isEfi=" + "";
-        params += "&efiPartition=" + "";
-        params += "&efiNeedFormat=" + "";
-    }
+    
     // give time for view transition
     $timeout(function(){
       console.log(params);
@@ -128,8 +124,10 @@ angular.module("partition",[])
   function ($scope, $window, $timeout, $rootScope){
     
     $(".content").css("height", $rootScope.contentHeight);
-
-
+    
+    $rootScope.installationData.secureInstall = true;
+    $rootScope.installationData.secureInstallPassphrase = "";
+    $rootScope.installationData.secureInstallPassphraseRepeat = "";
    
     $scope.slider = {
     	start : 0,
@@ -359,19 +357,7 @@ angular.module("partition",[])
       $scope.exitAdvancedModeMessage = false;
       $scope.applyAdvancedModeMessage = false;
     }
-
-    $scope.unselectEfiPartition = function() {
-      $rootScope.selectedEfiPartition = false;
-      $rootScope.validInstallationTarget = false;
-    }
     $scope.selectInstallationTarget = function(partition) {
-      
-      // TODO :Is EFI partition selection?
-      /* if ($rootScope.isEfi && !$rootScope.isEfiReady && !$rootScope.selectedEfiPartition) { */
-      /*   $rootScope.selectedEfiPartition = $rootScope.selectedDrive.path + partition.id; */ 
-      /*   return; */
-      /* } */
-      
       console.log(partition)
       if (!partition.disallow) {
         $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
@@ -1012,27 +998,12 @@ angular.module("partition",[])
       }, 1000);
     }
     $scope.setDrive = function(drive) {
+      $rootScope.validInstallationTarget = true;
       // TODO : reset UI
-      $rootScope.isEfiReady = false;
-      $rootScope.selectedEfiPartition = false;
-      $rootScope.isEfi = parseInt(Installation.isEfi());
-      if ($rootScope.isEfi === 1) {
-        $rootScope.whichEfi = Installation.whichEfi();
-        $rootScope.efiPartition = $rootScope.whichEfi.split(",")[0];
-        $rootScope.efiNeedFormat = $rootScope.whichEfi.split(",")[1];
-        if ($rootScope.efiNeedFormat === "N") {
-          $rootScope.selectedEfiPartition = $rootScope.efiPartition;
-        }
-        if ($rootScope.efiPartition.indexOf(drive.path) > -1) {
-          $rootScope.isEfiReady = true;
-          $rootScope.selectedEfiPartition = $rootScope.efiPartition;
-        }
-      }
       $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
       var path = drive.path;
       $rootScope.installationData.device_path = path;
       console.log(JSON.stringify($rootScope.devices));
-      $rootScope.validInstallationTarget = false;
       for (i = 0; i < $rootScope.devices.length; i++)
         if ($rootScope.devices[i].path === path) {
           $rootScope.selectedDrive = $rootScope.devices[i];
@@ -1092,7 +1063,30 @@ angular.module("partition",[])
           }
         }
       } 
+      $scope.validate = function() {
+        if (!$rootScope.validInstallationTarget) {
+          return;
+        }
+        if (!$rootScope.installationData.secureInstallPassphrase) {
+          return;
+        } else {
+          if ($rootScope.installationData.secureInstallPassphrase != $rootScope.installationData.secureInstallPassphraseRepeat) {
+            return;
+          }
+        }
+
+        $rootScope.next();
+      }   
+      if ($rootScope.quickDebug) {
+        $rootScope.installationData.secureInstallPassphrase = "test";
+        $rootScope.installationData.secureInstallPassphraseRepeat = "test";
+        setTimeout(function(){
+          $scope.setDrive($rootScope.devices[0]);
+          $rootScope.next();
+        }, 1000);
+      }
     }
+
 ])
 
 angular.module("summary",[])
@@ -1113,10 +1107,12 @@ angular.module("timezone",[])
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
     });
-    // Leave this here for quick debugging
-    /* setTimeout(function(){ */
-    /*   $rootScope.next(); */
-    /* }, 1000) */
+
+    if ($rootScope.quickDebug) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000);
+    }
 }])
 
 angular.module("user",[])
@@ -1200,6 +1196,12 @@ angular.module("user",[])
       } else {
         $rootScope.personalizationError = true;
       }
+    }
+    
+    if ($rootScope.quickDebug) {
+      $rootScope.installationData.username = "test";
+      $rootScope.installationData.fullname = "test";
+      $rootScope.installationData.hostname = "test";
     }
 }])
 
@@ -1303,6 +1305,7 @@ angular.module('Biui', [
 
 .run([ "$rootScope", "$state", "$stateParams", "$timeout", "$location", "$translate",
   function ($rootScope, $state, $stateParams, $timeout, $location, $translate) {
+    $rootScope.quickDebug = false;
     if (window.Installation) {
       $rootScope.release = Installation.getRelease();
     }
@@ -1437,13 +1440,13 @@ angular.module('Biui', [
 
 
 var en = {
-  welcome_to_program : "Welcome to BlankOn installation program.",
+  welcome_to_program : "Welcome to Xecure installation program.",
   installation_finish : "Installation Finish.",
   installation_error_occured : "Installation Error Occured.",
   please_take_look : "Please take a look at installion log : /var/log/blankon-installer.log",
   installation : "Installation",
   please_wait_system_scanned : "Please wait while your sistem is being scanned...",
-  please_choose_partition : "Please choose the partition on device below which you would like to install BlankOn into or use advanced partitioning tool for more control.",
+  please_choose_partition : "Please choose the partition on device below which you would like to install Xecure into or use advanced partitioning tool for more control.",
   install_partition : "Installation Target",
   installation_summary : "Installation Summary",
   install_summary_info : "This is our installation summary. Please proceed if you're agree. Beyond this point, the installer will make changes to your system and you can't go.",
@@ -1461,7 +1464,7 @@ var en = {
   next : "Next",
   previous : "Previous",
   continue_using_livecd : "Continue using live CD",
-  install_blankon : "Install BlankOn",
+  install_blankon : "Install Xecure",
   exit : "Exit",
   install : "Install",
   reboot : "Reboot",
@@ -1475,7 +1478,7 @@ var en = {
   free_space : "Free space",
   enter_advanced_mode : "Enter Advanced Mode",
   you_are_choosing : "You are choosing",
-  to_be_installed_with : "to bee installed with BlankOn.",
+  to_be_installed_with : "to be installed with Xecure.",
   warning : "WARNING",
   the_selected_partition_will_be_wiped_out : "The selected partition will be wiped out. Swap partition will be created if you don't have one.",
   exit_advanced_mode : "Exit Advanced Mode",
@@ -1506,21 +1509,28 @@ var en = {
   mounting_filesystem : "Mounting filesystem",
   mounting_home_filesystem : "Mounting home filesystem",
   copying_filesystem : "Copying filesystem",
+  wipe_disk : "Wiping disk",
   setting_up : "Setting up",
   installing_grub : "Installing GRUB",
   cleaning_up : "Cleaning up",
   create_partition : "Create partition",
   format_partition : "Format Partition",
+  secure_installation_summary_1 : "You have been choosen",
+  secure_installation_summary_2 : "as installation target. The entiry disk will be wiped out and rearranged to support encrypted installation.",
+  please_enter_passphrase : "Please enter the encryption passphrase bellow : ",
+  encryption_passphrase : "Encryption passphrase",
+  repeat_encryption_passphrase : "Repeat encryption passphrase",
+  preparing_encrypted_filesystem : "Preparing encrypted filesystem"
 }
 
 var id = {
-  welcome_to_program : "Selamat datang di program pemasang BlankOn.",
+  welcome_to_program : "Selamat datang di program pemasang Xecure.",
   installation_finish : "Pemasangan selesai.",
   installation_error_occured : "Terjadi galat saat pemasangan",
   please_take_look : "Silakan lihat di log pemasangan : /var/log/blankon-installer.log",
   installation : "Pemasangan",
   please_wait_system_scanned : "Sistem sedang dipindai...",
-  please_choose_partition : "Silakan pilih partisi pada diska di bawah ini untuk memasang BlankOn atau gunakan pemartisi untuk kontrol lebih.",
+  please_choose_partition : "Silakan pilih partisi pada diska di bawah ini untuk memasang Xecure atau gunakan pemartisi untuk kontrol lebih.",
   install_partition : "Tujuan pemasangan",
   installation_summary : "Ringkasan Pemasangan",
   install_summary_info : "Ini adalah ringkasan pemasangan. Lanjutkan jika Anda setuju. Setelah ini, Pemasang akan membuat perubahan pada sistem Anda dan Anda tidak dapat membatalkannya.",
@@ -1538,9 +1548,9 @@ var id = {
   next : "Lanjut",
   previous : "Kembali",
   continue_using_livecd : "Lanjut menggunakan sistem dalam moda live",
-  install_blankon : "Pasang BlankOn",
+  install_blankon : "Pasang Xecure",
   exit : "Keluar",
-  install : "Pasang BlankOn",
+  install : "Pasang Xecure",
   reboot : "Mula Ulang",
   timezone : "Zona Waktu",
   select_drive : "Pilih diska...",
@@ -1552,7 +1562,7 @@ var id = {
   free_space : "Ruang kosong",
   enter_advanced_mode : "Masuk ke moda mahir",
   you_are_choosing : "Anda memilih",
-  to_be_installed_with : "untuk dipasang dengan BlankOn.",
+  to_be_installed_with : "untuk dipasang dengan Xecure.",
   warning : "PERINGATAN",
   the_selected_partition_will_be_wiped_out : "Partisi terpilih akan dihapus. Partisi Swap akan dibuat jika tidak ada.",
   exit_advanced_mode : "Keluar dari moda mahir",
@@ -1583,9 +1593,16 @@ var id = {
   mounting_filesystem : "Mengkaitkan sistem berkas",
   mounting_home_filesystem : "Mengkaitkan sistem berkas /home",
   copying_filesystem : "Menyalin berkas",
+  wipe_disk : "Membersihkan ulang diska",
   setting_up : "Menerapkan pengaturan awal",
   installing_grub : "Memasang GRUB",
   cleaning_up : "Merapikan sistem",
   create_partition : "Buat partisi",
   format_partition : "Format Partisi",
+  secure_installation_summary_1 : "Anda telah memilih",
+  secure_installation_summary_2 : "sebagai tujuan pemasangan. Seluruh isi diska akan dibersihkan dan diatur ulang untuk mendukung pemasangan terenkripsi.",
+  please_enter_passphrase : "Silakan masukkan kata sandi enkripsi : ",
+  encryption_passphrase : "Kata sandi enkripsi",
+  repeat_encryption_passphrase : "Ulangi kata sandi enkripsi",
+  preparing_encrypted_filesystem : "Mempersiapkan sistem berkas terenkripsi"
 }

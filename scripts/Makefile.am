@@ -1,4 +1,4 @@
 sbindir = /sbin
-sbin_SCRIPTS = b-i-cleanup  b-i-copy-fs  b-i-install-grub  b-i-setup-fs b-i-is-efi
+sbin_SCRIPTS = b-i-cleanup  b-i-copy-fs  b-i-install-grub b-i-setup-fs b-i-encrypt-fs b-i-is-efi b-i-wipe-disk
 bin_SCRIPTS = blankon-session-try-installer 
 

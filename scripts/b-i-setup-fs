@@ -1,16 +1,25 @@
 #!/bin/bash
 
-/bin/mount --bind /dev /target/dev
-/bin/mount --bind /dev/pts /target/dev/pts
-/bin/mount --bind /proc /target/proc
-/bin/mount --bind /sys /target/sys
+/bin/mkdir -p $ROOTFS/target/dev
+/bin/mkdir -p $ROOTFS/target/proc
+/bin/mkdir -p $ROOTFS/target/sys
+
+/bin/mount --bind /dev $ROOTFS/target/dev
+/bin/mount --bind /dev/pts $ROOTFS/target/dev/pts
+/bin/mount --bind /proc $ROOTFS/target/proc
+/bin/mount --bind /sys $ROOTFS/target/sys
 
 set -e
 
-PATH=$PATH:/usr/sbin:/usr/bin
+PATH=$PATH:/usr/sbin:/usr/bin:/bin:/sbin
 
 function do_chroot() {
-    chroot /target /usr/bin/env PATH=$PATH $@ 
+    if [ -f /tmp/pass ];
+    then
+        /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH CRYPTSETUP=y $@ 
+    else
+        /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH $@ 
+    fi
 }
 
 rm -f $ROOTFS/target/etc/fstab
@@ -29,8 +38,27 @@ if [ "x$P" != "x" ];then
     do_chroot /usr/bin/apt-get --yes purge $P
 fi
 
-echo "Updating initramfs"
-do_chroot /usr/sbin/update-initramfs -k all -u
+echo "Encryption specific setting up"
+
+###### INITRAMFS HOOK
+if [ -f /tmp/pass ];
+then
+  echo "Setup encryption configuration"
+	# Add the hook file
+  cp $ROOTFS/usr/share/initramfs-tools/hooks/cryptroot $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
+
+  touch $ROOTFS/target/etc/crypttab
+  echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
+  echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
+  touch $ROOTFS/target/etc/fstab
+  echo "/dev/sda1 ext4 relatime 0 2" >> $ROOTFS/target/etc/fstab
+  
+  # echo "Adding more module to initramfs"
+  echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
+  echo "dm-crypt" >> $ROOTFS/target/etc/initramfs-tools/modules
+  echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules
+  echo "sha256" >> $ROOTFS/target/etc/initramfs-tools/modules
+fi
 
 echo "Removing unused packages"
 do_chroot /usr/bin/apt-get --yes autoremove
@@ -141,7 +169,7 @@ fi
 ###### HOME
 
 if [ -f /tmp/fstab ];then
-    mv /tmp/fstab /target/etc/fstab
+    mv /tmp/fstab $ROOTFS/target/etc/fstab
 fi
 
 
@@ -183,3 +211,13 @@ set -e
 LSB_RELEASE=`cat $ROOTFS/target/etc/lsb-release | sed -n 2p | cut -d"-" -f1`
 sed -i "2s/.*/$LSB_RELEASE/" $ROOTFS/target/etc/lsb-release
 
+echo "Updating initramfs"
+
+###### INITRAMFS HOOK
+if [ -f /tmp/pass ];
+then
+    # The secure installer has specific package configuration. The hook file already injected by debian post install to /etc/initramfs-tools/hooks/cryptroot
+    do_chroot CRYPTSETUP=y /usr/sbin/update-initramfs -k all -u
+else
+    do_chroot /usr/sbin/update-initramfs -k all -u
+fi

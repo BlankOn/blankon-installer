@@ -21,10 +21,27 @@ export PATH=/bin:/usr/bin:/sbin
 
 grep -v GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub > /tmp/grub
 mv /tmp/grub /target/etc/default/grub
-cat << @@EOF >> /target/etc/default/grub
+
+if [ -f /tmp/pass ];
+then
+    # The GRUB_DISABLE_SUBMENY=y fix broken grub.cfg generation
+    cat << @@EOF >> /target/etc/default/grub
+GRUB_CMDLINE_LINUX_DEFAULT="rw quiet cryptopts=target=root,source=/dev/lvm/root,lvm=root CRYPTSETUP=y"
+GRUB_ENABLE_CRYPTODISK=y
+GRUB_GFXPAYLOAD_LINUX=1024x768
+GRUB_DISABLE_SUBMENU=y
+@@EOF
+
+else
+    cat << @@EOF >> /target/etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="rw quiet splash"
 GRUB_GFXPAYLOAD_LINUX=1024x768
 @@EOF
+
+fi
+
+
+echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 
 if [ -z "$EFI_PARTITION" ];then
     /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE

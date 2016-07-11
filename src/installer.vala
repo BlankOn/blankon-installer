@@ -50,9 +50,11 @@ public class Installation : GLib.Object {
 
     enum Step {
         IDLE,
+        WIPE,
         PARTITION,
         FS,
         MOUNT,
+        MOUNTBOOT,
         MOUNTHOME,
         COPY,
         SETUP,
@@ -75,6 +77,8 @@ public class Installation : GLib.Object {
     public string home { get; set construct; }
     public string root { get; set construct; }
     public bool autologin { get; set construct; }
+    public bool secureInstall { get; set construct; }
+    public string secureInstallPassphrase { get; set construct; }
     public bool advancedMode { get; set construct; }
     public bool isEfi { get; set construct; }
     public string efiPartition { get; set construct; }
@@ -88,6 +92,7 @@ public class Installation : GLib.Object {
 
     uint64 installation_size;
     string partition_path;
+    string boot_partition_path;
     string device_path;
 
     Step step = Step.IDLE;
@@ -103,6 +108,7 @@ public class Installation : GLib.Object {
         state = State.NOT_STARTED;
         description = "";
         autologin = false;
+        secureInstall = false;
         foreach (var param in uri.split("&")) {
             var entry = param.split("=");
             if (entry.length == 2) { // handle only valid key-value entry
@@ -123,31 +129,37 @@ public class Installation : GLib.Object {
                 case "password":
                     password = entry[1];
                     break;
-                case  "hostname":
+                case "hostname":
                     host_name = entry[1];
                     break;
-                case  "timezone":
+                case "timezone":
                     timezone = entry[1];
                     break;
-                case  "fullname":
+                case "fullname":
                     full_name = entry[1];
                     break;
-                case  "grubdevice":
+                case "grubdevice":
                     grub_device = entry[1];
                     break;
-                case  "language":
+                case "language":
                     language = entry[1];
                     break;
-                case  "region":
+                case "region":
                     region = entry[1];
                     break;
-                case  "keyboard":
+                case "keyboard":
                     keyboard = entry[1];
                     break;
-                case  "autologin":
+                case "autologin":
                     autologin = (entry[1] == "true");
                     break;
-                case  "home":
+                case "secureInstall":
+                    secureInstall = (entry[1] == "true");
+                    break;
+                case "secureInstallPassphrase":
+                    secureInstallPassphrase = entry[1];
+                    break;
+                case "home":
                     home = entry[1];
                     break;
                 case  "advancedMode":
@@ -208,6 +220,11 @@ public class Installation : GLib.Object {
         switch (last_step) {
         case Step.IDLE:
             progress = 5;
+            Log.instance().log ("WIPE");
+            do_wipe ();
+            break;
+        case Step.WIPE:
+            progress = 7;
             Log.instance().log ("PARTITION");
             do_partition ();
             break;
@@ -221,6 +238,10 @@ public class Installation : GLib.Object {
             do_mount ();
             break;
         case Step.MOUNT:
+            Log.instance().log ("MOUNTBOOT");
+            do_mount_boot ();
+            break;
+        case Step.MOUNTBOOT:
             Log.instance().log ("MOUNTHOME");
             do_mount_home ();
             break;
@@ -296,7 +317,19 @@ public class Installation : GLib.Object {
         }
     }
     
-    void do_partition() {;
+    void do_wipe() {
+        if (secureInstall) {
+          // Wipe the entire disk to empty GPT partition table
+          string [] c = { "/sbin/b-i-wipe-disk" , device_path };
+          do_simple_command_with_args (c, Step.WIPE, "wipe_disk", "Unable to wipe disk");
+        } else {
+            last_step = Step.WIPE;
+            do_next_job ();
+        }
+    }
+    void do_partition() {
+        
+        Parted.get_devices (false); // re-read devices and partitions
         
         Device dev_init = new Device.from_name(device_path);
         uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
@@ -427,21 +460,19 @@ public class Installation : GLib.Object {
             step = Step.PARTITION; 
     
             Log.instance().log ("Enter simple partitioning");
-            if (partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
+            if (secureInstall || partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
                 Device device = new Device.from_name (device_path);
                 var can_continue = false;
                 var new_partition = -1;
                 try {
                     uint64 swap_size = 0;
-                    if (SwapCollector.get_partitions().is_empty) {
+                    if (SwapCollector.get_partitions().is_empty && !secureInstall) {
                          if (partitions.get(partition).size - OneGig > installation_size) {
                             // Fix for "doesnt start on physical sector boundary". Give 1MB margin.
                             swap_size = OneGig - 1024;
                             Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
                          }
                     }
-                    swap_size = OneGig;
-                    
                     new_partition = device.create_partition_simple (partitions.get (partition).start,
                                                              partitions.get (partition).end,
                                                              "ext4", swap_size);
@@ -464,29 +495,66 @@ public class Installation : GLib.Object {
                 } 
                 Parted.get_devices (false); // re-read devices and partitions
                 partition_path = device_path + new_partition.to_string ();
+                Log.instance().log ("Created in freespace");
             } else {
+                Log.instance().log ("Created in non-freespace");
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
+            Log.instance().log ("=============================");
+            Log.instance().log (partition_path);
             last_step = Step.PARTITION;
             do_next_job ();
         }
     }
 
     void do_fs() {
-        string [] c = { "/sbin/mkfs.ext4", partition_path };
-        do_simple_command_with_args (c, Step.FS, "installing_filesystem", "Unable to install filesystem");
+        if (secureInstall) {
+          // The second argument is where the boot partition will be installed.
+          // dev_init.initialize_esp_bios_grub() will always create /dev/sdX1 as boot partition
+          var content = ("%s\n").printf(secureInstallPassphrase);
+          Utils.write_simple_file ("/tmp/pass", content);
+
+          boot_partition_path = device_path + "1";
+          string [] c = { "/sbin/b-i-encrypt-fs", partition_path , boot_partition_path };
+          do_simple_command_with_args (c, Step.FS, "preparing_encrypted_filesystem", "Unable to install filesystem");
+        } else {
+          string [] c = { "/sbin/mkfs.ext4", partition_path };
+          do_simple_command_with_args (c, Step.FS, "installing_filesystem", "Unable to install filesystem");
+        }
     }
     
 
 
     void do_mount () {
-        Log.instance().log ("\nho home\n");
-        DirUtils.create ("/target", 0700);
-        string [] c = { "/bin/mount", partition_path, "/target" };
-        do_simple_command_with_args (c, Step.MOUNT, "mounting_filesystem ", "Unable to mount filesystem");
+        Log.instance().log ("do_mount\n");
+        if (secureInstall) {
+          // Mount root
+          DirUtils.create ("/target", 0700);
+          string [] c = { "/bin/mount", "/dev/mapper/root", "/target" };
+          do_simple_command_with_args (c, Step.MOUNT, "mounting_filesystem ", "Unable to mount filesystem");
+        } else {
+          DirUtils.create ("/target", 0700);
+          string [] c = { "/bin/mount", partition_path, "/target" };
+          do_simple_command_with_args (c, Step.MOUNT, "mounting_filesystem ", "Unable to mount filesystem");
+        }
+    
+    }
+    void do_mount_boot () {
+        Log.instance().log ("do_mount_boot\n");
+        /* if (secureInstall) { */
+        /*   // Mount boot */
+        /*   DirUtils.create ("/target/boot", 0700); */
+        /*   string boot_device = boot_partition_path; */
+        /*   string [] b = { "/sbin/b-i-mount-boot", boot_device }; */
+        /*   do_simple_command_with_args (b, Step.MOUNT, "mounting_filesystem ", "Unable to mount boot partition"); */
+        /* } else { */
+        /* } */
+        last_step = Step.MOUNTBOOT;
+        do_next_job ();
     }
     
     void do_mount_home () {
+        Log.instance().log ("do_mount_home\n");
         if (separatedHome == true && advancedMode == true) {
             // should write fstab configuration to somewhere
             // then it will be copied in b-i-cleanup, just before umount
@@ -519,7 +587,7 @@ public class Installation : GLib.Object {
     void do_setup () {
         var content = ("%s:%s\n").printf(user_name, password);
         Utils.write_simple_file ("/tmp/user-pass", content);
-
+        
         content = ("%d %s\n").printf((int) autologin, user_name);
         Utils.write_simple_file ("/tmp/user-setup", content);
 
@@ -555,7 +623,14 @@ public class Installation : GLib.Object {
     }
 
     void do_cleanup() {
-        do_simple_command ("/sbin/b-i-cleanup", Step.CLEANUP, "cleaning_up", "Unable to properly clean up");
+        unowned string debug = GLib.Environment.get_variable("DEBUG");
+        if (debug == "1") {
+            // Leave /target for debugging
+            last_step = Step.CLEANUP;
+            do_next_job ();
+        } else {
+            do_simple_command ("/sbin/b-i-cleanup", Step.CLEANUP, "cleaning_up", "Unable to properly clean up");
+        }
     }
 
     void do_done () {

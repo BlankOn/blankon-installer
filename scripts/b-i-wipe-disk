@@ -1,0 +1,18 @@
+#!/bin/bash
+
+DEVICE=$1
+
+# Unmount existing the physical volumme
+set +e
+PREFIX=VGName
+LVM=`pvdisplay | grep "VG Name" | tr -d '[[:space:]]' | sed "s/^$PREFIX//"`
+/sbin/vgremove $LVM -f
+set -e
+
+#/sbin/parted --script $DEVICE mklabel gpt
+(/bin/echo g;/bin/echo w;) | fdisk $DEVICE
+
+/bin/sync
+/sbin/partprobe $DEVICE
+
+/bin/sleep 1
