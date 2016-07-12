@@ -90,6 +90,16 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 @@EOF
 
+###### SCIM
+
+cat << @@EOF > $ROOTFS/target/etc/X11/Xsession.d/99scim
+GTK_IM_MODULE=scim
+QT_IM_MODULE=scim
+
+export GTK_IM_MODULE
+export QT_IM_MODULE
+@@EOF
+
 ###### Locale
 if [ -f /run/locale ];then
     cp /run/locale $ROOTFS/target/etc/default/
