@@ -1,5 +1,7 @@
 #!/bin/bash
 
+unset GTK_IM_MODULE
+
 LIVEDEVICE=`mount | grep \/lib\/live\/mount\/medium | cut -d" " -f1 | cut -d"/" -f3`
 
 # Check for mounted partition
@@ -64,3 +66,4 @@ WantedBy=shutdown.target
 
 fi
 
+export GTK_IM_MODULE=scim
