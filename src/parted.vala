@@ -400,32 +400,43 @@ public class Device : GLib.Object {
         bool is_gpt = (disk.type.name == "gpt");
         // if this is an uefi system and there is  no partition
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
-        if ((EfiCollector.is_efi_system () && efi_partitions.is_empty) || emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
+        var start = (uint64) 1;
+        if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
             stdout.printf ("Creating EFI partition in initialze_esp_bios\n");
-            var start = (uint64) 1;
             var efi_fs = new Ped.FileSystemType("");
             var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
             var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
-          
-            if (EfiCollector.is_efi_system () && efi_partitions.is_empty) {
-                ext.set_flag (Ped.PartitionFlag.ESP, 1);
-            } else if (emptyLabel == true || (is_gpt && efi_partitions.is_empty)) {
-                ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
-            }
-            stdout.printf ("Primary partition %s%d\n", get_path(), ext.num);
+            ext.set_flag (Ped.PartitionFlag.ESP, 1);
+            stdout.printf ("EFI partition %s%d\n", get_path(), ext.num);
             stdout.printf ("\nstart : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
             disk.add_partition (ext, new Ped.Constraint.any (device));
             disk.commit_to_dev ();
             if (ext == null) {
-                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't efi partition\n");
             }
             EfiCollector.reset ();
             start = efi_end + get_unit_size ();
-            return start;
-        } else {
-            return 0;
         }
-        
+        // Create bios_grub partition
+        // TODO : Detect existing bios_grub partition
+        if (is_gpt) {
+            stdout.printf ("Creating BIOS_GRUB partition in initialze_esp_bios\n");
+            var bios_grub_fs = new Ped.FileSystemType("");
+            var bios_grub_end = (uint64) ((start + (200 * 1024 * 1024))/ get_unit_size ());
+            var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, bios_grub_fs, start, bios_grub_end);
+            ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
+            stdout.printf ("BIOS_GRUB partition %s%d\n", get_path(), ext.num);
+            stdout.printf ("\nstart : " + start.to_string () + " end : " + bios_grub_end.to_string () + "\n");
+            disk.add_partition (ext, new Ped.Constraint.any (device));
+            disk.commit_to_dev ();
+            if (ext == null) {
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create bios_grub partition\n");
+            }
+            EfiCollector.reset ();
+            start = bios_grub_end + get_unit_size ();
+            return start;
+        }
+        return 0;
     }
     
     // \brief Delete existing partition
@@ -510,7 +521,7 @@ public class Device : GLib.Object {
     // Partition is created either inside a new extended partition
     // or as a new logical partition. The partition list will be
     // rebuilt. This function is used when user use simple partitioning interface.
-    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size) throws DeviceError {
+    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size, bool secureInstall) throws DeviceError {
         stdout.printf ("===================== create_partition_simple\n");
         stdout.printf ("byte_start : " + byte_start.to_string () + " byte_end : " + byte_end.to_string () + "\n");
         uint64 start_ = (uint64) (byte_start / get_unit_size ());
@@ -661,28 +672,20 @@ public class Device : GLib.Object {
         } else {
           stdout.printf("false\n");
         }
-        var efi_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
-        if (is_gpt || emptyLabel == true) {
-            stdout.printf ("Creating EFI partition\n");
-            var efi_fs = new Ped.FileSystemType("EFI System");
-            var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, efi_fs, start, efi_end);
-          
-            if (EfiCollector.is_efi_system ()) {
-                stdout.printf("Set partition flag to ESP\n");
-                ext.set_flag (Ped.PartitionFlag.ESP, 1);
-            } else if (emptyLabel == true || (is_gpt)) {
-                stdout.printf("Set partition flag to BIOS_GRUB\n");
-                ext.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
-            }
-            stdout.printf ("start : " + start.to_string () + " end : " + efi_end.to_string () + "\n");
+        if (secureInstall) {
+            var boot_end = (uint64) ((start + (1000 * 1024 * 1024))/ get_unit_size ());
+            stdout.printf ("Creating separated BOOT partition\n");
+            var boot_fs = new Ped.FileSystemType("ext3");
+            var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, boot_fs, start, boot_end);
+            stdout.printf ("start : " + start.to_string () + " end : " + boot_end.to_string () + "\n");
             disk.add_partition (ext, new Ped.Constraint.any (device));
             disk.commit_to_dev ();
             if (ext == null) {
-                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create BIOS_GRUB/EFI partition\n");
+                throw new DeviceError.CANT_CREATE_PARTITION ("Can't create separated BOOT partition\n");
             }
             EfiCollector.reset ();
-            stdout.printf ("Current BIOS_GRUB/EFI partition %s%d\n", get_path(), ext.num);
-            start = efi_end + 2044; 
+            stdout.printf ("Current separated BOOT partition %s%d\n", get_path(), ext.num);
+            start = boot_end + 2044; 
         }
 
         if (create_extended && !is_gpt) {
@@ -725,9 +728,9 @@ public class Device : GLib.Object {
             }
             stdout.printf ("Current swap partition %s%d\n", get_path(), new_partition.num);
         }
-        // Only in secure install (?)
+        /* // Only in secure install (?) */
+        /* start = efi_end; */ 
         stdout.printf ("Create the main partition\n");
-        start = efi_end; 
         end  = (uint64) (byte_end / get_unit_size ());
         stdout.printf ("start : " + start.to_string () + " end : " + end.to_string () + "\n");
         new_partition = new Ped.Partition(disk, first_partition_type, fs_type, start, end);

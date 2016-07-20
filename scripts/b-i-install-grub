@@ -27,11 +27,11 @@ then
     # The GRUB_DISABLE_SUBMENY=y fix broken grub.cfg generation
     cat << @@EOF >> /target/etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="rw quiet cryptopts=target=root,source=/dev/lvm/root,lvm=root CRYPTSETUP=y"
-GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXPAYLOAD_LINUX=1024x768
-GRUB_DISABLE_SUBMENU=y
 @@EOF
 
+#GRUB_ENABLE_CRYPTODISK=y
+#    echo /target/etc/default/grub /etc/default/grub
 else
     cat << @@EOF >> /target/etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="rw quiet splash"
@@ -40,11 +40,14 @@ GRUB_GFXPAYLOAD_LINUX=1024x768
 
 fi
 
-
-echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
-
 if [ -z "$EFI_PARTITION" ];then
-    /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
+    if [ -f /tmp/pass ];then
+        echo "Installing GRUB on separated boot partition"
+        # The boot partition already prepared on b-i-setup-fs script.
+        /usr/sbin/grub-install --recheck --root-directory=/target --boot-directory=/target/boot $DEVICE
+    else
+        /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
+    fi
 else
     # If EFI_PARTITION was a false, then the instaler.vala has create one. Find it.
     if [ "x$EFI_PARTITION" = "xfalse" ];then
@@ -63,3 +66,19 @@ else
     umount /target/boot/efi
 fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 
+
+echo "Updating initramfs"
+PATH=$PATH:/usr/sbin:/usr/bin:/bin:/sbin
+function do_chroot() {
+    /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH $@ 
+}
+# Clean the existing initrd(s)
+do_chroot /bin/rm /boot/initrd*
+# Create new fresh one
+if [ -f /tmp/pass ];
+then
+    do_chroot CRYPTSETUP=y /usr/sbin/update-initramfs -c -k all
+else
+    do_chroot /usr/sbin/update-initramfs -c -k all
+fi
+

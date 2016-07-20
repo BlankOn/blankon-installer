@@ -11,15 +11,12 @@
 
 set -e
 
+DEVICE=$1
+BOOT=$2
 PATH=$PATH:/usr/sbin:/usr/bin:/bin:/sbin
 
 function do_chroot() {
-    if [ -f /tmp/pass ];
-    then
-        /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH CRYPTSETUP=y $@ 
-    else
-        /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH $@ 
-    fi
+    /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH $@ 
 }
 
 rm -f $ROOTFS/target/etc/fstab
@@ -40,18 +37,19 @@ fi
 
 echo "Encryption specific setting up"
 
-###### INITRAMFS HOOK
 if [ -f /tmp/pass ];
 then
+
+  ###### INITRAMFS HOOK
   echo "Setup encryption configuration"
 	# Add the hook file
   cp $ROOTFS/usr/share/initramfs-tools/hooks/cryptroot $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
 
   touch $ROOTFS/target/etc/crypttab
   echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
-  echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
   touch $ROOTFS/target/etc/fstab
-  echo "/dev/sda1 ext4 relatime 0 2" >> $ROOTFS/target/etc/fstab
+  echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
+  echo "$BOOT   /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro   0   2" >> $ROOTFS/target/etc/fstab
   
   # echo "Adding more module to initramfs"
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
@@ -210,14 +208,3 @@ set -e
 
 LSB_RELEASE=`cat $ROOTFS/target/etc/lsb-release | sed -n 2p | cut -d"-" -f1`
 sed -i "2s/.*/$LSB_RELEASE/" $ROOTFS/target/etc/lsb-release
-
-echo "Updating initramfs"
-
-###### INITRAMFS HOOK
-if [ -f /tmp/pass ];
-then
-    # The secure installer has specific package configuration. The hook file already injected by debian post install to /etc/initramfs-tools/hooks/cryptroot
-    do_chroot CRYPTSETUP=y /usr/sbin/update-initramfs -k all -u
-else
-    do_chroot /usr/sbin/update-initramfs -k all -u
-fi

@@ -2,6 +2,14 @@
 
 set -e
 
+if [ -f /tmp/pass ];
+then
+  # A secure installation
+  echo "Prepare separated boot partition"
+  mkdir -p /target/boot
+  mount $1\2 /target/boot
+fi
+
 mkdir -p /rofs
 mount -o loop /lib/live/mount/medium/live/filesystem.squashfs /rofs
 rsync -aAXv --info=progress2 /rofs/* /target > /tmp/b-i-copy-fs-progress

@@ -13,5 +13,9 @@ if cat /proc/mounts | grep -F " /target/home " > /dev/null; then
   /bin/umount /target/home
 fi
 
+if [ -f /tmp/pass ];then
+    umount /target/boot
+fi
+
 /bin/umount /target
 rm -rf /rofs
