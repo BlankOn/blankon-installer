@@ -349,8 +349,6 @@ public class Installation : GLib.Object {
             var stepsArray = steps.split(",");
 
             foreach (var s in stepsArray) {
-              /* int num_partitions = dev.get_num_partitions(); */
-              /* Log.instance().log (num_partitions.to_string ()); */
               // split params
               var splittedParams = s.split(";");
               Log.instance().log (splittedParams[0]);
@@ -372,8 +370,6 @@ public class Installation : GLib.Object {
                   }
                   int new_partition = dev.create_partition (uint64.parse (range[0]), uint64.parse (range[1]), splittedParams[2], splittedParams[1], mount);
                   
-                  Log.instance().log ("=================" + new_partition.to_string ());
-        
                   if (splittedParams[4] == "root") {
                       Log.instance().log ("root");
                       root = new_partition.to_string ();
@@ -500,7 +496,6 @@ public class Installation : GLib.Object {
                 Log.instance().log ("Created in non-freespace");
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
-            Log.instance().log ("=============================");
             Log.instance().log (partition_path);
             last_step = Step.PARTITION;
             do_next_job ();
@@ -542,14 +537,6 @@ public class Installation : GLib.Object {
     }
     void do_mount_boot () {
         Log.instance().log ("do_mount_boot\n");
-        /* if (secureInstall) { */
-        /*   // Mount boot */
-        /*   DirUtils.create ("/target/boot", 0700); */
-        /*   string boot_device = boot_partition_path; */
-        /*   string [] b = { "/sbin/b-i-mount-boot", boot_device }; */
-        /*   do_simple_command_with_args (b, Step.MOUNT, "mounting_filesystem ", "Unable to mount boot partition"); */
-        /* } else { */
-        /* } */
         last_step = Step.MOUNTBOOT;
         do_next_job ();
     }
