@@ -349,6 +349,8 @@ public class Installation : GLib.Object {
             var stepsArray = steps.split(",");
 
             foreach (var s in stepsArray) {
+              /* int num_partitions = dev.get_num_partitions(); */
+              /* Log.instance().log (num_partitions.to_string ()); */
               // split params
               var splittedParams = s.split(";");
               Log.instance().log (splittedParams[0]);
@@ -369,7 +371,7 @@ public class Installation : GLib.Object {
                       mount = splittedParams[4]; 
                   }
                   int new_partition = dev.create_partition (uint64.parse (range[0]), uint64.parse (range[1]), splittedParams[2], splittedParams[1], mount);
-                  
+        
                   if (splittedParams[4] == "root") {
                       Log.instance().log ("root");
                       root = new_partition.to_string ();
@@ -496,7 +498,6 @@ public class Installation : GLib.Object {
                 Log.instance().log ("Created in non-freespace");
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
-            Log.instance().log (partition_path);
             last_step = Step.PARTITION;
             do_next_job ();
         }
@@ -508,9 +509,6 @@ public class Installation : GLib.Object {
           var content = ("%s\n").printf(secureInstallPassphrase);
           Utils.write_simple_file ("/tmp/pass", content);
           boot_partition_path = device_path + "2";
-          if (EfiCollector.is_efi_system ()) {
-            boot_partition_path = device_path + "3";
-          }
           string [] c = { "/sbin/b-i-encrypt-fs", partition_path , boot_partition_path };
           do_simple_command_with_args (c, Step.FS, "preparing_encrypted_filesystem", "Unable to install filesystem");
         } else {
@@ -537,6 +535,7 @@ public class Installation : GLib.Object {
     }
     void do_mount_boot () {
         Log.instance().log ("do_mount_boot\n");
+        // TODO create its own script to mount boot
         last_step = Step.MOUNTBOOT;
         do_next_job ();
     }
@@ -570,10 +569,12 @@ public class Installation : GLib.Object {
     
     void do_copy() {
         if (secureInstall) {
-          string [] c = { "/sbin/b-i-copy-fs", device_path };
-          do_simple_command_with_args (c, Step.COPY, "copying_filesystem", "Unable to copy filesystem");
+            // The copy-fs script needed additional argument (boot partition path)
+            boot_partition_path = device_path + "2";
+            string [] c = { "/sbin/b-i-copy-fs", boot_partition_path };
+            do_simple_command_with_args (c, Step.COPY, "copying_filesystem", "Unable to copy filesystem");
         } else {
-          do_simple_command ("/sbin/b-i-copy-fs", Step.COPY, "copying_filesystem", "Unable to copy filesystem");
+            do_simple_command ("/sbin/b-i-copy-fs", Step.COPY, "copying_filesystem", "Unable to copy filesystem");
         }
     }
 
@@ -601,17 +602,18 @@ public class Installation : GLib.Object {
 
         content = ("%s").printf(swaps);
         Utils.write_simple_file ("/tmp/swaps", content);
+        string [] c = { "/sbin/b-i-setup-fs", device_path };
         if (secureInstall) {
             boot_partition_path = device_path + "2";
-            if (EfiCollector.is_efi_system ()) {
-                boot_partition_path = device_path + "3";
-            }
+            c = { "/sbin/b-i-setup-fs", device_path, boot_partition_path };
         }
-        string [] c = { "/sbin/b-i-setup-fs", device_path, boot_partition_path };
         do_simple_command_with_args (c, Step.SETUP, "setting_up", "Unable to setup installation");
     }
 
     void do_grub () {
+        if (secureInstall) {
+            efiPartition = device_path + "1";
+        }
         string [] c = { "/sbin/b-i-install-grub", device_path, efiPartition, efiNeedFormat };
         do_simple_command_with_args (c, Step.GRUB, "installing_grub", "Unable to install GRUB");
     }

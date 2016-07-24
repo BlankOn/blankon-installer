@@ -35,13 +35,10 @@ if [ "x$P" != "x" ];then
     do_chroot /usr/bin/apt-get --yes purge $P
 fi
 
-echo "Encryption specific setting up"
-
+###### ENCRYPTION SPECIFIC SETTING UP
 if [ -f /tmp/pass ];
 then
-
-  ###### INITRAMFS HOOK
-  echo "Setup encryption configuration"
+  echo "Encryption specific setting up"
 	# Add the hook file
   cp $ROOTFS/usr/share/initramfs-tools/hooks/cryptroot $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
 
@@ -49,14 +46,17 @@ then
   echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
   touch $ROOTFS/target/etc/fstab
   echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
-  echo "$BOOT   /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro   0   2" >> $ROOTFS/target/etc/fstab
+  echo "$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
   # echo "Adding more module to initramfs"
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-crypt" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "sha256" >> $ROOTFS/target/etc/initramfs-tools/modules
+ 
 fi
+
+###### CLEAN UP PACKAGES
 
 echo "Removing unused packages"
 do_chroot /usr/bin/apt-get --yes autoremove

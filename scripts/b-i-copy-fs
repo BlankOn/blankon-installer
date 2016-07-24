@@ -7,7 +7,7 @@ then
   # A secure installation
   echo "Prepare separated boot partition"
   mkdir -p /target/boot
-  mount $1\2 /target/boot
+  mount $1 /target/boot
 fi
 
 mkdir -p /rofs

@@ -61,8 +61,20 @@ else
     if [ "x$NEED_FORMAT" = "xY" ];then
        /sbin/mkfs.fat -F 32 $EFI_PARTITION
     fi
+
+    BOOT_TARGET=""
+    if [ -f /tmp/pass ];then
+        # Format the efi partition
+        /sbin/mkfs.fat -F 32 $EFI_PARTITION
+        echo "Secure installation has separated boot partition"
+        # The boot partition already prepared on b-i-setup-fs script.
+        BOOT_TARGET="--boot-directory=/target/boot"
+    fi
     mount $EFI_PARTITION /target/boot/efi
-    /usr/sbin/grub-install --recheck --efi-directory=/target/boot/efi --root-directory=/target $DEVICE
+    OPT="--recheck --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
+    # Expose it, for debugging purpose
+    echo $OPT
+    /usr/sbin/grub-install $OPT
     umount /target/boot/efi
 fi
 sudo chroot /target /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg 

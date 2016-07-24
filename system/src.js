@@ -96,6 +96,26 @@ angular.module("install",[])
 
 }])
 
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+}])
+
+angular.module("timezone",[])
+.controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope, $watch){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+    $("area, timezone-next").click(function(){
+      $rootScope.installationData.timezone = $("select").val();
+      console.log($rootScope.installationData);
+    });
+}])
+
 angular.module("partition",[])
 .controller("PartitionCtrl", ["$scope", "$window", "$timeout", "$rootScope", 
   function ($scope, $window, $timeout, $rootScope){
@@ -1038,26 +1058,6 @@ angular.module("partition",[])
       } 
     }
 ])
-
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-}])
-
-angular.module("timezone",[])
-.controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope, $watch){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-    $("area, timezone-next").click(function(){
-      $rootScope.installationData.timezone = $("select").val();
-      console.log($rootScope.installationData);
-    });
-}])
 
 angular.module("user",[])
 .controller("UserCtrl", ["$scope", "$window", "$rootScope", 
