@@ -58,7 +58,9 @@ then
   echo "dm-crypt" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "sha256" >> $ROOTFS/target/etc/initramfs-tools/modules
- 
+
+  echo "CRYPTSETUP=y" >> $ROOTFS/target/etc/environment
+
 fi
 
 ###### CLEAN UP PACKAGES

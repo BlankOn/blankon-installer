@@ -332,7 +332,7 @@ public class Installation : GLib.Object {
         Parted.get_devices (false); // re-read devices and partitions
         
         Device dev_init = new Device.from_name(device_path);
-        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
+        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub(secureInstall);
         if (advancedMode == true) {
                   
             

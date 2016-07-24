@@ -2,8 +2,10 @@
 
 DEVICE=$1
 
-# Unmount existing the physical volumme
 set +e
+# Remove existing the root vg
+dmsetup remove root
+# Unmount existing the physical volumme
 PREFIX=VGName
 LVM=`pvdisplay | grep "VG Name" | tr -d '[[:space:]]' | sed "s/^$PREFIX//"`
 /sbin/vgremove $LVM -f
