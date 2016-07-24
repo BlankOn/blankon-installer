@@ -17,6 +17,7 @@ grep "boot=live" /proc/cmdline
 if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
 
     rm -f /run/locale
+    chown -R 1000:1000 /run/user/1000/dconf
 
     sudo -E nice -n -20 blankon-installer
 
