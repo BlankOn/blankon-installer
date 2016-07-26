@@ -551,9 +551,9 @@ public class Installation : GLib.Object {
             do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
-            var content = partition_path + " / ext4 defaults 1 2";
+            var content = "UUID=" + backtick("/bin/lsblk -no UUID " + partition_path) + " / ext4 defaults 1 2";
             Utils.write_simple_file ("/tmp/fstab", content);
-            content = home + " /home ext4 defaults 1 2";
+            content = "UUID=" + backtick("/bin/lsblk -no UUID " + home) + " /home ext4 defaults 1 2";
             Utils.write_simple_file ("/tmp/fstab", content);
 
         } else {
@@ -670,6 +670,20 @@ public class Installation : GLib.Object {
 
         return result;
 
+    }
+
+    public string backtick (string command)
+    {
+      try {
+        int exitCode;
+        string std_out;
+        Process.spawn_command_line_sync(command, out std_out, null, out exitCode);
+        return std_out;
+      }
+      catch (GLib.Error e){
+        Log.instance().log ("Error running: " + e.message);
+        return "";
+      }
     }
 
     int run (string[] command) {
