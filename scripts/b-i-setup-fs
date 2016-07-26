@@ -19,6 +19,11 @@ function do_chroot() {
     /usr/sbin/chroot $ROOTFS/target /usr/bin/env PATH=$PATH $@ 
 }
 
+# Source blankon-installer default values
+if [ -f /etc/default/blankon-installer ];then
+  . /etc/default/blankon-installer
+fi
+
 rm -f $ROOTFS/target/etc/fstab
 
 ###### REMOVE PACKAGES
@@ -76,6 +81,15 @@ do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
 do_chroot /usr/bin/chfn < $ROOTFS/tmp/user-info
 rm -f $ROOTFS/tmp/user-pass
+
+###### CUSTOM GROUP
+
+if [ -n "$BI_CUSTOM_GROUPS" ];then
+  for i in $BI_CUSTOM_GROUPS;do
+    do_chroot /usr/sbin/groupadd -r $i
+    do_chroot /usr/sbin/adduser $USERNAME $i
+  done
+fi
 
 ###### AUTOLOGIN
 
