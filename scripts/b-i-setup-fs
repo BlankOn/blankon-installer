@@ -192,7 +192,7 @@ fi
 for i in `cat $ROOTFS/tmp/swaps`;do
     mkswap $i
     UUID=`lsblk -no UUID $i`
-    echo "$UUID    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
+    echo "UUID=$UUID    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
 done
 
 
