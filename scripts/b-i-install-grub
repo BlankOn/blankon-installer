@@ -71,7 +71,7 @@ else
         BOOT_TARGET="--boot-directory=/target/boot"
     fi
     mount $EFI_PARTITION /target/boot/efi
-    OPT="--recheck --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
+    OPT="--recheck --bootloader-id=Xecure --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
     # Expose it, for debugging purpose
     echo $OPT
     /usr/sbin/grub-install $OPT

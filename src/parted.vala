@@ -396,14 +396,14 @@ public class Device : GLib.Object {
         }
     }
     
-    public uint64 initialize_esp_bios_grub () {
+    public uint64 initialize_esp_bios_grub (bool secureInstall) {
         // TODO : Detect existing bios_grub partition
         bool is_gpt = (disk.type.name == "gpt");
         // if this is an uefi system and there is  no partition
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         var start = (uint64) 1;
         ArrayList<string> efipartitions = EfiCollector.get_partitions ();
-        if ((EfiCollector.is_efi_system () && efipartitions.is_empty) || emptyLabel == true || (is_gpt && efipartitions.is_empty)) {
+        if ((EfiCollector.is_efi_system () && efipartitions.is_empty) || emptyLabel == true || (is_gpt && efipartitions.is_empty) || secureInstall) {
             stdout.printf ("Creating EFI partition in initialze_esp_bios\n");
             var esp_fs = new Ped.FileSystemType("");
             var esp_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
@@ -425,6 +425,13 @@ public class Device : GLib.Object {
             start = esp_end + get_unit_size ();
             return start;
         } else {
+            // For debugging purpose
+            stdout.printf ("Not creating any esp partition\n");
+            if (secureInstall) {
+                stdout.printf ("This is a secure installation\n");
+            } else {
+                stdout.printf ("This isn't a secure installation\n");
+            }
             return 0;
         }
     }
