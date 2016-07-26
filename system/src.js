@@ -1,15 +1,3 @@
-angular.module("done",[])
-.controller("DoneCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-    $scope.reboot = function(){
-      console.log("reboot");
-      Installation.reboot();
-    };
-}])
-
 angular.module("hello",[])
 .controller("HelloCtrl", ["$scope", "$window", "$rootScope", "$translate",
   function ($scope, $window, $rootScope, $translate){
@@ -96,24 +84,16 @@ angular.module("install",[])
 
 }])
 
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+angular.module("done",[])
+.controller("DoneCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope){
     
     $(".content").css("height", $rootScope.contentHeight);
 
-}])
-
-angular.module("timezone",[])
-.controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope, $watch){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-    $("area, timezone-next").click(function(){
-      $rootScope.installationData.timezone = $("select").val();
-      console.log($rootScope.installationData);
-    });
+    $scope.reboot = function(){
+      console.log("reboot");
+      Installation.reboot();
+    };
 }])
 
 angular.module("partition",[])
@@ -1058,6 +1038,26 @@ angular.module("partition",[])
       } 
     }
 ])
+
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+}])
+
+angular.module("timezone",[])
+.controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope, $watch){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+    $("area, timezone-next").click(function(){
+      $rootScope.installationData.timezone = $("select").val();
+      console.log($rootScope.installationData);
+    });
+}])
 
 angular.module("user",[])
 .controller("UserCtrl", ["$scope", "$window", "$rootScope", 
