@@ -16,3 +16,4 @@ cat $ROOTFS/tmp/pass | cryptsetup luksOpen /dev/lvm/root root
 cat $ROOTFS/tmp/pass | cryptsetup luksAddKey /dev/lvm/swap /tmp/derived
 
 mkfs.ext4 /dev/mapper/root
+mkswap /dev/mapper/lvm-swap

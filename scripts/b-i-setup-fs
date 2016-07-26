@@ -51,6 +51,7 @@ then
   echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
   touch $ROOTFS/target/etc/fstab
   echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
+  echo "/dev/mapper/lvm-swap    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
   echo "$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
   # echo "Adding more module to initramfs"
@@ -59,6 +60,7 @@ then
   echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "sha256" >> $ROOTFS/target/etc/initramfs-tools/modules
  
+
 fi
 
 ###### CLEAN UP PACKAGES
