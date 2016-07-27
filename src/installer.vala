@@ -302,8 +302,9 @@ public class Installation : GLib.Object {
                   
             
             description = "Partitioning in advancedMode";
-            step = Step.PARTITION;
             
+            step = Step.PARTITION;
+        do_simple_command_with_args (c, Step.PARTITION, "Partitioning_in_advancedMode", "Unable to start Partitioning in advancedMode");    
             Device dev_init = new Device.from_name(device_path);
             var start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub();
  
