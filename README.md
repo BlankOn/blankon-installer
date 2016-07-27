@@ -2,9 +2,12 @@
 
 [![Build Status](https://api.travis-ci.org/BlankOn/blankon-installer.svg?branch=master)](https://travis-ci.org/BlankOn/blankon-installer)
 
-## Note
+## Debugging
 
-- Use ``DEBUG=1`` to get inspector enabled.
+What you get for using `DEBUG=1` environment variable :
+
+- Right click and inspect element enabled.
+- `/sbin/b-i-cleanup` wouldn't get executed, leave `/target` mounted for investigation.
 
 ## Packaging
 
