@@ -52,7 +52,7 @@ then
   touch $ROOTFS/target/etc/fstab
   echo "/dev/mapper/root / ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
   echo "/dev/mapper/lvm-swap    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
-  echo "$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
+  echo "UUID=$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
   # Adding more module to initramfs
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules

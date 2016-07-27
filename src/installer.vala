@@ -687,7 +687,7 @@ public class Installation : GLib.Object {
         int exitCode;
         string std_out;
         Process.spawn_command_line_sync(command, out std_out, null, out exitCode);
-        return std_out.replace("/n", "");
+        return std_out.replace("\n","").replace(" ","");
       }
       catch (GLib.Error e){
         Log.instance().log ("Error running: " + e.message);
