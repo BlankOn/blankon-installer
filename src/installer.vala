@@ -557,14 +557,13 @@ public class Installation : GLib.Object {
             var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
                content += "UUID=" + home_partition + " /home ext4 defaults 1 2\n";
             Utils.write_simple_file ("/tmp/fstab", content);
-
-        } else {
+        } else if (secureInstall == false) {
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
             var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
 
             var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
             Utils.write_simple_file ("/tmp/fstab", content);
-
+        } else {
             last_step = Step.MOUNTHOME;
             do_next_job ();
         }

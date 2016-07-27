@@ -3,18 +3,21 @@
 DEVICE=$1
 
 set +e
-# Remove existing the root vg
-dmsetup remove root
 # Unmount existing the physical volumme
 PREFIX=VGName
 LVM=`pvdisplay | grep "VG Name" | tr -d '[[:space:]]' | sed "s/^$PREFIX//"`
 /sbin/vgremove $LVM -f
-set -e
 
 #/sbin/parted --script $DEVICE mklabel gpt
 (/bin/echo g;/bin/echo w;) | fdisk $DEVICE
 
-/bin/sync
-/sbin/partprobe $DEVICE
+set -e
 
-/bin/sleep 1
+# Make sure kernel re-read the partition table
+for i in `seq 1 3`;
+do
+		/bin/sync
+		/sbin/partprobe $DEVICE
+		/usr/bin/partx -a $DEVICE
+		/bin/sleep 5
+done  
