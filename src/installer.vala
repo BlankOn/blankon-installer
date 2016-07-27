@@ -578,6 +578,7 @@ public class Installation : GLib.Object {
         if (secureInstall) {
             // The copy-fs script needed additional argument (boot partition path)
             boot_partition_path = device_path + "2";
+
             string [] c = { "/sbin/b-i-copy-fs", boot_partition_path };
             do_simple_command_with_args (c, Step.COPY, "copying_filesystem", "Unable to copy filesystem");
         } else {
@@ -612,7 +613,8 @@ public class Installation : GLib.Object {
         string [] c = { "/sbin/b-i-setup-fs", device_path };
         if (secureInstall) {
             boot_partition_path = device_path + "2";
-            c = { "/sbin/b-i-setup-fs", device_path, boot_partition_path };
+            var boot_partition_uuid = backtick("/bin/lsblk -no UUID " + boot_partition_path);
+            c = { "/sbin/b-i-setup-fs", device_path, boot_partition_uuid };
         }
         do_simple_command_with_args (c, Step.SETUP, "setting_up", "Unable to setup installation");
     }
