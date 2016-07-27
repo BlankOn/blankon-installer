@@ -551,11 +551,18 @@ public class Installation : GLib.Object {
             do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
-            var content = partition_path + " / ext4 defaults 1 2";
-            Utils.write_simple_file ("/tmp/fstab", content);
-            content = home + " /home ext4 defaults 1 2";
-            Utils.write_simple_file ("/tmp/fstab", content);
+            var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
+            var home_partition = backtick("/bin/lsblk -no UUID " + home);
 
+            var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
+               content += "UUID=" + home_partition + " /home ext4 defaults 1 2\n";
+            Utils.write_simple_file ("/tmp/fstab", content);
+        } else if (secureInstall == false) {
+            // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
+            var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
+
+            var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
+            Utils.write_simple_file ("/tmp/fstab", content);
         } else {
             last_step = Step.MOUNTHOME;
             do_next_job ();
@@ -571,6 +578,7 @@ public class Installation : GLib.Object {
         if (secureInstall) {
             // The copy-fs script needed additional argument (boot partition path)
             boot_partition_path = device_path + "2";
+
             string [] c = { "/sbin/b-i-copy-fs", boot_partition_path };
             do_simple_command_with_args (c, Step.COPY, "copying_filesystem", "Unable to copy filesystem");
         } else {
@@ -605,7 +613,8 @@ public class Installation : GLib.Object {
         string [] c = { "/sbin/b-i-setup-fs", device_path };
         if (secureInstall) {
             boot_partition_path = device_path + "2";
-            c = { "/sbin/b-i-setup-fs", device_path, boot_partition_path };
+            var boot_partition_uuid = backtick("/bin/lsblk -no UUID " + boot_partition_path);
+            c = { "/sbin/b-i-setup-fs", device_path, boot_partition_uuid };
         }
         do_simple_command_with_args (c, Step.SETUP, "setting_up", "Unable to setup installation");
     }
@@ -670,6 +679,20 @@ public class Installation : GLib.Object {
 
         return result;
 
+    }
+
+    public string backtick (string command)
+    {
+      try {
+        int exitCode;
+        string std_out;
+        Process.spawn_command_line_sync(command, out std_out, null, out exitCode);
+        return std_out.replace("/n", "");
+      }
+      catch (GLib.Error e){
+        Log.instance().log ("Error running: " + e.message);
+        return "";
+      }
     }
 
     int run (string[] command) {
