@@ -1,3 +1,15 @@
+angular.module("done",[])
+.controller("DoneCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+    $scope.reboot = function(){
+      console.log("reboot");
+      Installation.reboot();
+    };
+}])
+
 angular.module("hello",[])
 .controller("HelloCtrl", ["$scope", "$window", "$rootScope", "$translate",
   function ($scope, $window, $rootScope, $translate){
@@ -82,18 +94,6 @@ angular.module("install",[])
       statusUpdater = $interval(updateStatus, 1000);
     }, 1000);
 
-}])
-
-angular.module("done",[])
-.controller("DoneCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-    $scope.reboot = function(){
-      console.log("reboot");
-      Installation.reboot();
-    };
 }])
 
 angular.module("partition",[])

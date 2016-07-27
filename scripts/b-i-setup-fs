@@ -50,9 +50,9 @@ then
   touch $ROOTFS/target/etc/crypttab
   echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
   touch $ROOTFS/target/etc/fstab
-  echo "/dev/mapper/root ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
+  echo "/dev/mapper/root / ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
   echo "/dev/mapper/lvm-swap    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
-  echo "$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
+  echo "UUID=$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
   # Adding more module to initramfs
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
@@ -192,7 +192,8 @@ fi
 
 for i in `cat $ROOTFS/tmp/swaps`;do
     mkswap $i
-    echo "$i    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
+    UUID=`lsblk -no UUID $i`
+    echo "UUID=$UUID    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
 done
 
 
