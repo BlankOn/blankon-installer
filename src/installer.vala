@@ -301,7 +301,7 @@ public class Installation : GLib.Object {
         if (advancedMode == true) {
                   
             
-            description = "Partitioning in advancedMode";
+            description = "partitioning_in_advancedMode";
             step = Step.PARTITION;
             
             Device dev_init = new Device.from_name(device_path);
