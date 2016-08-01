@@ -77,6 +77,45 @@ public class EfiCollector {
     }
 
 }
+// BiosBootCollector
+// collects all BIOS boot partitions in the system
+public class BiosBootCollector {
+    static ArrayList<string> bios_boot;
+
+    static void reget () {
+        bios_boot = new ArrayList<string> ();
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/sbin/fdisk", "-l" };
+        string[] env = { "LC_ALL=C" };
+
+
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+
+        foreach (var line in normal_output.split("\n")) {
+            if ((line.index_of ("/dev/") == 0)
+                && (line.index_of ("BIOS boot") > 0)) {
+                bios_boot.add (line.split (" ", 2)[0]);
+            }
+        }
+    }
+
+    public static ArrayList<string> get_partitions () {
+        if (bios_boot == null) {
+            reget ();
+        }
+        return bios_boot;
+    }
+
+    public static void reset () {
+        reget (); 
+    } 
+}
+
 public class SwapCollector {
     static ArrayList<string> swaps;
 
@@ -400,10 +439,24 @@ public class Device : GLib.Object {
         // TODO : Detect existing bios_grub partition
         bool is_gpt = (disk.type.name == "gpt");
         // if this is an uefi system and there is  no partition
-        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         var start = (uint64) 1;
-        ArrayList<string> efipartitions = EfiCollector.get_partitions ();
-        if ((EfiCollector.is_efi_system () && efipartitions.is_empty) || emptyLabel == true || (is_gpt && efipartitions.is_empty) || secureInstall) {
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        ArrayList<string> bios_boot_partitions = BiosBootCollector.get_partitions ();
+        if (
+            // The disk is empty. TODO : wipe to GPT
+            emptyLabel == true || 
+
+            // This is an EFI 
+            (EfiCollector.is_efi_system () && efi_partitions.is_empty) || 
+
+            // This isn't an EFI system but has GPT partition table
+            // and there is no existing BIOS boot partition
+            (!EfiCollector.is_efi_system () || is_gpt && bios_boot_partitions.is_empty) || 
+
+            // A secure install. The secure installation will wipe the entire disk
+            secureInstall
+
+        ) {
             stdout.printf ("Creating EFI partition in initialze_esp_bios\n");
             var esp_fs = new Ped.FileSystemType("");
             var esp_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());

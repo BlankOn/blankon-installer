@@ -82,6 +82,7 @@ public class Installation : GLib.Object {
     public bool advancedMode { get; set construct; }
     public bool isEfi { get; set construct; }
     public string efiPartition { get; set construct; }
+    public bool createESPPartition { get; set construct; }
     public string efiNeedFormat { get; set construct; }
     public int state { get; set construct; }
     public int progress { get; private set; }
@@ -173,6 +174,9 @@ public class Installation : GLib.Object {
                     break;
                 case  "efiPartition":
                     efiPartition = entry[1];
+                    break;
+                case  "createESPPartition":
+                    createESPPartition = (entry[1] == "true");
                     break;
                 case  "steps":
                     steps = entry[1];
@@ -548,7 +552,6 @@ public class Installation : GLib.Object {
             Log.instance().log ("\nmount separated home partition\n");
             DirUtils.create ("/target/home", 0700);
             string [] c = { "/bin/mount", home, "/target/home" };
-            do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
             var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
@@ -557,12 +560,17 @@ public class Installation : GLib.Object {
             var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
                content += "UUID=" + home_partition + " /home ext4 defaults 1 2\n";
             Utils.write_simple_file ("/tmp/fstab", content);
+            
+          do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         } else if (secureInstall == false) {
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
             var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
 
             var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
             Utils.write_simple_file ("/tmp/fstab", content);
+            
+            last_step = Step.MOUNTHOME;
+            do_next_job ();
         } else {
             last_step = Step.MOUNTHOME;
             do_next_job ();
@@ -622,6 +630,9 @@ public class Installation : GLib.Object {
     void do_grub () {
         if (secureInstall) {
             efiPartition = device_path + "1";
+        } else if (createESPPartition) {
+            efiPartition = "false";
+            efiNeedFormat = "Y";
         }
         string [] c = { "/sbin/b-i-install-grub", device_path, efiPartition, efiNeedFormat };
         do_simple_command_with_args (c, Step.GRUB, "installing_grub", "Unable to install GRUB");
@@ -1000,6 +1011,34 @@ public class Installation : GLib.Object {
         }
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
     } 
+    
+    public static JSCore.Value js_is_esp_exists (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        if (EfiCollector.is_efi_system () && !efi_partitions.is_empty) {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
+    
+    public static JSCore.Value js_is_bios_boot_exists (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        
+        string retval = "false";
+        ArrayList<string> bios_boot_partitions = BiosBootCollector.get_partitions ();
+        if (!bios_boot_partitions.is_empty) {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -1011,6 +1050,8 @@ public class Installation : GLib.Object {
         { "getRelease", js_get_release, PropertyAttribute.ReadOnly },
         { "whichEfi", js_which_efi, PropertyAttribute.ReadOnly },
         { "isEfi", js_is_efi, PropertyAttribute.ReadOnly },
+        { "isESPExists", js_is_esp_exists, PropertyAttribute.ReadOnly },
+        { "isBiosBootExists", js_is_bios_boot_exists, PropertyAttribute.ReadOnly },
         { "getCopyingProgress", js_get_copying_progress, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
