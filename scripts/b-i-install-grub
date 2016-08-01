@@ -40,26 +40,31 @@ GRUB_GFXPAYLOAD_LINUX=1024x768
 
 fi
 
+echo $EFI_PARTITION
 if [ -z "$EFI_PARTITION" ];then
     if [ -f /tmp/pass ];then
         echo "Installing GRUB on separated boot partition"
         # The boot partition already prepared on b-i-setup-fs script.
         /usr/sbin/grub-install --recheck --root-directory=/target --boot-directory=/target/boot $DEVICE
     else
+        echo "Installing GRUB"
         /usr/sbin/grub-install --recheck --root-directory=/target $DEVICE
     fi
 else
     # If EFI_PARTITION was a false, then the instaler.vala has create one. Find it.
     if [ "x$EFI_PARTITION" = "xfalse" ];then
+        echo "Find the EFI partition..."
         set +e
         EFI_PARTITION=`/sbin/fdisk -l $DEVICE 2> /dev/null | grep "EFI System" | cut -d" " -f1`
+        echo "Found : $EFI_PARTITION"
         set -e
     fi
     # grub-efi must be available 
     apt-get --assume-yes install grub-efi
     mkdir -p /target/boot/efi
     if [ "x$NEED_FORMAT" = "xY" ];then
-       /sbin/mkfs.fat -F 32 $EFI_PARTITION
+        echo "Formatting EFI partition..."
+        /sbin/mkfs.fat -F 32 $EFI_PARTITION
     fi
 
     BOOT_TARGET=""
@@ -74,6 +79,7 @@ else
     OPT="--recheck --bootloader-id=Xecure --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
     # Expose it, for debugging purpose
     echo $OPT
+    echo "Installing GRUB EFI"
     /usr/sbin/grub-install $OPT
     umount /target/boot/efi
 fi
