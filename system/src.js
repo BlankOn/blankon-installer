@@ -96,14 +96,6 @@ angular.module("install",[])
 
 }])
 
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-}])
-
 angular.module("partition",[])
 .controller("PartitionCtrl", ["$scope", "$window", "$timeout", "$rootScope", 
   function ($scope, $window, $timeout, $rootScope){
@@ -1046,6 +1038,14 @@ angular.module("partition",[])
       } 
     }
 ])
+
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+}])
 
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
