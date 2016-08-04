@@ -189,10 +189,13 @@ fi
 
 
 ###### Swap
-
+echo "Collecting swaps"
 for i in `cat $ROOTFS/tmp/swaps`;do
     mkswap $i
-    UUID=`lsblk -no UUID $i`
+    # UUID=`/bin/lsblk -no UUID $i`
+    UUID=`/sbin/blkid | grep $i | cut -d'D' -f2 | cut -d'"' -f2`
+    echo $i
+    echo $UUID
     echo "UUID=$UUID    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
 done
 
