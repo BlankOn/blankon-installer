@@ -435,7 +435,7 @@ public class Device : GLib.Object {
         }
     }
     
-    public uint64 initialize_esp_bios_grub (bool secureInstall) {
+    public uint64 initialize_esp_bios_grub (bool wipeDisk) {
         // TODO : Detect existing bios_grub partition
         bool is_gpt = (disk.type.name == "gpt");
         // if this is an uefi system and there is  no partition
@@ -453,8 +453,8 @@ public class Device : GLib.Object {
             // and there is no existing BIOS boot partition
             (!EfiCollector.is_efi_system () || is_gpt && bios_boot_partitions.is_empty) || 
 
-            // A secure install. The secure installation will wipe the entire disk
-            secureInstall
+            // A clean/secure install. The clean/secure installation will wipe the entire disk
+            wipeDisk
 
         ) {
             stdout.printf ("Creating EFI partition in initialze_esp_bios\n");
@@ -480,8 +480,8 @@ public class Device : GLib.Object {
         } else {
             // For debugging purpose
             stdout.printf ("Not creating any esp partition\n");
-            if (secureInstall) {
-                stdout.printf ("This is a secure installation\n");
+            if (wipeDisk) {
+                stdout.printf ("This is a clean/secure installation\n");
             } else {
                 stdout.printf ("This isn't a secure installation\n");
             }
@@ -571,7 +571,7 @@ public class Device : GLib.Object {
     // Partition is created either inside a new extended partition
     // or as a new logical partition. The partition list will be
     // rebuilt. This function is used when user use simple partitioning interface.
-    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size, bool secureInstall) throws DeviceError {
+    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size, bool wipeDisk) throws DeviceError {
         stdout.printf ("Create_partition_simple\n");
         stdout.printf ("byte_start : " + byte_start.to_string () + " byte_end : " + byte_end.to_string () + "\n");
         uint64 start_ = (uint64) (byte_start / get_unit_size ());
@@ -689,7 +689,7 @@ public class Device : GLib.Object {
         } else {
           stdout.printf("false\n");
         }
-        if (secureInstall) {
+        if (wipeDisk) {
             var boot_end = (uint64) ((start + (1000 * 1024 * 1024))/ get_unit_size ());
             stdout.printf ("Creating separated BOOT partition\n");
             var boot_fs = new Ped.FileSystemType("ext3");

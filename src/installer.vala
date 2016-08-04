@@ -77,7 +77,10 @@ public class Installation : GLib.Object {
     public string home { get; set construct; }
     public string root { get; set construct; }
     public bool autologin { get; set construct; }
-    public bool secureInstall { get; set construct; }               // If true, secure install mode will executed
+    public bool secureInstall { get; set construct; }               // If true, secure install mode will executed. 
+                                                                    // The secure install will wipe the entire disk and encrypt the LVM partition
+
+    public bool cleanInstall { get; set construct; }                // Like secureInstall, the cleanInstall will will wipe the entire disk, but without encryption.
     public string secureInstallPassphrase { get; set construct; }   // The encryption passphrase
     public bool advancedMode { get; set construct; }                // advancedMode bring the partitioning parameters to partitioning iteration in parted.vala
     public bool isEfi { get; set construct; }                       // This value derrived from this intsaller.vala
@@ -153,6 +156,9 @@ public class Installation : GLib.Object {
                     break;
                 case "autologin":
                     autologin = (entry[1] == "true");
+                    break;
+                case "cleanInstall":
+                    cleanInstall = (entry[1] == "true");
                     break;
                 case "secureInstall":
                     secureInstall = (entry[1] == "true");
@@ -322,7 +328,7 @@ public class Installation : GLib.Object {
     }
     
     void do_wipe() {
-        if (secureInstall) {
+        if (secureInstall || cleanInstall) {
           // Wipe the entire disk to empty GPT partition table
           string [] c = { "/sbin/b-i-wipe-disk" , device_path };
           do_simple_command_with_args (c, Step.WIPE, "wipe_disk", "Unable to wipe disk");
@@ -336,9 +342,12 @@ public class Installation : GLib.Object {
         Parted.get_devices (false); // re-read devices and partitions
         
         Device dev_init = new Device.from_name(device_path);
-        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub(secureInstall);
+
+        bool wipeDisk = secureInstall || cleanInstall;
+        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub(wipeDisk);
+
+        // ADVANCED
         if (advancedMode == true) {
-                  
             
             description = "partitioning_in_advancedMode";
             step = Step.PARTITION;
@@ -434,6 +443,8 @@ public class Installation : GLib.Object {
             last_step = Step.PARTITION;
             do_next_job ();
         
+        
+        // SIMPLE
         } else {
             var d = Parted.get_devices (true); 
     
@@ -462,12 +473,13 @@ public class Installation : GLib.Object {
             step = Step.PARTITION; 
     
             Log.instance().log ("Enter simple partitioning");
-            if (secureInstall || partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
+            if (cleanInstall || secureInstall || partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
                 Device device = new Device.from_name (device_path);
                 var can_continue = false;
                 var new_partition = -1;
                 try {
                     uint64 swap_size = 0;
+                    // The secure installation will create swap partition inside LVM
                     if (SwapCollector.get_partitions().is_empty && !secureInstall) {
                          if (partitions.get(partition).size - OneGig > installation_size) {
                             // Fix for "doesnt start on physical sector boundary". Give 1MB margin.
@@ -477,7 +489,7 @@ public class Installation : GLib.Object {
                     }
                     new_partition = device.create_partition_simple (partitions.get (partition).start,
                                                              partitions.get (partition).end,
-                                                             "ext4", swap_size, secureInstall);
+                                                             "ext4", swap_size, (cleanInstall || secureInstall));
     
                     Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
                     if (new_partition != -1) {
@@ -630,7 +642,7 @@ public class Installation : GLib.Object {
     void do_grub () {
         if (secureInstall) {
             efiPartition = device_path + "1";
-        } else if (createESPPartition) {
+        } else if (createESPPartition || cleanInstall) {
             efiPartition = "false";
             efiNeedFormat = "Y";
         }
