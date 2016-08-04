@@ -77,13 +77,13 @@ public class Installation : GLib.Object {
     public string home { get; set construct; }
     public string root { get; set construct; }
     public bool autologin { get; set construct; }
-    public bool secureInstall { get; set construct; }
-    public string secureInstallPassphrase { get; set construct; }
-    public bool advancedMode { get; set construct; }
-    public bool isEfi { get; set construct; }
-    public string efiPartition { get; set construct; }
-    public bool createESPPartition { get; set construct; }
-    public string efiNeedFormat { get; set construct; }
+    public bool secureInstall { get; set construct; }               // If true, secure install mode will executed
+    public string secureInstallPassphrase { get; set construct; }   // The encryption passphrase
+    public bool advancedMode { get; set construct; }                // advancedMode bring the partitioning parameters to partitioning iteration in parted.vala
+    public bool isEfi { get; set construct; }                       // This value derrived from this intsaller.vala
+    public string efiPartition { get; set construct; }              // If this value defined, 
+    public bool createESPPartition { get; set construct; }          // The current disk is a GPT and has no ESP partition, then this value should be true
+    public string efiNeedFormat { get; set construct; }             // The current EFI partition is not suitable for installation, should be re-formatted.
     public int state { get; set construct; }
     public int progress { get; private set; }
     public string description { get; set construct; }
