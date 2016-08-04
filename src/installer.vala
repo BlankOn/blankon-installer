@@ -1051,6 +1051,34 @@ public class Installation : GLib.Object {
         }
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
     } 
+    
+    public static JSCore.Value js_debug (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string debug = GLib.Environment.get_variable("DEBUG");
+        if (debug == "1") {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
+    
+    public static JSCore.Value js_autofill (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string autofill = GLib.Environment.get_variable("AUTOFILL");
+        if (autofill == "1") {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -1065,6 +1093,8 @@ public class Installation : GLib.Object {
         { "isESPExists", js_is_esp_exists, PropertyAttribute.ReadOnly },
         { "isBiosBootExists", js_is_bios_boot_exists, PropertyAttribute.ReadOnly },
         { "getCopyingProgress", js_get_copying_progress, PropertyAttribute.ReadOnly },
+        { "debug", js_debug, PropertyAttribute.ReadOnly },
+        { "autofill", js_autofill, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 
