@@ -87,7 +87,7 @@ angular.module("install",[])
     params += "&autologin=" + $rootScope.installationData.autologin;
     params += "&advancedMode=" + $rootScope.advancedPartition;
     if ($rootScope.advancedPartition) {
-        params += "&steps=" + $rootScope.partitionSteps;
+      params += "&steps=" + $rootScope.partitionSteps;
     }
     if (
       (!$rootScope.isEfi && $rootScope.currentPartitionTable === 'gpt' && !$rootScope.isBiosBootExists) ||
@@ -96,6 +96,12 @@ angular.module("install",[])
       // The installer will create one.
       params += "&createESPPartition=true";
     }
+    if ($rootScope.cleanInstall) {
+      params += "&cleanInstall=true";
+      // There is no EFI partition. Instaler will create one;
+      params += "&efiPartition=false";
+    }
+
     // give time for view transition
     $timeout(function(){
       console.log(params);
@@ -241,7 +247,7 @@ angular.module("partition",[])
     var driveBlockWidth = 600;
     
     $scope.partitionSimpleNext = function(){
-      if ($rootScope.selectedInstallationTarget) {
+      if ($rootScope.selectedInstallationTarget || $rootScope.cleanInstall) {
         $rootScope.next(); 
       }
     }
@@ -991,6 +997,8 @@ angular.module("partition",[])
       var path = drive.path;
       $rootScope.currentPartitionTable = drive.label;
       $rootScope.installationData.device_path = path;
+      // If it's not a GPT and booted up on UEFI system, do the clean install
+      $rootScope.cleanInstall = ($rootScope.currentPartitionTable !== 'gpt' && $rootScope.isEfi);
       console.log(JSON.stringify($rootScope.devices));
       $rootScope.validInstallationTarget = false;
       for (i = 0; i < $rootScope.devices.length; i++)
@@ -1055,14 +1063,6 @@ angular.module("partition",[])
     }
 ])
 
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-
-}])
-
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope, $watch){
@@ -1073,6 +1073,14 @@ angular.module("timezone",[])
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
     });
+}])
+
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
 }])
 
 angular.module("user",[])
@@ -1467,6 +1475,7 @@ var en = {
   cleaning_up : "Cleaning up",
   create_partition : "Create partition",
   format_partition : "Format Partition",
+  partitioning_in_advancedMode : "Partitioning",
 }
 
 var id = {
@@ -1544,4 +1553,5 @@ var id = {
   cleaning_up : "Merapikan sistem",
   create_partition : "Buat partisi",
   format_partition : "Format Partisi",
+  partitioning_in_advancedMode : "Mengatur Partisi",
 }
