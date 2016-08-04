@@ -487,9 +487,15 @@ public class Installation : GLib.Object {
                             Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
                          }
                     }
+                    string simpleMode = "";
+                    if (secureInstall) {
+                        simpleMode = "secureInstall";
+                    } else {
+                        simpleMode = "cleanInstall";
+                    }
                     new_partition = device.create_partition_simple (partitions.get (partition).start,
                                                              partitions.get (partition).end,
-                                                             "ext4", swap_size, (cleanInstall || secureInstall));
+                                                             "ext4", swap_size, simpleMode);
     
                     Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
                     if (new_partition != -1) {
@@ -512,6 +518,7 @@ public class Installation : GLib.Object {
                 Log.instance().log ("Created in freespace");
             } else {
                 Log.instance().log ("Created in non-freespace");
+                // This partition will be re-formatted.
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
             last_step = Step.PARTITION;
