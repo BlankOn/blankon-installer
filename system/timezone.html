@@ -488,6 +488,6 @@ option><option value="Europe/Vilnius">Europe/Vilnius</option><option value="Euro
 </div><!-- /sample -->
   <div class="columns nav-button">
     <button class='button' ng-click="previous()">{{'previous' | translate}}</button>
-    <button id="timezone-next" class='button' ng-click="next()">{{'next' | translate}}</button>
+    <button id="timezone-next" class='button' ng-click="next()" ng-disabled="autofill">{{'next' | translate}}</button>
   </div>
 </div>

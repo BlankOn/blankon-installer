@@ -30,9 +30,19 @@ angular.module("hello",[])
         Installation.setLocale(lang.id);
       }
     }
-    $rootScope.isEfi = parseInt(Installation.isEfi())==1 ? true : false;
-    $rootScope.isESPExists = Installation.isESPExists()=='true' ? true : false ;
-    $rootScope.isBiosBootExists = Installation.isBiosBootExists()=='true' ? true : false;
+    if (window.Installation) {
+      $rootScope.isEfi = parseInt(Installation.isEfi())==1 ? true : false;
+      $rootScope.isESPExists = Installation.isESPExists()=='true' ? true : false ;
+      $rootScope.isBiosBootExists = Installation.isBiosBootExists()=='true' ? true : false;
+      $rootScope.debug = Installation.debug()=='true' ? true : false;
+      $rootScope.autofill = Installation.autofill()=='true' ? true : false;
+    }
+
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
 
     $scope.setLanguage($scope.languages[0]);
 }])
@@ -72,6 +82,11 @@ angular.module("install",[])
         $scope.loadingDot += " .";
       }
     }, 500);
+   
+    // password value got reset after next(). Refill it.
+    if ($rootScope.autofill) {
+      $rootScope.installationData.password = 'test';
+    }
 
     var params = "";
     params += "&partition=" + $rootScope.installationData.partition;
@@ -119,6 +134,7 @@ angular.module("partition",[])
     
     $(".content").css("height", $rootScope.contentHeight);
    
+    $scope.cleanInstall = false;
     $scope.slider = {
     	start : 0,
     	end : 1.0,
@@ -247,8 +263,13 @@ angular.module("partition",[])
     var driveBlockWidth = 600;
     
     $scope.partitionSimpleNext = function(){
-      if ($rootScope.selectedInstallationTarget || $rootScope.cleanInstall) {
+      console.log($rootScope.selectedInstallationTarget);
+      console.log($scope.cleanInstall);
+      if ($rootScope.selectedInstallationTarget || $scope.cleanInstall) {
+        $rootScope.cleanInstall = $scope.cleanInstall;
         $rootScope.next(); 
+      } else {
+        console.log('bah');
       }
     }
   
@@ -998,7 +1019,7 @@ angular.module("partition",[])
       $rootScope.currentPartitionTable = drive.label;
       $rootScope.installationData.device_path = path;
       // If it's not a GPT and booted up on UEFI system, do the clean install
-      $rootScope.cleanInstall = ($rootScope.currentPartitionTable !== 'gpt' && $rootScope.isEfi);
+      $scope.cleanInstall = ($rootScope.currentPartitionTable !== 'gpt' && $rootScope.isEfi);
       console.log(JSON.stringify($rootScope.devices));
       $rootScope.validInstallationTarget = false;
       for (i = 0; i < $rootScope.devices.length; i++)
@@ -1063,6 +1084,20 @@ angular.module("partition",[])
     }
 ])
 
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+    
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
+
+}])
+
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope, $watch){
@@ -1073,14 +1108,12 @@ angular.module("timezone",[])
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
     });
-}])
-
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
     
-    $(".content").css("height", $rootScope.contentHeight);
-
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
 }])
 
 angular.module("user",[])
@@ -1164,6 +1197,17 @@ angular.module("user",[])
       } else {
         $rootScope.personalizationError = true;
       }
+    }
+    
+    if ($rootScope.autofill) {
+      $rootScope.installationData.hostname = 'test';
+      $rootScope.installationData.fullname = 'test';
+      $rootScope.installationData.username = 'test';
+      $rootScope.installationData.password = 'test';
+      $rootScope.installationData.repeatPassword = 'test';
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
     }
 }])
 
