@@ -78,7 +78,12 @@ read AUTOLOGIN USERNAME < $ROOTFS/tmp/user-setup
 echo "Configuring user $USERNAME"
 echo "Auto-login: $AUTOLIGIN"
 rm -f $ROOTFS/tmp/user-setup
-USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
+
+# This is the original group used in full ISO of BlankOn, since the current ISO generate the minimum packages,
+# some groups doesnt exist.
+# USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
+USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,netdev
+
 do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 
 do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
