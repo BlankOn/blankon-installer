@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This post-install script was created for debugging purpose
+
+echo "BEGIN OF POST INSTALLATION LOG" >> /var/log/blankon-installer.log
+echo "fdisk -l" >> /var/log/blankon-installer.log
+/sbin/fdisk -l >> /var/log/blankon-installer.log
+echo "END OF POST INSTALLATION LOG" >> /var/log/blankon-installer.log

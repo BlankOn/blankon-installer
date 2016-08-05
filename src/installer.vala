@@ -328,6 +328,7 @@ public class Installation : GLib.Object {
     }
     
     void do_wipe() {
+
         if (secureInstall || cleanInstall) {
           // Wipe the entire disk to empty GPT partition table
           string [] c = { "/sbin/b-i-wipe-disk" , device_path };
@@ -338,6 +339,10 @@ public class Installation : GLib.Object {
         }
     }
     void do_partition() {
+        
+        // Run pre install script for debugging purpose
+        string command = "/sbin/b-i-pre";
+        Process.spawn_command_line_sync(command);
         
         Parted.get_devices (false); // re-read devices and partitions
         
@@ -658,6 +663,10 @@ public class Installation : GLib.Object {
     }
 
     void do_cleanup() {
+        // Run post install script for debugging purpose
+        string command = "/sbin/b-i-post";
+        Process.spawn_command_line_sync(command);
+
         unowned string debug = GLib.Environment.get_variable("DEBUG");
         if (debug == "1") {
             // Leave /target for debugging
