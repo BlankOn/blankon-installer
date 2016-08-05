@@ -652,9 +652,10 @@ public class Installation : GLib.Object {
     }
 
     void do_grub () {
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         if (secureInstall) {
             efiPartition = device_path + "1";
-        } else if (createESPPartition || cleanInstall) {
+        } else if ((EfiCollector.is_efi_system () && !efi_partitions.is_empty && createESPPartition) || cleanInstall) {
             efiPartition = "false";
             efiNeedFormat = "Y";
         }

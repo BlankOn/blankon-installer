@@ -66,8 +66,8 @@ fi
 
 ###### CLEAN UP PACKAGES
 
-#echo "Removing unused packages"
-#do_chroot /usr/bin/apt-get --yes autoremove
+echo "Removing unused packages"
+do_chroot /usr/bin/apt-get --yes autoremove
 
 echo "Clean up packaging system"
 do_chroot /usr/bin/apt-get --yes clean 

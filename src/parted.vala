@@ -443,15 +443,12 @@ public class Device : GLib.Object {
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         ArrayList<string> bios_boot_partitions = BiosBootCollector.get_partitions ();
         if (
-            // The disk is empty. TODO : wipe to GPT
-            emptyLabel == true || 
-
             // This is an EFI 
             (EfiCollector.is_efi_system () && efi_partitions.is_empty) || 
 
             // This isn't an EFI system but has GPT partition table
             // and there is no existing BIOS boot partition
-            (!EfiCollector.is_efi_system () || is_gpt && bios_boot_partitions.is_empty) || 
+            (!EfiCollector.is_efi_system () && efi_partitions.is_empty || is_gpt && bios_boot_partitions.is_empty) || 
 
             // A clean/secure install. The clean/secure installation will wipe the entire disk
             wipeDisk
