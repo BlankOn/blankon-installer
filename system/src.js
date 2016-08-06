@@ -113,8 +113,10 @@ angular.module("install",[])
     }
     if ($rootScope.cleanInstall) {
       params += "&cleanInstall=true";
-      // There is no EFI partition. Instaler will create one;
-      params += "&efiPartition=false";
+      if ($rootScope.isEfi) {
+        // There is no EFI partition. Instaler will create one;
+        params += "&efiPartition=false";
+      }
     }
 
     // give time for view transition
