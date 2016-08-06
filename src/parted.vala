@@ -448,7 +448,7 @@ public class Device : GLib.Object {
 
             // This isn't an EFI system but has GPT partition table
             // and there is no existing BIOS boot partition
-            (!EfiCollector.is_efi_system () && efi_partitions.is_empty || is_gpt && bios_boot_partitions.is_empty) || 
+            (!EfiCollector.is_efi_system () && efi_partitions.is_empty && is_gpt && bios_boot_partitions.is_empty) || 
 
             // A clean/secure install. The clean/secure installation will wipe the entire disk
             wipeDisk
