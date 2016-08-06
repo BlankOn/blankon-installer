@@ -655,7 +655,8 @@ public class Installation : GLib.Object {
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         if (secureInstall) {
             efiPartition = device_path + "1";
-        } else if ((EfiCollector.is_efi_system () && !efi_partitions.is_empty && createESPPartition) || cleanInstall) {
+            Log.instance().log("Secure installation. The EFI partition is " + efiPartition);
+        } else if ((EfiCollector.is_efi_system () && !efi_partitions.is_empty && createESPPartition) || (EfiCollector.is_efi_system () && cleanInstall)) {
             efiPartition = "false";
             efiNeedFormat = "Y";
         }
