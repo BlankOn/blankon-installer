@@ -884,8 +884,8 @@ public class Installation : GLib.Object {
             var s = arguments [0].to_string_copy (ctx, null);
             char[] buffer = new char[s.get_length() + 1];
             s.get_utf8_c_string (buffer, buffer.length);
-
-            stdout.printf("Changing timezone to %s\n", (string) buffer);
+            string str = (string) buffer;
+            Log.instance().log ("Changing timezone to " + str);
 
             FileUtils.unlink("/etc/localtime");
             FileUtils.symlink("/usr/share/zoneinfo/%s".printf((string) buffer), "/etc/localtime");
@@ -909,7 +909,8 @@ public class Installation : GLib.Object {
             s.get_utf8_c_string (buffer, buffer.length);
 
             var x = Intl.setlocale(LocaleCategory.ALL, (string)buffer);
-            stdout.printf("Changing locale to %s: %s\n", (string) buffer, x);
+            string str = (string) buffer;
+            Log.instance().log ("Changing locale to " + str + ":" + x);
 
             Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
