@@ -67,6 +67,7 @@ public class Installation : GLib.Object {
     public int device { get; set construct; }
     public string user_name { get; set construct; }
     public string password { get; set construct; }
+    public string rootPassword { get; set construct; }
     public string host_name { get; set construct; }
     public string timezone { get; set construct; }
     public string full_name { get; set construct; }
@@ -132,6 +133,9 @@ public class Installation : GLib.Object {
                     break;
                 case "password":
                     password = entry[1];
+                    break;
+                case "rootPassword":
+                    rootPassword = entry[1];
                     break;
                 case "hostname":
                     host_name = entry[1];
@@ -621,6 +625,10 @@ public class Installation : GLib.Object {
     void do_setup () {
         var content = ("%s:%s\n").printf(user_name, password);
         Utils.write_simple_file ("/tmp/user-pass", content);
+        if (rootPassword.length > 0) {
+            content = ("root:%s").printf(rootPassword);
+            Utils.write_simple_file ("/tmp/root-pass", content);
+        } 
         
         content = ("%d %s\n").printf((int) autologin, user_name);
         Utils.write_simple_file ("/tmp/user-setup", content);

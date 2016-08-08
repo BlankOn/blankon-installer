@@ -90,6 +90,12 @@ do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
 do_chroot /usr/bin/chfn < $ROOTFS/tmp/user-info
 rm -f $ROOTFS/tmp/user-pass
 
+if [ -f /tmp/root-pass ];
+then
+    do_chroot /usr/sbin/chpasswd root < $ROOTFS/tmp/root-pass
+    rm -f $ROOTFS/tmp/root-pass
+fi
+
 ###### CUSTOM GROUP
 
 if [ -n "$BI_CUSTOM_GROUPS" ];then
