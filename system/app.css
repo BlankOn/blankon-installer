@@ -8075,7 +8075,7 @@ body {
   color: white;
   height:100%;
   overflow:hidden !important;
-  ::-webkit-scrollbar { 
+  :-webkit-scrollbar { 
     display: none; 
   }
 }

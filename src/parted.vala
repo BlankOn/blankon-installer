@@ -1,6 +1,37 @@
 using Gee;
+using GLib;
 using JSCore;
 
+public class PartedLog : GLib.Object {
+    DataOutputStream stream;
+    static PartedLog _instance = null;
+
+    public PartedLog () {
+        try {
+            var file = File.new_for_path ("/var/log/blankon-installer.log");
+            stream = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
+        } catch (Error e) {
+            stderr.printf ("%s\n", e.message);
+        }
+    }
+
+    public void log_without_newline (string string) {
+        stream.put_string (string);
+    }
+
+    public void log (string string) {
+        stream.put_string (string);
+        stream.put_string ("\n");
+    }
+
+    public static PartedLog instance() {
+        if (_instance == null) {
+            _instance = new PartedLog ();
+        }
+
+        return _instance;
+    }
+}
 
 // EfiCollector
 // collects all EFI partitions in the system
@@ -77,6 +108,45 @@ public class EfiCollector {
     }
 
 }
+// BiosBootCollector
+// collects all BIOS boot partitions in the system
+public class BiosBootCollector {
+    static ArrayList<string> bios_boot;
+
+    static void reget () {
+        bios_boot = new ArrayList<string> ();
+        string normal_output;
+        string error_output;
+        int status;
+        string[] args = { "/sbin/fdisk", "-l" };
+        string[] env = { "LC_ALL=C" };
+
+
+        try {
+            Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+        } catch (GLib.Error e) {
+        }
+
+        foreach (var line in normal_output.split("\n")) {
+            if ((line.index_of ("/dev/") == 0)
+                && (line.index_of ("BIOS boot") > 0)) {
+                bios_boot.add (line.split (" ", 2)[0]);
+            }
+        }
+    }
+
+    public static ArrayList<string> get_partitions () {
+        if (bios_boot == null) {
+            reget ();
+        }
+        return bios_boot;
+    }
+
+    public static void reset () {
+        reget (); 
+    } 
+}
+
 public class SwapCollector {
     static ArrayList<string> swaps;
 
@@ -396,26 +466,57 @@ public class Device : GLib.Object {
         }
     }
     
-    public uint64 initialize_esp_bios_grub (bool secureInstall) {
+    public uint64 initialize_esp_bios_grub (bool wipeDisk) {
         // TODO : Detect existing bios_grub partition
         bool is_gpt = (disk.type.name == "gpt");
         // if this is an uefi system and there is  no partition
-        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         var start = (uint64) 1;
-        ArrayList<string> efipartitions = EfiCollector.get_partitions ();
-        if ((EfiCollector.is_efi_system () && efipartitions.is_empty) || emptyLabel == true || (is_gpt && efipartitions.is_empty) || secureInstall) {
-            stdout.printf ("Creating EFI partition in initialze_esp_bios\n");
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        ArrayList<string> bios_boot_partitions = BiosBootCollector.get_partitions ();
+
+        // Evaluate values
+
+        PartedLog.instance().log("Evaluate values : ");
+        if (
+          (EfiCollector.is_efi_system () && efi_partitions.is_empty)
+        ) {
+          PartedLog.instance().log("EFI system.");
+        } 
+        if (
+            (!EfiCollector.is_efi_system () && efi_partitions.is_empty && is_gpt && bios_boot_partitions.is_empty)
+        ) {
+          PartedLog.instance().log("Non EFI with GPT.");
+        } 
+        if (
+            wipeDisk
+        ) {
+          PartedLog.instance().log("Wipe disk.");
+        } 
+
+        if (
+            // This is an EFI 
+            (EfiCollector.is_efi_system () && efi_partitions.is_empty) || 
+
+            // This isn't an EFI system but has GPT partition table
+            // and there is no existing BIOS boot partition
+            (!EfiCollector.is_efi_system () && efi_partitions.is_empty && is_gpt && bios_boot_partitions.is_empty) || 
+
+            // A clean/secure install. The clean/secure installation will wipe the entire disk
+            wipeDisk
+
+        ) {
+            PartedLog.instance().log ("Creating EFI partition in initialze_esp_bios\n");
             var esp_fs = new Ped.FileSystemType("");
             var esp_end = (uint64) ((start + (100 * 1024 * 1024))/ get_unit_size ());
             var esp = new Ped.Partition(disk, Ped.PartitionType.NORMAL, esp_fs, start, esp_end);
             if (EfiCollector.is_efi_system ()) {
               esp.set_flag (Ped.PartitionFlag.ESP, 1);
-              stdout.printf ("EFI partition %s%d\n", get_path(), esp.num);
+              PartedLog.instance().log ("EFI partition " + get_path() + esp.num.to_string ());
             } else {
               esp.set_flag (Ped.PartitionFlag.BIOS_GRUB, 1);
-              stdout.printf ("BIOS_GRUB partition %s%d\n", get_path(), esp.num);
+              PartedLog.instance().log ("BIOS partition " + get_path() + esp.num.to_string ());
             }
-            stdout.printf ("\nstart : " + start.to_string () + " end : " + esp_end.to_string () + "\n");
+            PartedLog.instance().log ("\nstart : " + start.to_string () + " end : " + esp_end.to_string () + "\n");
             disk.add_partition (esp, new Ped.Constraint.any (device));
             disk.commit_to_dev ();
             if (esp == null) {
@@ -426,11 +527,11 @@ public class Device : GLib.Object {
             return start;
         } else {
             // For debugging purpose
-            stdout.printf ("Not creating any esp partition\n");
-            if (secureInstall) {
-                stdout.printf ("This is a secure installation\n");
+            PartedLog.instance().log ("Not creating any esp partition\n");
+            if (wipeDisk) {
+                PartedLog.instance().log ("This is a clean/secure installation\n");
             } else {
-                stdout.printf ("This isn't a secure installation\n");
+                PartedLog.instance().log ("This isn't a secure installation\n");
             }
             return 0;
         }
@@ -475,7 +576,7 @@ public class Device : GLib.Object {
             Ped.Partition? p = disk.part_list;
             while ((p = disk.next_partition (p)) != null) {
                 p_num_array += p.num;
-                stdout.printf ("origin : " + p.num.to_string () + "\n");
+                PartedLog.instance().log ("origin : " + p.num.to_string () + "\n");
             }
 
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
@@ -489,7 +590,7 @@ public class Device : GLib.Object {
             Ped.Partition? q = disk.part_list;
             while ((q = disk.next_partition (q)) != null) {
                 p_num_array_new += q.num;
-                stdout.printf ("next : " + q.num.to_string () + "\n");
+                PartedLog.instance().log ("next : " + q.num.to_string () + "\n");
             }
 
             //find the new part_num
@@ -518,13 +619,13 @@ public class Device : GLib.Object {
     // Partition is created either inside a new extended partition
     // or as a new logical partition. The partition list will be
     // rebuilt. This function is used when user use simple partitioning interface.
-    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size, bool secureInstall) throws DeviceError {
-        stdout.printf ("Create_partition_simple\n");
-        stdout.printf ("byte_start : " + byte_start.to_string () + " byte_end : " + byte_end.to_string () + "\n");
+    public int create_partition_simple (uint64 byte_start, uint64 byte_end, string fs, uint64 swap_size, string simpleMode) throws DeviceError {
+        PartedLog.instance().log ("Create_partition_simple\n");
+        PartedLog.instance().log ("byte_start : " + byte_start.to_string () + " byte_end : " + byte_end.to_string () + "\n");
         uint64 start_ = (uint64) (byte_start / get_unit_size ());
         uint64 end_ = (uint64) (byte_end / get_unit_size ());
-        stdout.printf ("start : " + start_.to_string () + " end : " + end_.to_string () + "\n");
-        stdout.printf ("get_unit_size() : " + get_unit_size().to_string () + "\n");
+        PartedLog.instance().log ("start : " + start_.to_string () + " end : " + end_.to_string () + "\n");
+        PartedLog.instance().log ("get_unit_size() : " + get_unit_size().to_string () + "\n");
         
         disk = new Ped.Disk.from_device (device);
 
@@ -591,7 +692,7 @@ public class Device : GLib.Object {
         // This will recreate the disk if the device is totally empty
         if (disk == null) {
             disk = new Ped.Disk (device, new Ped.DiskType("gpt"));
-            stdout.printf ("Label created\n");
+            PartedLog.instance().log ("Label created\n");
             if (disk != null) {
                 disk.commit_to_dev ();
             }
@@ -610,72 +711,72 @@ public class Device : GLib.Object {
 
         // if this is an uefi system and there is  no partition
         ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
-        stdout.printf ("Check values for debugging\n");
+        PartedLog.instance().log ("Check values for debugging\n");
         if (EfiCollector.is_efi_system ()) {
-          stdout.printf("true\n");
+          PartedLog.instance().log("true\n");
         } else {
-          stdout.printf("false\n");
+          PartedLog.instance().log("false\n");
         }
         if (partitions.is_empty) {
-          stdout.printf("true\n");
+          PartedLog.instance().log("true\n");
         } else {
-          stdout.printf("false\n");
+          PartedLog.instance().log("false\n");
         }
         if (efi_partitions.is_empty) {
-          stdout.printf("true\n");
+          PartedLog.instance().log("true\n");
         } else {
-          stdout.printf("false\n");
+          PartedLog.instance().log("false\n");
         }
         if (emptyLabel) {
-          stdout.printf("true\n");
+          PartedLog.instance().log("true\n");
         } else {
-          stdout.printf("false\n");
+          PartedLog.instance().log("false\n");
         }
         if (is_gpt) {
-          stdout.printf("true\n");
+          PartedLog.instance().log("true\n");
         } else {
-          stdout.printf("false\n");
+          PartedLog.instance().log("false\n");
         }
-        if (secureInstall) {
+        if (simpleMode == "secureInstall") {
             var boot_end = (uint64) ((start + (1000 * 1024 * 1024))/ get_unit_size ());
-            stdout.printf ("Creating separated BOOT partition\n");
+            PartedLog.instance().log ("Creating separated BOOT partition\n");
             var boot_fs = new Ped.FileSystemType("ext3");
             var ext = new Ped.Partition(disk, Ped.PartitionType.NORMAL, boot_fs, start, boot_end);
-            stdout.printf ("start : " + start.to_string () + " end : " + boot_end.to_string () + "\n");
+            PartedLog.instance().log ("start : " + start.to_string () + " end : " + boot_end.to_string () + "\n");
             disk.add_partition (ext, new Ped.Constraint.any (device));
             disk.commit_to_dev ();
             if (ext == null) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Can't create separated BOOT partition\n");
             }
             EfiCollector.reset ();
-            stdout.printf ("Current separated BOOT partition %s%d\n", get_path(), ext.num);
+            PartedLog.instance().log ("Current separated BOOT partition " + get_path() + ext.num.to_string ());
             start = boot_end + 2044; 
         }
 
         if (create_extended && !is_gpt) {
-            stdout.printf ("Creating extended partition\n");
+            PartedLog.instance().log ("Creating extended partition\n");
             var ext_fs = new Ped.FileSystemType("ext3");
             var ext = new Ped.Partition(disk, Ped.PartitionType.EXTENDED, ext_fs, start, end);
-            stdout.printf ("Extended partition %s%d\n", get_path(), ext.num);
-            stdout.printf ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
+            PartedLog.instance().log ("Extended partition " + get_path() + ext.num.to_string ());
+            PartedLog.instance().log ("\nstart : " + start.to_string () + " end : " + end.to_string () + "\n");
             disk.add_partition (ext, new Ped.Constraint.any (device));
             disk.commit_to_dev ();
             if (ext == null) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Can't create extended partition\n");
             }
-            stdout.printf ("Current extended partition %s%d\n", get_path(), ext.num);
+            PartedLog.instance().log ("Current extended partition " + get_path() + ext.num.to_string ());
         }
 
         var first_partition_type = Ped.PartitionType.LOGICAL;
 
         if (is_gpt) {
-            stdout.printf ("This is a GPT. Create normal partition\n");
+            PartedLog.instance().log ("This is a GPT. Create normal partition\n");
             first_partition_type = Ped.PartitionType.NORMAL;
             create_extended = false;
         }
 
         if (swap_size > 0) {
-            stdout.printf ("Create swap partition\n");
+            PartedLog.instance().log ("Create swap partition\n");
             var swap_size_sector = (uint64) (swap_size / get_unit_size ());
             end  = start + swap_size_sector; 
             Ped.FileSystemType swap_type = new Ped.FileSystemType("linux-swap(v1)");
@@ -690,13 +791,13 @@ public class Device : GLib.Object {
             if (part_num == 0) {
                 throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create swap\n");
             }
-            stdout.printf ("Current swap partition %s%d\n", get_path(), new_partition.num);
+            PartedLog.instance().log ("Current swap partition " + get_path() + new_partition.num.to_string ());
         }
         /* // Only in secure install (?) */
         /* start = efi_end; */ 
-        stdout.printf ("Create the main partition\n");
+        PartedLog.instance().log ("Create the main partition\n");
         end  = (uint64) (byte_end / get_unit_size ());
-        stdout.printf ("start : " + start.to_string () + " end : " + end.to_string () + "\n");
+        PartedLog.instance().log ("start : " + start.to_string () + " end : " + end.to_string () + "\n");
         new_partition = new Ped.Partition(disk, first_partition_type, fs_type, start, end);
         if (new_partition != null) {
             var part_num = disk.add_partition (new_partition, new Ped.Constraint.any (device));
@@ -706,7 +807,7 @@ public class Device : GLib.Object {
 
             disk.commit_to_dev ();
             disk.commit_to_os ();
-            stdout.printf ("Current main partition %s%d\n", get_path(), new_partition.num);
+            PartedLog.instance().log ("Current main partition " + get_path() + new_partition.num.to_string ());
             return new_partition.num;
         } else {
             throw new DeviceError.CANT_CREATE_PARTITION ("Unable to create partition\n");

@@ -52,7 +52,7 @@ then
   touch $ROOTFS/target/etc/fstab
   echo "/dev/mapper/root / ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
   echo "/dev/mapper/lvm-swap    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
-  echo "UUID=$BOOT /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
+  echo "UUID=$BOOT /boot ext3 rw,relatime,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
   # Adding more module to initramfs
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
@@ -78,12 +78,23 @@ read AUTOLOGIN USERNAME < $ROOTFS/tmp/user-setup
 echo "Configuring user $USERNAME"
 echo "Auto-login: $AUTOLIGIN"
 rm -f $ROOTFS/tmp/user-setup
-USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
+
+# This is the original group used in full ISO of BlankOn, since the current ISO generate the minimum packages,
+# some groups doesnt exist.
+# USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth
+USER_GROUPS=sudo,cdrom,floppy,audio,dip,video,plugdev,netdev
+
 do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 
 do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
 do_chroot /usr/bin/chfn < $ROOTFS/tmp/user-info
 rm -f $ROOTFS/tmp/user-pass
+
+if [ -f /tmp/root-pass ];
+then
+    do_chroot /usr/sbin/chpasswd root < $ROOTFS/tmp/root-pass
+    rm -f $ROOTFS/tmp/root-pass
+fi
 
 ###### CUSTOM GROUP
 
@@ -149,7 +160,7 @@ if [ -f /run/locale ];then
 fi
 
 ###### gnome settings overrides
-if [ -f /usr/share/glib-2.0/schemas/blankon.gschema.override ];then
+if [ -f /usr/share/glib-2.0/schemas/blankon.gschema.override && -f /usr/bin/glib-compile-schemas ];then
   cp /usr/share/glib-2.0/schemas/blankon.gschema.override $ROOTFS/target/usr/share/glib-2.0/schemas/blankon.gschema.override 
   do_chroot /usr/bin/glib-compile-schemas /usr/share/glib-2.0/schemas/
 fi
@@ -189,10 +200,13 @@ fi
 
 
 ###### Swap
-
+echo "Collecting swaps"
 for i in `cat $ROOTFS/tmp/swaps`;do
     mkswap $i
-    UUID=`lsblk -no UUID $i`
+    # UUID=`/bin/lsblk -no UUID $i`
+    UUID=`/sbin/blkid | grep $i | cut -d'D' -f2 | cut -d'"' -f2`
+    echo $i
+    echo $UUID
     echo "UUID=$UUID    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
 done
 

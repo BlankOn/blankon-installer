@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This pre-install script was created for debugging purpose
+
+echo "BEGIN OF PRE INSTALLATION LOG" >> /var/log/blankon-installer.log
+echo "fdisk -l" >> /var/log/blankon-installer.log
+/sbin/fdisk -l >> /var/log/blankon-installer.log
+echo "END OF PRE INSTALLATION LOG" >> /var/log/blankon-installer.log

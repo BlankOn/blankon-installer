@@ -3,7 +3,7 @@
 TARGET=$1
 BOOT=$2
 
-mkfs.vfat $BOOT
+mkfs.ext3 $BOOT
 
 lvm pvcreate -ff -y $TARGET
 lvm vgcreate -y lvm $TARGET

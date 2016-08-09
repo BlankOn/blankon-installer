@@ -67,6 +67,7 @@ public class Installation : GLib.Object {
     public int device { get; set construct; }
     public string user_name { get; set construct; }
     public string password { get; set construct; }
+    public string rootPassword { get; set construct; }
     public string host_name { get; set construct; }
     public string timezone { get; set construct; }
     public string full_name { get; set construct; }
@@ -77,12 +78,16 @@ public class Installation : GLib.Object {
     public string home { get; set construct; }
     public string root { get; set construct; }
     public bool autologin { get; set construct; }
-    public bool secureInstall { get; set construct; }
-    public string secureInstallPassphrase { get; set construct; }
-    public bool advancedMode { get; set construct; }
-    public bool isEfi { get; set construct; }
-    public string efiPartition { get; set construct; }
-    public string efiNeedFormat { get; set construct; }
+    public bool secureInstall { get; set construct; }               // If true, secure install mode will executed. 
+                                                                    // The secure install will wipe the entire disk and encrypt the LVM partition
+
+    public bool cleanInstall { get; set construct; }                // Like secureInstall, the cleanInstall will will wipe the entire disk, but without encryption.
+    public string secureInstallPassphrase { get; set construct; }   // The encryption passphrase
+    public bool advancedMode { get; set construct; }                // advancedMode bring the partitioning parameters to partitioning iteration in parted.vala
+    public bool isEfi { get; set construct; }                       // This value derrived from this intsaller.vala
+    public string efiPartition { get; set construct; }              // If this value defined, 
+    public bool createESPPartition { get; set construct; }          // The current disk is a GPT and has no ESP partition, then this value should be true
+    public string efiNeedFormat { get; set construct; }             // The current EFI partition is not suitable for installation, should be re-formatted.
     public int state { get; set construct; }
     public int progress { get; private set; }
     public string description { get; set construct; }
@@ -129,6 +134,9 @@ public class Installation : GLib.Object {
                 case "password":
                     password = entry[1];
                     break;
+                case "rootPassword":
+                    rootPassword = entry[1];
+                    break;
                 case "hostname":
                     host_name = entry[1];
                     break;
@@ -153,6 +161,9 @@ public class Installation : GLib.Object {
                 case "autologin":
                     autologin = (entry[1] == "true");
                     break;
+                case "cleanInstall":
+                    cleanInstall = (entry[1] == "true");
+                    break;
                 case "secureInstall":
                     secureInstall = (entry[1] == "true");
                     break;
@@ -173,6 +184,9 @@ public class Installation : GLib.Object {
                     break;
                 case  "efiPartition":
                     efiPartition = entry[1];
+                    break;
+                case  "createESPPartition":
+                    createESPPartition = (entry[1] == "true");
                     break;
                 case  "steps":
                     steps = entry[1];
@@ -318,7 +332,8 @@ public class Installation : GLib.Object {
     }
     
     void do_wipe() {
-        if (secureInstall) {
+
+        if (secureInstall || cleanInstall) {
           // Wipe the entire disk to empty GPT partition table
           string [] c = { "/sbin/b-i-wipe-disk" , device_path };
           do_simple_command_with_args (c, Step.WIPE, "wipe_disk", "Unable to wipe disk");
@@ -329,12 +344,19 @@ public class Installation : GLib.Object {
     }
     void do_partition() {
         
+        // Run pre install script for debugging purpose
+        string command = "/sbin/b-i-pre";
+        Process.spawn_command_line_sync(command);
+        
         Parted.get_devices (false); // re-read devices and partitions
         
         Device dev_init = new Device.from_name(device_path);
-        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub(secureInstall);
+
+        bool wipeDisk = secureInstall || cleanInstall;
+        uint64 start_after_esp_bios_grub = dev_init.initialize_esp_bios_grub(wipeDisk);
+
+        // ADVANCED
         if (advancedMode == true) {
-                  
             
             description = "partitioning_in_advancedMode";
             step = Step.PARTITION;
@@ -430,6 +452,8 @@ public class Installation : GLib.Object {
             last_step = Step.PARTITION;
             do_next_job ();
         
+        
+        // SIMPLE
         } else {
             var d = Parted.get_devices (true); 
     
@@ -458,12 +482,13 @@ public class Installation : GLib.Object {
             step = Step.PARTITION; 
     
             Log.instance().log ("Enter simple partitioning");
-            if (secureInstall || partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
+            if (cleanInstall || secureInstall || partitions.get (partition).ptype == Device.PartitionType.FREESPACE) {
                 Device device = new Device.from_name (device_path);
                 var can_continue = false;
                 var new_partition = -1;
                 try {
                     uint64 swap_size = 0;
+                    // The secure installation will create swap partition inside LVM
                     if (SwapCollector.get_partitions().is_empty && !secureInstall) {
                          if (partitions.get(partition).size - OneGig > installation_size) {
                             // Fix for "doesnt start on physical sector boundary". Give 1MB margin.
@@ -471,9 +496,15 @@ public class Installation : GLib.Object {
                             Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
                          }
                     }
+                    string simpleMode = "";
+                    if (secureInstall) {
+                        simpleMode = "secureInstall";
+                    } else {
+                        simpleMode = "cleanInstall";
+                    }
                     new_partition = device.create_partition_simple (partitions.get (partition).start,
                                                              partitions.get (partition).end,
-                                                             "ext4", swap_size, secureInstall);
+                                                             "ext4", swap_size, simpleMode);
     
                     Log.instance().log ("Partition creation returns new partition ID: " + new_partition.to_string ());
                     if (new_partition != -1) {
@@ -496,6 +527,7 @@ public class Installation : GLib.Object {
                 Log.instance().log ("Created in freespace");
             } else {
                 Log.instance().log ("Created in non-freespace");
+                // This partition will be re-formatted.
                 partition_path = d.get (device).get_path () + partitions.get (partition).number.to_string ();
             }
             last_step = Step.PARTITION;
@@ -548,7 +580,6 @@ public class Installation : GLib.Object {
             Log.instance().log ("\nmount separated home partition\n");
             DirUtils.create ("/target/home", 0700);
             string [] c = { "/bin/mount", home, "/target/home" };
-            do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
             var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
@@ -557,12 +588,17 @@ public class Installation : GLib.Object {
             var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
                content += "UUID=" + home_partition + " /home ext4 defaults 1 2\n";
             Utils.write_simple_file ("/tmp/fstab", content);
+            
+          do_simple_command_with_args (c, Step.MOUNTHOME, "mounting_home_filesystem ", "Unable to mount home filesystem");
         } else if (secureInstall == false) {
             // write fstab file at tmp, will be copied to /target/etc/fstab by b-i-setup-fs script
             var root_partition = backtick("/bin/lsblk -no UUID " + partition_path);
 
             var content = "UUID=" + root_partition + " / ext4 defaults 1 2\n";
             Utils.write_simple_file ("/tmp/fstab", content);
+            
+            last_step = Step.MOUNTHOME;
+            do_next_job ();
         } else {
             last_step = Step.MOUNTHOME;
             do_next_job ();
@@ -589,6 +625,10 @@ public class Installation : GLib.Object {
     void do_setup () {
         var content = ("%s:%s\n").printf(user_name, password);
         Utils.write_simple_file ("/tmp/user-pass", content);
+        if (rootPassword.length > 0) {
+            content = ("root:%s").printf(rootPassword);
+            Utils.write_simple_file ("/tmp/root-pass", content);
+        } 
         
         content = ("%d %s\n").printf((int) autologin, user_name);
         Utils.write_simple_file ("/tmp/user-setup", content);
@@ -620,14 +660,23 @@ public class Installation : GLib.Object {
     }
 
     void do_grub () {
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
         if (secureInstall) {
             efiPartition = device_path + "1";
+            Log.instance().log("Secure installation. The EFI partition is " + efiPartition);
+        } else if ((EfiCollector.is_efi_system () && !efi_partitions.is_empty && createESPPartition) || (EfiCollector.is_efi_system () && cleanInstall)) {
+            efiPartition = "false";
+            efiNeedFormat = "Y";
         }
         string [] c = { "/sbin/b-i-install-grub", device_path, efiPartition, efiNeedFormat };
         do_simple_command_with_args (c, Step.GRUB, "installing_grub", "Unable to install GRUB");
     }
 
     void do_cleanup() {
+        // Run post install script for debugging purpose
+        string command = "/sbin/b-i-post";
+        Process.spawn_command_line_sync(command);
+
         unowned string debug = GLib.Environment.get_variable("DEBUG");
         if (debug == "1") {
             // Leave /target for debugging
@@ -844,8 +893,8 @@ public class Installation : GLib.Object {
             var s = arguments [0].to_string_copy (ctx, null);
             char[] buffer = new char[s.get_length() + 1];
             s.get_utf8_c_string (buffer, buffer.length);
-
-            stdout.printf("Changing timezone to %s\n", (string) buffer);
+            string str = (string) buffer;
+            Log.instance().log ("Changing timezone to " + str);
 
             FileUtils.unlink("/etc/localtime");
             FileUtils.symlink("/usr/share/zoneinfo/%s".printf((string) buffer), "/etc/localtime");
@@ -869,7 +918,8 @@ public class Installation : GLib.Object {
             s.get_utf8_c_string (buffer, buffer.length);
 
             var x = Intl.setlocale(LocaleCategory.ALL, (string)buffer);
-            stdout.printf("Changing locale to %s: %s\n", (string) buffer, x);
+            string str = (string) buffer;
+            Log.instance().log ("Changing locale to " + str + ":" + x);
 
             Intl.bindtextdomain( Config.GETTEXT_PACKAGE, Config.LOCALEDIR );
             Intl.bind_textdomain_codeset( Config.GETTEXT_PACKAGE, "UTF-8" );
@@ -1000,6 +1050,62 @@ public class Installation : GLib.Object {
         }
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
     } 
+    
+    public static JSCore.Value js_is_esp_exists (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        ArrayList<string> efi_partitions = EfiCollector.get_partitions ();
+        if (EfiCollector.is_efi_system () && !efi_partitions.is_empty) {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
+    
+    public static JSCore.Value js_is_bios_boot_exists (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        
+        string retval = "false";
+        ArrayList<string> bios_boot_partitions = BiosBootCollector.get_partitions ();
+        if (!bios_boot_partitions.is_empty) {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
+    
+    public static JSCore.Value js_debug (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string debug = GLib.Environment.get_variable("DEBUG");
+        if (debug == "1") {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
+    
+    public static JSCore.Value js_autofill (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string autofill = GLib.Environment.get_variable("AUTOFILL");
+        if (autofill == "1") {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -1011,7 +1117,11 @@ public class Installation : GLib.Object {
         { "getRelease", js_get_release, PropertyAttribute.ReadOnly },
         { "whichEfi", js_which_efi, PropertyAttribute.ReadOnly },
         { "isEfi", js_is_efi, PropertyAttribute.ReadOnly },
+        { "isESPExists", js_is_esp_exists, PropertyAttribute.ReadOnly },
+        { "isBiosBootExists", js_is_bios_boot_exists, PropertyAttribute.ReadOnly },
         { "getCopyingProgress", js_get_copying_progress, PropertyAttribute.ReadOnly },
+        { "debug", js_debug, PropertyAttribute.ReadOnly },
+        { "autofill", js_autofill, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 

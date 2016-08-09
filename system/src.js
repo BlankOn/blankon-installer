@@ -30,6 +30,20 @@ angular.module("hello",[])
         Installation.setLocale(lang.id);
       }
     }
+    if (window.Installation) {
+      $rootScope.isEfi = parseInt(Installation.isEfi())==1 ? true : false;
+      $rootScope.isESPExists = Installation.isESPExists()=='true' ? true : false ;
+      $rootScope.isBiosBootExists = Installation.isBiosBootExists()=='true' ? true : false;
+      $rootScope.debug = Installation.debug()=='true' ? true : false;
+      $rootScope.autofill = Installation.autofill()=='true' ? true : false;
+    }
+
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
+
     $scope.setLanguage($scope.languages[0]);
 }])
 
@@ -68,6 +82,11 @@ angular.module("install",[])
         $scope.loadingDot += " .";
       }
     }, 500);
+   
+    // password value got reset after next(). Refill it.
+    if ($rootScope.autofill) {
+      $rootScope.installationData.password = 'test';
+    }
 
     var params = "";
     params += "&partition=" + $rootScope.installationData.partition;
@@ -83,8 +102,23 @@ angular.module("install",[])
     params += "&autologin=" + $rootScope.installationData.autologin;
     params += "&advancedMode=" + $rootScope.advancedPartition;
     if ($rootScope.advancedPartition) {
-        params += "&steps=" + $rootScope.partitionSteps;
+      params += "&steps=" + $rootScope.partitionSteps;
     }
+    if (
+      (!$rootScope.isEfi && $rootScope.currentPartitionTable === 'gpt' && !$rootScope.isBiosBootExists) ||
+      ($rootScope.isEfi && $rootScope.currentPartitionTable === 'gpt' && !$rootScope.isESPExists)
+    ) {
+      // The installer will create one.
+      params += "&createESPPartition=true";
+    }
+    if ($rootScope.cleanInstall) {
+      params += "&cleanInstall=true";
+      if ($rootScope.isEfi) {
+        // There is no EFI partition. Instaler will create one;
+        params += "&efiPartition=false";
+      }
+    }
+
     // give time for view transition
     $timeout(function(){
       console.log(params);
@@ -102,6 +136,7 @@ angular.module("partition",[])
     
     $(".content").css("height", $rootScope.contentHeight);
    
+    $scope.cleanInstall = false;
     $scope.slider = {
     	start : 0,
     	end : 1.0,
@@ -230,8 +265,13 @@ angular.module("partition",[])
     var driveBlockWidth = 600;
     
     $scope.partitionSimpleNext = function(){
-      if ($rootScope.selectedInstallationTarget) {
+      console.log($rootScope.selectedInstallationTarget);
+      console.log($scope.cleanInstall);
+      if ($rootScope.selectedInstallationTarget || $scope.cleanInstall) {
+        $rootScope.cleanInstall = $scope.cleanInstall;
         $rootScope.next(); 
+      } else {
+        console.log('bah');
       }
     }
   
@@ -965,6 +1005,10 @@ angular.module("partition",[])
           // Used for debugging
           $rootScope.devices = [{"path":"/dev/sda","size":53687091200,"model":"ATA VBOX HARDDISK","label":"msdos","partitions":[{"id":-1,"parent":-1,"start":32256,"end":1048064,"size":1016320,"type":"DEVICE_PARTITION_TYPE_FREESPACE","filesystem":"","description":""},{"id":1,"parent":-1,"start":1048576,"end":15570304512,"size":15569256448,"type":"DEVICE_PARTITION_TYPE_NORMAL","filesystem":"ext4","description":""},{"id":2,"parent":-1,"start":15570305024,"end":17780702720,"size":2210398208,"type":"DEVICE_PARTITION_TYPE_NORMAL","filesystem":"ext4","description":""},{"id":-1,"parent":-1,"start":17780703232,"end":27044871680,"size":9264168960,"type":"DEVICE_PARTITION_TYPE_FREESPACE","filesystem":"","description":""},{"id":3,"parent":-1,"start":27044872192,"end":53687090688,"size":26642219008,"type":"DEVICE_PARTITION_TYPE_EXTENDED","filesystem":"","description":""},{"id":-1,"parent":-1,"start":27044872192,"end":27044872192,"size":512,"type":"DEVICE_PARTITION_TYPE_FREESPACE","filesystem":"","description":""},{"id":-1,"parent":-1,"start":27044872704,"end":27045920256,"size":1048064,"type":"DEVICE_PARTITION_TYPE_FREESPACE","filesystem":"","description":""},{"id":5,"parent":-1,"start":27045920768,"end":50703891968,"size":23657971712,"type":"DEVICE_PARTITION_TYPE_LOGICAL","filesystem":"ext4","description":""},{"id":-1,"parent":-1,"start":50703892480,"end":53687090688,"size":2983198720,"type":"DEVICE_PARTITION_TYPE_FREESPACE","filesystem":"","description":""}],"$$hashKey":"00T"}];
         }
+        /* Other example with existing EFI partition
+
+[{"path":"/dev/sda","size":8589934592,"model":"ATA VBOX HARDDISK","label":"gpt","partitions":[{"id":-1,"parent":-1,"start":17408,"end":1048064,"size":1031168,"type":"DEVICE_PARTITION_TYPE_FREESPACE","filesystem":"","description":""},{"id":1,"parent":-1,"start":1048576,"end":104857600,"size":103809536,"type":"DEVICE_PARTITION_TYPE_NORMAL","filesystem":"","description":""},{"id":2,"parent":-1,"start":104858112,"end":1178598912,"size":1073741312,"type":"DEVICE_PARTITION_TYPE_NORMAL","filesystem":"linux-swap(v1)","description":""},{"id":3,"parent":-1,"start":1178599424,"end":8589917184,"size":7411318272,"type":"DEVICE_PARTITION_TYPE_NORMAL","filesystem":"ext4","description":""},{"id":-1,"parent":-1,"start":8589917696,"end":8589934080,"size":16896,"type":"DEVICE_PARTITION_TYPE_METADATA","filesystem":"","description":""}],"$$hashKey":"00Q"}]i
+        */
 
 
         $scope.scanning = true;
@@ -974,7 +1018,10 @@ angular.module("partition",[])
       // TODO : reset UI
       $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
       var path = drive.path;
+      $rootScope.currentPartitionTable = drive.label;
       $rootScope.installationData.device_path = path;
+      // If it's not a GPT and booted up on UEFI system, do the clean install
+      $scope.cleanInstall = ($rootScope.currentPartitionTable !== 'gpt' && $rootScope.isEfi);
       console.log(JSON.stringify($rootScope.devices));
       $rootScope.validInstallationTarget = false;
       for (i = 0; i < $rootScope.devices.length; i++)
@@ -1044,6 +1091,12 @@ angular.module("summary",[])
   function ($scope, $window, $rootScope){
     
     $(".content").css("height", $rootScope.contentHeight);
+    
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
 
 }])
 
@@ -1057,6 +1110,12 @@ angular.module("timezone",[])
       $rootScope.installationData.timezone = $("select").val();
       console.log($rootScope.installationData);
     });
+    
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
 }])
 
 angular.module("user",[])
@@ -1140,6 +1199,17 @@ angular.module("user",[])
       } else {
         $rootScope.personalizationError = true;
       }
+    }
+    
+    if ($rootScope.autofill) {
+      $rootScope.installationData.hostname = 'test';
+      $rootScope.installationData.fullname = 'test';
+      $rootScope.installationData.username = 'test';
+      $rootScope.installationData.password = 'test';
+      $rootScope.installationData.repeatPassword = 'test';
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
     }
 }])
 
@@ -1451,6 +1521,7 @@ var en = {
   cleaning_up : "Cleaning up",
   create_partition : "Create partition",
   format_partition : "Format Partition",
+  partitioning_in_advancedMode : "Partitioning",
 }
 
 var id = {
@@ -1528,4 +1599,5 @@ var id = {
   cleaning_up : "Merapikan sistem",
   create_partition : "Buat partisi",
   format_partition : "Format Partisi",
+  partitioning_in_advancedMode : "Mengatur Partisi",
 }
