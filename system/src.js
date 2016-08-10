@@ -36,6 +36,7 @@ angular.module("hello",[])
       $rootScope.isBiosBootExists = Installation.isBiosBootExists()=='true' ? true : false;
       $rootScope.debug = Installation.debug()=='true' ? true : false;
       $rootScope.autofill = Installation.autofill()=='true' ? true : false;
+      $rootScope.scenario = Installation.getScenario();
     }
 
     if ($rootScope.autofill) {
@@ -127,6 +128,20 @@ angular.module("install",[])
       $scope.currentStep = "";
       statusUpdater = $interval(updateStatus, 1000);
     }, 1000);
+
+}])
+
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+    
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
 
 }])
 
@@ -270,8 +285,6 @@ angular.module("partition",[])
       if ($rootScope.selectedInstallationTarget || $scope.cleanInstall) {
         $rootScope.cleanInstall = $scope.cleanInstall;
         $rootScope.next(); 
-      } else {
-        console.log('bah');
       }
     }
   
@@ -1084,21 +1097,16 @@ angular.module("partition",[])
         }
       } 
     }
-])
 
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-    
-    if ($rootScope.autofill) {
-      setTimeout(function(){
+    // BIFT
+
+    if ($rootScope.scenario && $rootScope.scenario.length > 0) {
+      if ($rootScope.scenario.split('_')[2] === 'CLEANINSTALL') {
+        $scope.cleanInstall = true;
         $rootScope.next();
-      }, 1000)
+      }
     }
-
-}])
+])
 
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
