@@ -27,13 +27,12 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
         curl ftp://$BIFTADDR:2121/scenario > /tmp/scenario
         if [ "x$?" = "x0" ];then
             SCENARIO=`cat /tmp/scenario`
-            export BIFT=$SCENARIO
             export DEBUG=1		
             export AUTOFILL=1		
-            export BIFT=$SCENARIO		
+            export SCENARIO=$SCENARIO		
             sudo -E bash -c 'echo $DEBUG' 
             sudo -E bash -c 'echo $AUTOFILL' 
-            sudo -E bash -c 'echo $BIFT' 
+            sudo -E bash -c 'echo $SCENARIO' 
         fi
     fi
     sudo -E nice -n -20 blankon-installer

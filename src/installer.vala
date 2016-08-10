@@ -624,22 +624,27 @@ public class Installation : GLib.Object {
 
     void do_setup () {
         var content = ("%s:%s\n").printf(user_name, password);
+        Log.instance().log("/tmp/user-pass : " + content);
         Utils.write_simple_file ("/tmp/user-pass", content);
-        if (rootPassword.length > 0) {
+        if (secureInstall && rootPassword.length > 0) {
             content = ("root:%s").printf(rootPassword);
             Utils.write_simple_file ("/tmp/root-pass", content);
         } 
         
         content = ("%d %s\n").printf((int) autologin, user_name);
+        Log.instance().log("/tmp/user-setup : " + content);
         Utils.write_simple_file ("/tmp/user-setup", content);
 
         content = ("%s\n\n\n\n\n").printf(full_name);
+        Log.instance().log("/tmp/user-info : " + content);
         Utils.write_simple_file ("/tmp/user-info", content);
 
         content = ("%s\n").printf(host_name);
+        Log.instance().log("/tmp/host_name : " + content);
         Utils.write_simple_file ("/tmp/hostname", content);
 
         content = ("%s\n").printf(timezone);
+        Log.instance().log("/tmp/timezone : " + content);
         Utils.write_simple_file ("/tmp/timezone", content);
 
         SwapCollector.reset ();
@@ -1106,6 +1111,17 @@ public class Installation : GLib.Object {
         }
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
     } 
+    
+    public static JSCore.Value js_scenario (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string scenario = GLib.Environment.get_variable("SCENARIO");
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(scenario));
+    } 
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
@@ -1122,6 +1138,7 @@ public class Installation : GLib.Object {
         { "getCopyingProgress", js_get_copying_progress, PropertyAttribute.ReadOnly },
         { "debug", js_debug, PropertyAttribute.ReadOnly },
         { "autofill", js_autofill, PropertyAttribute.ReadOnly },
+        { "getScenario", js_scenario, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 
