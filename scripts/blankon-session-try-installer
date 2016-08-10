@@ -19,6 +19,25 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
     rm -f /run/locale
     chown -R 1000:1000 /run/user/1000/dconf
 
+    # Check for BIFT instance
+    PARAMS=""
+    BIFTADDR="192.168.1.11"
+    nc -z $BIFTADDR 2121
+    BIFT=`echo $?`
+    if [ "x$BIFT" = "x0" ];then
+        wget ftp://$BIFTADDR:2121/scenario -O /tmp/scenario
+        if [ "x$?" = "x0" ];then
+            SCENARIO=`cat /tmp/scenario`
+            export BIFT=$SCENARIO
+            PARAMS="DEBUG=1 AUTOFILL=1 BIFT=$SCENARIO"
+            export DEBUG=1		
+            export AUTOFILL=1		
+            export BIFT=$SCENARIO		
+            sudo -E bash -c 'echo $DEBUG' 
+            sudo -E bash -c 'echo $AUTOFILL' 
+            sudo -E bash -c 'echo $BIFT' 
+        fi
+    fi
     sudo -E nice -n -20 blankon-installer
 
     # Run post-install script when created by blankon-installer
