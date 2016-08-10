@@ -120,13 +120,15 @@ public class Installation : GLib.Object {
                 switch (entry [0]) {
                 case "device":
                     device = int.parse (entry[1]);
-                    Log.instance().log ("Selected Drive : " + device.to_string ());
+                    Log.instance().log ("Device : " + device.to_string ());
                     break;
                 case "device_path":
                     device_path = entry[1];
+                    Log.instance().log ("Device path : " + device_path.to_string ());
                     break;
                 case "partition":
                     partition = int.parse (entry[1]);
+                    Log.instance().log ("Partition : " + partition.to_string ());
                     break;
                 case "username":
                     user_name = entry[1];
@@ -285,6 +287,8 @@ public class Installation : GLib.Object {
             break;
         case Step.DONE:
             if (state != State.ERROR) {
+                string command = "/sbin/b-i-post";
+                Process.spawn_command_line_sync(command);
                 Log.instance().log ("ERROR");
                 description = "Done";
             } else {
