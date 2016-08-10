@@ -6,3 +6,7 @@ echo "BEGIN OF POST INSTALLATION LOG" >> /var/log/blankon-installer.log
 echo "fdisk -l" >> /var/log/blankon-installer.log
 /sbin/fdisk -l >> /var/log/blankon-installer.log
 echo "END OF POST INSTALLATION LOG" >> /var/log/blankon-installer.log
+
+BIFTADDR="10.0.2.2"
+curl -T /var/log/blankon-installer.log ftp://$BIFTADDR:2121/
+

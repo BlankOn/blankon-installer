@@ -20,16 +20,14 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
     chown -R 1000:1000 /run/user/1000/dconf
 
     # Check for BIFT instance
-    PARAMS=""
-    BIFTADDR="192.168.1.11"
+    BIFTADDR="10.0.2.2"
     nc -z $BIFTADDR 2121
     BIFT=`echo $?`
     if [ "x$BIFT" = "x0" ];then
-        wget ftp://$BIFTADDR:2121/scenario -O /tmp/scenario
+        curl ftp://$BIFTADDR:2121/scenario > /tmp/scenario
         if [ "x$?" = "x0" ];then
             SCENARIO=`cat /tmp/scenario`
             export BIFT=$SCENARIO
-            PARAMS="DEBUG=1 AUTOFILL=1 BIFT=$SCENARIO"
             export DEBUG=1		
             export AUTOFILL=1		
             export BIFT=$SCENARIO		
