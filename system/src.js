@@ -36,6 +36,7 @@ angular.module("hello",[])
       $rootScope.isBiosBootExists = Installation.isBiosBootExists()=='true' ? true : false;
       $rootScope.debug = Installation.debug()=='true' ? true : false;
       $rootScope.autofill = Installation.autofill()=='true' ? true : false;
+      $rootScope.scenario = Installation.getScenario();
     }
 
     if ($rootScope.autofill) {
@@ -270,8 +271,6 @@ angular.module("partition",[])
       if ($rootScope.selectedInstallationTarget || $scope.cleanInstall) {
         $rootScope.cleanInstall = $scope.cleanInstall;
         $rootScope.next(); 
-      } else {
-        console.log('bah');
       }
     }
   
@@ -1016,9 +1015,9 @@ angular.module("partition",[])
     }
     $scope.setDrive = function(drive) {
       // TODO : reset UI
-      $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
       var path = drive.path;
       $rootScope.currentPartitionTable = drive.label;
+      $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
       $rootScope.installationData.device_path = path;
       // If it's not a GPT and booted up on UEFI system, do the clean install
       $scope.cleanInstall = ($rootScope.currentPartitionTable !== 'gpt' && $rootScope.isEfi);
@@ -1083,7 +1082,26 @@ angular.module("partition",[])
           }
         }
       } 
+      
+      // BIFT
+  
+      if ($rootScope.scenario && $rootScope.scenario.length > 0) {
+        var scenario = JSON.parse($rootScope.scenario);
+        console.log('Scenario');
+        console.log(scenario);
+        var keys = Object.keys(scenario.data);
+        for (var i in keys) {
+          $rootScope.installationData[keys[i]] = scenario.data[keys[i]];
+          console.log($rootScope.installationData[keys[i]]);
+          // Some values are not included in installationData object, catch it
+          if (keys[i] === 'cleanInstall' || keys[i] === 'partitionSteps' || keys[i] === 'advancedPartition') {
+            $rootScope[keys[i]] = scenario.data[keys[i]]
+          }
+        }
+        $rootScope.next();
+      }
     }
+
 ])
 
 angular.module("summary",[])

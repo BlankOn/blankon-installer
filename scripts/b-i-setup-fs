@@ -76,8 +76,8 @@ do_chroot /usr/bin/apt-get --yes clean
 
 read AUTOLOGIN USERNAME < $ROOTFS/tmp/user-setup
 echo "Configuring user $USERNAME"
-echo "Auto-login: $AUTOLIGIN"
 rm -f $ROOTFS/tmp/user-setup
+
 
 # This is the original group used in full ISO of BlankOn, since the current ISO generate the minimum packages,
 # some groups doesnt exist.

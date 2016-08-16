@@ -8,7 +8,10 @@ public class PartedLog : GLib.Object {
 
     public PartedLog () {
         try {
-            var file = File.new_for_path ("/var/log/blankon-installer.log");
+            var file = File.new_for_path ("/var/log/blankon-installer.parted.log");
+            if (file.query_exists ()) {
+                file.delete ();
+            }
             stream = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
         } catch (Error e) {
             stderr.printf ("%s\n", e.message);
