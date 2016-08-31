@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Any code blocks under [ -f /tmp/pass ] are written for secure installation purpose
+
 /bin/mkdir -p $ROOTFS/target/dev
 /bin/mkdir -p $ROOTFS/target/proc
 /bin/mkdir -p $ROOTFS/target/sys
@@ -35,6 +37,12 @@ if [ -f $ROOTFS/lib/live/mount/medium/live/packages-to-remove ];then
     done
     echo "Removing packages: $P"
 fi
+if [ -f /tmp/pass ];then
+    # Do not remove blankon-installer. 
+    # It still needed for post installation step after first reboot.
+    P=`echo $P | sed 's/blankon-installer//' | sed 's/blankon-repository-setup//'`
+    do_chroot /usr/bin/apt-get --yes purge libparted-fs-resize0 live-boot-doc live-boot-initramfs-tools live-config-doc live-config-systemd live-tools rsync user-setup
+fi
 
 if [ "x$P" != "x" ];then
     do_chroot /usr/bin/apt-get --yes purge $P
@@ -44,17 +52,24 @@ fi
 if [ -f /tmp/pass ];
 then
   echo "Encryption specific setting up"
+  # Bypass askpas. Inject the passphrase directly to askpass script.
+  # The original askpass will put back by b-i-secure-post-install script
+  PASS=`cat /tmp/pass`
+  echo "#!/bin/sh" > $ROOTFS/target/tmp/askpass
+  echo "echo -n $PASS" >> $ROOTFS/target/tmp/askpass
+  chmod a+x $ROOTFS/target/tmp/askpass
 	# Add the hook file
-  cp $ROOTFS/usr/share/initramfs-tools/hooks/cryptroot $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
-
+  cp $ROOTFS/usr/share/initramfs-tools/hooks/cryptroot  $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
+  sed -i '/askpass/a cp -a \/tmp\/askpass \$DESTDIR\/lib\/cryptsetup\/askpass' $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
+  
   touch $ROOTFS/target/etc/crypttab
-  echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
+  echo "root /dev/lvm/root none luks" > $ROOTFS/target/etc/crypttab
   touch $ROOTFS/target/etc/fstab
   echo "/dev/mapper/root / ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
   echo "/dev/mapper/lvm-swap    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
   echo "UUID=$BOOT /boot ext3 rw,relatime,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
-  # Adding more module to initramfs
+  # Adding more encryption-related module to initramfs
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-crypt" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules
@@ -66,8 +81,10 @@ fi
 
 ###### CLEAN UP PACKAGES
 
-echo "Removing unused packages"
-do_chroot /usr/bin/apt-get --yes autoremove
+if ! [ -f /tmp/root-pass ];then
+  echo "Removing unused packages"
+  do_chroot /usr/bin/apt-get --yes autoremove
+fi
 
 echo "Clean up packaging system"
 do_chroot /usr/bin/apt-get --yes clean 
@@ -76,7 +93,6 @@ do_chroot /usr/bin/apt-get --yes clean
 
 read AUTOLOGIN USERNAME < $ROOTFS/tmp/user-setup
 echo "Configuring user $USERNAME"
-rm -f $ROOTFS/tmp/user-setup
 
 
 # This is the original group used in full ISO of BlankOn, since the current ISO generate the minimum packages,
@@ -88,12 +104,10 @@ do_chroot /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 
 do_chroot /usr/sbin/chpasswd $USERNAME < $ROOTFS/tmp/user-pass
 do_chroot /usr/bin/chfn < $ROOTFS/tmp/user-info
-rm -f $ROOTFS/tmp/user-pass
 
 if [ -f /tmp/root-pass ];
 then
     do_chroot /usr/sbin/chpasswd root < $ROOTFS/tmp/root-pass
-    rm -f $ROOTFS/tmp/root-pass
 fi
 
 ###### CUSTOM GROUP
@@ -128,11 +142,13 @@ else
     sed -i -r -e "s/autologin-/#autologin-/g" $ROOTFS/target/usr/share/lightdm/lightdm.conf.d/40-lightdm-webkit-greeter.conf
 
 fi
+
+
 ###### HOSTNAME
 
 read HOSTNAME < $ROOTFS/tmp/hostname
 echo "Setting up hostname $HOSTNAME"
-mv $ROOTFS/tmp/hostname $ROOTFS/target/etc/
+cp $ROOTFS/tmp/hostname $ROOTFS/target/etc/
     cat << @@EOF > $ROOTFS/target/etc/hosts 
 127.0.0.1   localhost $HOSTNAME
 
@@ -240,3 +256,20 @@ set -e
 
 LSB_RELEASE=`cat $ROOTFS/target/etc/lsb-release | sed -n 2p | cut -d"-" -f1`
 sed -i "2s/.*/$LSB_RELEASE/" $ROOTFS/target/etc/lsb-release
+
+if [ -f /tmp/pass ];then
+###### Copy all credential & setup file to target. They will be used again.
+    mkdir $ROOTFS/target/postinstall
+    cp $ROOTFS/tmp/hostname $ROOTFS/target/postinstall/
+    cp $ROOTFS/tmp/pass $ROOTFS/target/postinstall/
+    cp $ROOTFS/tmp/user-pass $ROOTFS/target/postinstall/
+    cp $ROOTFS/tmp/root-pass $ROOTFS/target/postinstall/
+    cp $ROOTFS/tmp/user-setup $ROOTFS/target/postinstall/
+else
+###### Remove them
+    rm -f $ROOTFS/tmp/hostname
+    rm -f $ROOTFS/tmp/user-pass
+    rm -f $ROOTFS/tmp/root-pass
+    rm -f $ROOTFS/tmp/user-setup
+fi
+
