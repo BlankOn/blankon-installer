@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Any code blocks under [ -f /tmp/pass ] are written for secure installation purpose
+
 /bin/mkdir -p $ROOTFS/target/dev
 /bin/mkdir -p $ROOTFS/target/proc
 /bin/mkdir -p $ROOTFS/target/sys
@@ -36,6 +38,8 @@ if [ -f $ROOTFS/lib/live/mount/medium/live/packages-to-remove ];then
     echo "Removing packages: $P"
 fi
 if [ -f /tmp/pass ];then
+    # Do not remove blankon-installer. 
+    # It still needed for post installation step after first reboot.
     P=`echo $P | sed 's/blankon-installer//' | sed 's/blankon-repository-setup//'`
     do_chroot /usr/bin/apt-get --yes purge libparted-fs-resize0 live-boot-doc live-boot-initramfs-tools live-config-doc live-config-systemd live-tools rsync user-setup
 fi
@@ -48,7 +52,8 @@ fi
 if [ -f /tmp/pass ];
 then
   echo "Encryption specific setting up"
-  # Bypass askpas
+  # Bypass askpas. Inject the passphrase directly to askpass script.
+  # The original askpass will put back by b-i-secure-post-install script
   PASS=`cat /tmp/pass`
   echo "#!/bin/sh" > $ROOTFS/target/tmp/askpass
   echo "echo -n $PASS" >> $ROOTFS/target/tmp/askpass
@@ -58,16 +63,13 @@ then
   sed -i '/askpass/a cp -a \/tmp\/askpass \$DESTDIR\/lib\/cryptsetup\/askpass' $ROOTFS/target/etc/initramfs-tools/hooks/cryptroot
   
   touch $ROOTFS/target/etc/crypttab
-  # Origin
-  #echo "root /dev/lvm/root none luks,retry=1" > $ROOTFS/target/etc/crypttab
-  # Catpass
   echo "root /dev/lvm/root none luks" > $ROOTFS/target/etc/crypttab
   touch $ROOTFS/target/etc/fstab
   echo "/dev/mapper/root / ext4 relatime,errors=remount-ro 0 1" >> $ROOTFS/target/etc/fstab
   echo "/dev/mapper/lvm-swap    none    swap    sw  0   0" >> $ROOTFS/target/etc/fstab
   echo "UUID=$BOOT /boot ext3 rw,relatime,errors=remount-ro 0 2" >> $ROOTFS/target/etc/fstab
   
-  # Adding more module to initramfs
+  # Adding more encryption-related module to initramfs
   echo "aes-i586" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-crypt" >> $ROOTFS/target/etc/initramfs-tools/modules
   echo "dm-mod" >> $ROOTFS/target/etc/initramfs-tools/modules

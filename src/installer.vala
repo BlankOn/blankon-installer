@@ -875,6 +875,7 @@ public class Installation : GLib.Object {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
 
+        // TODO This is too dirty. Please find a pretier way to logout.
         Process.spawn_command_line_sync ("/usr/bin/killall Xorg");
         Gtk.main_quit();
 
@@ -1137,11 +1138,9 @@ public class Installation : GLib.Object {
                 var s = arguments [0].to_string_copy (ctx, null);
                 char[] buffer = new char[s.get_length() + 1];
                 s.get_utf8_c_string (buffer, buffer.length);
-    
                 var str = (string) buffer;
-                Log.instance().log ("securePostInstallConfig parameter : ");
-                Log.instance().log (str);
 
+                // This file will be used by b-i-secure-post-install script
                 Utils.write_simple_file ("/postinstall/config", str);
                 
                 string normal_output;
