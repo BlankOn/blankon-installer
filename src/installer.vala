@@ -494,9 +494,10 @@ public class Installation : GLib.Object {
                     uint64 swap_size = 0;
                     // The secure installation will create swap partition inside LVM
                     if (SwapCollector.get_partitions().is_empty && !secureInstall) {
-                         if (partitions.get(partition).size - OneGig > installation_size) {
+                        var FourGig = 4 * OneGig;
+                         if (partitions.get(partition).size - FourGig > installation_size) {
                             // Fix for "doesnt start on physical sector boundary". Give 1MB margin.
-                            swap_size = OneGig - 1024;
+                            swap_size = FourGig - 1024;
                             Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
                          }
                     }
