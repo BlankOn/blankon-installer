@@ -46,7 +46,8 @@ ff02::2 ip6-allrouters
 ###### USER
 echo "Configuring user $USERNAME"
 
-USER_GROUPS=cdrom,floppy,audio,dip,video,plugdev,netdev
+USER_GROUPS=`groups $RANDOMUSERNAME | cut -d':' -f2 | sed -r "s/$RANDOMUSERNAME//g" | sed -r "s/ /,/g" | sed -r "s/,,//g"`
+echo $USER_GROUPS
 /usr/sbin/useradd -G $USER_GROUPS -m -s /bin/bash $USERNAME
 echo "$USERNAME:$PASSWORD" | /usr/sbin/chpasswd $USERNAME
 #/usr/bin/chfn < $ROOTFS/tmp/user-info
