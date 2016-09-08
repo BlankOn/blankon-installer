@@ -494,9 +494,10 @@ public class Installation : GLib.Object {
                     uint64 swap_size = 0;
                     // The secure installation will create swap partition inside LVM
                     if (SwapCollector.get_partitions().is_empty && !secureInstall) {
-                         if (partitions.get(partition).size - OneGig > installation_size) {
+                        var FourGig = 4 * OneGig;
+                         if (partitions.get(partition).size - FourGig > installation_size) {
                             // Fix for "doesnt start on physical sector boundary". Give 1MB margin.
-                            swap_size = OneGig - 1024;
+                            swap_size = FourGig - 1024;
                             Log.instance().log ("No swap detected, creating swap along with partition creation, swap size = " + swap_size.to_string());
                          }
                     }
@@ -868,6 +869,19 @@ public class Installation : GLib.Object {
 
         return new JSCore.Value.undefined (ctx);
     }
+    
+    public static JSCore.Value js_logout (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        // TODO This is too dirty. Please find a pretier way to logout.
+        Process.spawn_command_line_sync ("/usr/bin/killall Xorg");
+        Gtk.main_quit();
+
+        return new JSCore.Value.undefined (ctx);
+    }
 
     public static JSCore.Value js_translate (Context ctx,
             JSCore.Object function,
@@ -1101,6 +1115,51 @@ public class Installation : GLib.Object {
         }
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
     } 
+    public static JSCore.Value js_isSecurePostInstall (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string debug = GLib.Environment.get_variable("SECURE_POST_INSTALL");
+        if (debug == "1") {
+            retval = "true";
+        }
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
+    } 
+    
+    public static JSCore.Value js_securePostInstallConfig (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+            if (arguments.length == 1 && arguments[0].is_string(ctx)) {
+                var s = arguments [0].to_string_copy (ctx, null);
+                char[] buffer = new char[s.get_length() + 1];
+                s.get_utf8_c_string (buffer, buffer.length);
+                var str = (string) buffer;
+
+                // This file will be used by b-i-secure-post-install script
+                Utils.write_simple_file ("/postinstall/config", str);
+                
+                string normal_output;
+                string error_output;
+                int status;
+                string [] args = { "/sbin/b-i-secure-post-install"};
+                string[] env = { "LC_ALL=C" };
+                try {
+                    Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+                } catch (GLib.Error e) {
+                }
+                Log.instance().log (normal_output);
+                Log.instance().log (error_output);
+            }
+            
+            return new JSCore.Value.undefined (ctx);
+        
+    } 
     
     public static JSCore.Value js_autofill (Context ctx,
             JSCore.Object function,
@@ -1130,6 +1189,7 @@ public class Installation : GLib.Object {
     static const JSCore.StaticFunction[] js_funcs = {
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
         { "reboot", js_reboot, PropertyAttribute.ReadOnly },
+        { "logout", js_logout, PropertyAttribute.ReadOnly },
         { "translate", js_translate, PropertyAttribute.ReadOnly },
         { "setLocale", js_set_locale, PropertyAttribute.ReadOnly },
         { "setTimezone", js_set_timezone, PropertyAttribute.ReadOnly },
@@ -1141,6 +1201,8 @@ public class Installation : GLib.Object {
         { "isBiosBootExists", js_is_bios_boot_exists, PropertyAttribute.ReadOnly },
         { "getCopyingProgress", js_get_copying_progress, PropertyAttribute.ReadOnly },
         { "debug", js_debug, PropertyAttribute.ReadOnly },
+        { "isSecurePostInstall", js_isSecurePostInstall, PropertyAttribute.ReadOnly },
+        { "securePostInstallConfig", js_securePostInstallConfig, PropertyAttribute.ReadOnly },
         { "autofill", js_autofill, PropertyAttribute.ReadOnly },
         { "getScenario", js_scenario, PropertyAttribute.ReadOnly },
         { null, null, 0 }

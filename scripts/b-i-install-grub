@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Any code blocks under [ -f /tmp/pass ] are written for secure installation purpose
+
 set -e
 
 # If this is an EFI system, this script will be called with two parameters,
@@ -28,7 +30,7 @@ then
     cat << @@EOF >> /target/etc/default/grub
 GRUB_CMDLINE_LINUX_DEFAULT="rw quiet splash cryptopts=target=root,source=/dev/lvm/root,lvm=root CRYPTSETUP=y"
 GRUB_GFXPAYLOAD_LINUX=1024x768
-GRUB_TIMEOUT=0
+GRUB_TIMEOUT=5
 @@EOF
 
 #GRUB_ENABLE_CRYPTODISK=y

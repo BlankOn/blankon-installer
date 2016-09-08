@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" ng-app="Biui">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>BlankOn Installer</title>  
+  
+  <link rel="stylesheet" href="app.css"/>
+  <script src="libs.js"></script>    
+  <script src="html.min.js"></script>    
+  <script src="src.js"></script> 
+</head>
+
+<body>    
+  <div>
+    <div class="page">
+      <div class="wrapper">
+      <div ui-view class="fade" ng-class="{back:back, forward:forward}"></div>
+      </div>
+    </div>
+    <div class="columns timeline" style="float:right">
+    <img src="logo.png" class="logo">            
+    <div class="line-container">
+    <div class="line"></div>
+    </div>
+    <div class="step-container fade" ng-show="showStepLine">
+            <div ng-repeat="state in steps">
+            <div class="step fade" ng-hide="currentState == state.seq"></div>
+            <!--div class="step fade" ng-hide="currentState == state.seq" ng-click="goStep(state.seq)"></div-->
+            <div class="step-big fade" ng-show="currentState == state.seq">{{state.step}}</div>
+            </div>
+    </div>
+    </div>
+  </div>
+</body>
+</html>
