@@ -270,6 +270,7 @@ if [ -f /tmp/pass ];then
     cp $ROOTFS/tmp/user-pass $ROOTFS/target/postinstall/
     cp $ROOTFS/tmp/root-pass $ROOTFS/target/postinstall/
     cp $ROOTFS/tmp/user-setup $ROOTFS/target/postinstall/
+    cp $ROOTFS/tmp/language $ROOTFS/target/postinstall/
 else
     ###### Remove them
     rm -f $ROOTFS/tmp/hostname
