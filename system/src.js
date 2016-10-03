@@ -131,20 +131,6 @@ angular.module("install",[])
 
 }])
 
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-    
-    if ($rootScope.autofill) {
-      setTimeout(function(){
-        $rootScope.next();
-      }, 1000)
-    }
-
-}])
-
 angular.module("partition",[])
 .controller("PartitionCtrl", ["$scope", "$window", "$timeout", "$rootScope", 
   function ($scope, $window, $timeout, $rootScope){
@@ -1118,22 +1104,18 @@ angular.module("partition",[])
 
 ])
 
-angular.module("timezone",[])
-.controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope, $watch){
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
     
     $(".content").css("height", $rootScope.contentHeight);
-
-    $("area, timezone-next").click(function(){
-      $rootScope.installationData.timezone = $("select").val();
-      console.log($rootScope.installationData);
-    });
     
     if ($rootScope.autofill) {
       setTimeout(function(){
         $rootScope.next();
       }, 1000)
     }
+
 }])
 
 angular.module("user",[])
@@ -1225,6 +1207,24 @@ angular.module("user",[])
       $rootScope.installationData.username = 'test';
       $rootScope.installationData.password = 'test';
       $rootScope.installationData.repeatPassword = 'test';
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
+}])
+
+angular.module("timezone",[])
+.controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope, $watch){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+
+    $("area, timezone-next").click(function(){
+      $rootScope.installationData.timezone = $("select").val();
+      console.log($rootScope.installationData);
+    });
+    
+    if ($rootScope.autofill) {
       setTimeout(function(){
         $rootScope.next();
       }, 1000)
