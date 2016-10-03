@@ -855,6 +855,9 @@ public class Installation : GLib.Object {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
 
+        var location = "/tmp/post-install.sh";
+        Utils.write_simple_file (location, "sudo /sbin/shutdown -t now\n");
+        Process.spawn_command_line_sync ("/bin/chmod a+x /tmp/post-install.sh");
         Gtk.main_quit();
 
         return new JSCore.Value.undefined (ctx);
