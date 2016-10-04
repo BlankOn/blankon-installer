@@ -1216,7 +1216,7 @@ public class Installation : GLib.Object {
     } 
 
     static const JSCore.StaticFunction[] js_funcs = {
-        { "shutdown", js_exit, PropertyAttribute.ReadOnly },
+        { "exit", js_exit, PropertyAttribute.ReadOnly },
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
         { "reboot", js_reboot, PropertyAttribute.ReadOnly },
         { "logout", js_logout, PropertyAttribute.ReadOnly },
