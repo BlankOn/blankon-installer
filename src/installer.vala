@@ -862,6 +862,17 @@ public class Installation : GLib.Object {
 
         return new JSCore.Value.undefined (ctx);
     }
+    
+    public static JSCore.Value js_exit (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        Gtk.main_quit();
+
+        return new JSCore.Value.undefined (ctx);
+    }
 
     public static JSCore.Value js_reboot (Context ctx,
             JSCore.Object function,
@@ -1205,6 +1216,7 @@ public class Installation : GLib.Object {
     } 
 
     static const JSCore.StaticFunction[] js_funcs = {
+        { "shutdown", js_exit, PropertyAttribute.ReadOnly },
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
         { "reboot", js_reboot, PropertyAttribute.ReadOnly },
         { "logout", js_logout, PropertyAttribute.ReadOnly },
