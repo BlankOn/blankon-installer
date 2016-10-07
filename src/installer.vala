@@ -651,6 +651,10 @@ public class Installation : GLib.Object {
         content = ("%s\n").printf(timezone);
         Log.instance().log("/tmp/timezone : " + content);
         Utils.write_simple_file ("/tmp/timezone", content);
+        
+        content = ("%s\n").printf(language);
+        Log.instance().log("/tmp/language : " + content);
+        Utils.write_simple_file ("/tmp/language", content);
 
         SwapCollector.reset ();
         var swaps = "";
@@ -851,6 +855,20 @@ public class Installation : GLib.Object {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
 
+        var location = "/tmp/post-install.sh";
+        Utils.write_simple_file (location, "sudo /sbin/shutdown -t now\n");
+        Process.spawn_command_line_sync ("/bin/chmod a+x /tmp/post-install.sh");
+        Gtk.main_quit();
+
+        return new JSCore.Value.undefined (ctx);
+    }
+    
+    public static JSCore.Value js_exit (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
         Gtk.main_quit();
 
         return new JSCore.Value.undefined (ctx);
@@ -862,10 +880,7 @@ public class Installation : GLib.Object {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
 
-        var location = "/tmp/post-install.sh";
-        Utils.write_simple_file (location, "sudo /sbin/reboot\n");
-        Process.spawn_command_line_sync ("/bin/chmod a+x /tmp/post-install.sh");
-        Gtk.main_quit();
+        Process.spawn_command_line_sync ("/sbin/reboot");
 
         return new JSCore.Value.undefined (ctx);
     }
@@ -1175,6 +1190,17 @@ public class Installation : GLib.Object {
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(retval));
     } 
     
+    public static JSCore.Value js_get_current_language (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        string retval = "false";
+        string language = GLib.Environment.get_variable("LANG_BI");
+        return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(language));
+    } 
+    
     public static JSCore.Value js_scenario (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
@@ -1187,6 +1213,7 @@ public class Installation : GLib.Object {
     } 
 
     static const JSCore.StaticFunction[] js_funcs = {
+        { "exit", js_exit, PropertyAttribute.ReadOnly },
         { "shutdown", js_shutdown, PropertyAttribute.ReadOnly },
         { "reboot", js_reboot, PropertyAttribute.ReadOnly },
         { "logout", js_logout, PropertyAttribute.ReadOnly },
@@ -1194,6 +1221,7 @@ public class Installation : GLib.Object {
         { "setLocale", js_set_locale, PropertyAttribute.ReadOnly },
         { "setTimezone", js_set_timezone, PropertyAttribute.ReadOnly },
         { "getLocaleList", js_get_locale_list, PropertyAttribute.ReadOnly },
+        { "getCurrentLanguage", js_get_current_language, PropertyAttribute.ReadOnly },
         { "getRelease", js_get_release, PropertyAttribute.ReadOnly },
         { "whichEfi", js_which_efi, PropertyAttribute.ReadOnly },
         { "isEfi", js_is_efi, PropertyAttribute.ReadOnly },

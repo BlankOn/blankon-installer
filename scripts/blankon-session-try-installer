@@ -29,7 +29,9 @@ if [ $? -eq 0 -a -x /usr/bin/blankon-installer ];then
         # If this file exists, then system just rebooted from an installation attempt
         # SECURE_POST_INSTALL envar will continue the installation step
         export SECURE_POST_INSTALL=1		
-        sudo -E bash -c 'echo $SECURE_POST_INSTALL' 
+        sudo -E bash -c 'echo $SECURE_POST_INSTALL'
+        export LANG_BI=`cat /postinstall/language` 
+        sudo -E bash -c 'echo $LANG_BI' 
     fi
     
     # Check for BIFT instance

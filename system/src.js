@@ -131,20 +131,6 @@ angular.module("install",[])
 
 }])
 
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-    
-    if ($rootScope.autofill) {
-      setTimeout(function(){
-        $rootScope.next();
-      }, 1000)
-    }
-
-}])
-
 angular.module("partition",[])
 .controller("PartitionCtrl", ["$scope", "$window", "$timeout", "$rootScope", 
   function ($scope, $window, $timeout, $rootScope){
@@ -1118,6 +1104,20 @@ angular.module("partition",[])
 
 ])
 
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+    
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
+
+}])
+
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
   function ($scope, $window, $rootScope, $watch){
@@ -1441,7 +1441,7 @@ angular.module('Biui', [
       }, 100);
     }
     $rootScope.exit = function(){
-      Installation.shutdown();
+      Installation.exit();
     }
     $timeout(function(){
       console.log($(window).width());

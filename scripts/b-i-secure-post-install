@@ -53,6 +53,8 @@ echo "$USERNAME:$PASSWORD" | /usr/sbin/chpasswd $USERNAME
 #/usr/bin/chfn < $ROOTFS/tmp/user-info
 echo "root:$ROOTPASSWORD" | /usr/sbin/chpasswd root
 
+/usr/sbin/deluser $USERNAME sudo
+
 # Disable nopasswd
 sed -i -r -e "/%sudo/c\%sudo ALL=(ALL:ALL) ALL" /etc/sudoers
 # Delete the random user
@@ -61,8 +63,11 @@ sed -i -r -e "/%sudo/c\%sudo ALL=(ALL:ALL) ALL" /etc/sudoers
 ###### CUSTOM GROUP
 if [ -n "$BI_CUSTOM_GROUPS" ];then
   for i in $BI_CUSTOM_GROUPS;do
-    do_chroot /usr/sbin/groupadd -r $i
-    do_chroot /usr/sbin/adduser $USERNAME $i
+    # Exclude sudo
+    if [ ! "x$i" = "xsudo" ];then
+      do_chroot /usr/sbin/groupadd -r $i
+      do_chroot /usr/sbin/adduser $USERNAME $i
+    fi
   done
 fi
 
