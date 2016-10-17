@@ -79,7 +79,11 @@ else
         BOOT_TARGET="--boot-directory=/target/boot"
     fi
     mount $EFI_PARTITION /target/boot/efi
-    OPT="--recheck --bootloader-id=Xecure --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
+    if [ -f /tmp/pass ];then
+      OPT="--recheck --bootloader-id=Xecure --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
+    else
+      OPT="--recheck --bootloader-id=BlankOn --efi-directory=/target/boot/efi --root-directory=/target $BOOT_TARGET $DEVICE"
+    fi
     # Expose it, for debugging purpose
     echo $OPT
     echo "Installing GRUB EFI"
