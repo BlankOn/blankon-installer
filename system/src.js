@@ -1540,6 +1540,9 @@ var en = {
   create_partition : "Create partition",
   format_partition : "Format Partition",
   partitioning_in_advancedMode : "Partitioning",
+  clean_install : "Clean Install",
+  clean_install_warning : "Warning : This wil delete all your programs, documents, photos, music, and any other files in all operating systems.",
+  cancel_clean_install : "Cancel",
 }
 
 var id = {
@@ -1618,4 +1621,7 @@ var id = {
   create_partition : "Buat partisi",
   format_partition : "Format Partisi",
   partitioning_in_advancedMode : "Mengatur Partisi",
+  clean_install : "Pemasangan Bersih",
+  clean_install_warning : "Peringatan : Tindakan ini akan menghapus program, dokumen, poto, musik dan berkas lain di semua sistem opearasi yang sudah ada.",
+  cancel_clean_install : "Batal",
 }
