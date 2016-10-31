@@ -1211,6 +1211,27 @@ public class Installation : GLib.Object {
         string scenario = GLib.Environment.get_variable("SCENARIO");
         return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(scenario));
     } 
+    
+    public static JSCore.Value js_getMemTotal (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+            exception = null;
+            
+            string normal_output;
+            string error_output;
+            int status;
+    
+            string [] args = { "/sbin/b-i-get-mem-total"};
+            string[] env = { "LC_ALL=C" };
+            try {
+                Process.spawn_sync ("/tmp", args, env,  SpawnFlags.LEAVE_DESCRIPTORS_OPEN, null, out normal_output, out error_output, out status);
+            } catch (GLib.Error e) {
+            }
+            return new JSCore.Value.string(ctx, new JSCore.String.with_utf8_c_string(normal_output));
+    } 
 
     static const JSCore.StaticFunction[] js_funcs = {
         { "exit", js_exit, PropertyAttribute.ReadOnly },
@@ -1233,6 +1254,7 @@ public class Installation : GLib.Object {
         { "securePostInstallConfig", js_securePostInstallConfig, PropertyAttribute.ReadOnly },
         { "autofill", js_autofill, PropertyAttribute.ReadOnly },
         { "getScenario", js_scenario, PropertyAttribute.ReadOnly },
+        { "getMemTotal", js_getMemTotal, PropertyAttribute.ReadOnly },
         { null, null, 0 }
     };
 

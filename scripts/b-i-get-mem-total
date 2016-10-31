@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/bin/cat /proc/meminfo | /bin/grep MemTotal | /usr/bin/cut -d':' -f2 | /usr/bin/cut -d'k' -f1 | sed 's/[^0-9]*//g'
