@@ -211,11 +211,6 @@ if [ -f $ROOTFS/target/etc/apt/sources.list.d/local.list ];then
     rm -f $ROOTFS/target/etc/apt/sources.list.d/local.list
 fi
 
-###### Remove cbatticon for PC
-if [ ! -d /sys/class/power_supply/BAT0 ] && [ ! -d /sys/class/power_supply/BAT1 ] && [ -f $ROOTFS/target/etc/xdg/autostart/cbatticon.desktop ]; then
-    rm -f $ROOTFS/target/etc/xdg/autostart/cbatticon.desktop
-fi
-
 ###### HOME
 
 if [ -f /tmp/fstab ];then
