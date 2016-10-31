@@ -131,6 +131,20 @@ angular.module("install",[])
 
 }])
 
+angular.module("summary",[])
+.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
+  function ($scope, $window, $rootScope){
+    
+    $(".content").css("height", $rootScope.contentHeight);
+    
+    if ($rootScope.autofill) {
+      setTimeout(function(){
+        $rootScope.next();
+      }, 1000)
+    }
+
+}])
+
 angular.module("partition",[])
 .controller("PartitionCtrl", ["$scope", "$window", "$timeout", "$rootScope", 
   function ($scope, $window, $timeout, $rootScope){
@@ -370,6 +384,7 @@ angular.module("partition",[])
       $scope.applyAdvancedModeMessage = false;
     }
     $scope.selectInstallationTarget = function(partition) {
+      $rootScope.lowPartitonSize = false;
       console.log(partition)
       if (!partition.disallow) {
         $rootScope.installationData.partition = $rootScope.selectedDrive.partitionList.indexOf(partition);
@@ -377,6 +392,9 @@ angular.module("partition",[])
           $rootScope.selectedInstallationTarget = $rootScope.selectedDrive.path + partition.id + " ("+partition.sizeGb+" GB)";
         } else {
           $rootScope.selectedInstallationTarget = "a freespace partition";
+        }
+        if (parseInt(partition.sizeGb) < 7.5 ) {
+          $rootScope.lowPartitonSize = true;
         }
         for (j = 0; j < $rootScope.selectedDrive.partitions.length; j++) {
           if ($rootScope.selectedDrive.partitions[j].id === partition.id) {
@@ -1013,8 +1031,16 @@ angular.module("partition",[])
         $scope.scanning = true;
       }, 1000);
     }
+    $scope.switchToCleanInstall = function() {
+      $rootScope.lowPartitonSize = false;
+      $scope.cleanInstall = true;
+    }
     $scope.setDrive = function(drive) {
       // TODO : reset UI
+      $rootScope.lowDiskSize = false;
+      if (parseInt(drive.size) < 8000000000 ) {
+        $rootScope.lowDiskSize = true;
+      }
       var path = drive.path;
       $rootScope.currentPartitionTable = drive.label;
       $rootScope.installationData.device = $rootScope.devices.indexOf(drive);
@@ -1103,20 +1129,6 @@ angular.module("partition",[])
     }
 
 ])
-
-angular.module("summary",[])
-.controller("SummaryCtrl", ["$scope", "$window", "$rootScope", 
-  function ($scope, $window, $rootScope){
-    
-    $(".content").css("height", $rootScope.contentHeight);
-    
-    if ($rootScope.autofill) {
-      setTimeout(function(){
-        $rootScope.next();
-      }, 1000)
-    }
-
-}])
 
 angular.module("timezone",[])
 .controller("TimezoneCtrl", ["$scope", "$window", "$rootScope", 
@@ -1333,6 +1345,10 @@ angular.module('Biui', [
   function ($rootScope, $state, $stateParams, $timeout, $location, $translate) {
     if (window.Installation) {
       $rootScope.release = Installation.getRelease();
+      var memTotal = parseInt(Installation.getMemTotal());
+      if (memTotal < 1000000) {
+        $rootScope.lowMemory = true;
+      }
     }
     $translate.use("enUS");
     $rootScope.steps = [
@@ -1472,6 +1488,7 @@ var en = {
   installation : "Installation",
   please_wait_system_scanned : "Please wait while your sistem is being scanned...",
   please_choose_partition : "Please choose the partition on device below which you would like to install BlankOn into or use advanced partitioning tool for more control.",
+  please_choose_lang : "Please choose your language and region below to continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the Settings application.",
   install_partition : "Installation Target",
   installation_summary : "Installation Summary",
   install_summary_info : "This is our installation summary. Please proceed if you're agree. Beyond this point, the installer will make changes to your system and you can't go.",
@@ -1543,6 +1560,9 @@ var en = {
   clean_install : "Clean Install",
   clean_install_warning : "Warning : This wil delete all your programs, documents, photos, music, and any other files in all operating systems.",
   cancel_clean_install : "Cancel",
+  low_memory_warning : "Your physical memory is under 1 GB, which doesn't meet minimum requirements. Installation can't be continued.",
+  low_partition_size_warning : "Your selected partition is under 8 GB, which doesn't meet minimum requirements. Please select another bigger partition or installation can't be continued.",
+  low_disk_size_warning : "Your selected disk is under 8 GB, which doesn't meet minimum requirements. Please select another bigger disk or installation can't be continued.",
 }
 
 var id = {
@@ -1553,6 +1573,7 @@ var id = {
   installation : "Pemasangan",
   please_wait_system_scanned : "Sistem sedang dipindai...",
   please_choose_partition : "Silakan pilih partisi pada diska di bawah ini untuk memasang BlankOn atau gunakan pemartisi untuk kontrol lebih.",
+  please_choose_lang : "Silakan pilih bahasa untuk melanjutkan. Jika pilihan Anda tidak ada di dalam daftar, Anda dapat melanjutkan dengan pilihan bahasa bawaan dan mengaturnya lagi setelah sistem terpasang pada aplikasi Pengaturan.",
   install_partition : "Tujuan pemasangan",
   installation_summary : "Ringkasan Pemasangan",
   install_summary_info : "Ini adalah ringkasan pemasangan. Lanjutkan jika Anda setuju. Setelah ini, Pemasang akan membuat perubahan pada sistem Anda dan Anda tidak dapat membatalkannya.",
@@ -1624,4 +1645,7 @@ var id = {
   clean_install : "Pemasangan Bersih",
   clean_install_warning : "Peringatan : Tindakan ini akan menghapus program, dokumen, poto, musik dan berkas lain di semua sistem opearasi yang sudah ada.",
   cancel_clean_install : "Batal",
+  low_memory_warning : "Memori komputer Anda berukuran di bawah 1 GB, tidak memenuhi standar minimal. Pemasangan tidak dapat dilanjutkan.",
+  low_partition_size_warning : "Partisi yang Anda pilih berukuran di bawah 8 GB, tidak memenuhi standar minimal. Pilih partisi lain yang lebih besar atau pemasangan tidak dapat dilanjutkan.",
+  low_disk_size_warning : "Diska yang Anda pilih berukuran di bawah 8 GB, tidak memenuhi standar minimal. Pilih diska lain yang lebih besar atau pemasangan tidak dapat dilanjutkan.",
 }
