@@ -8671,3 +8671,9 @@ label {
 .f-dropdown {
   z-index:9999;
 }
+.warning {
+  background:red;
+  color:white;
+  padding:10px;
+  font-size:18px;
+}
