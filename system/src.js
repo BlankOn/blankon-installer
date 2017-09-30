@@ -1567,12 +1567,12 @@ var en = {
   format_partition : "Format Partition",
   partitioning_in_advancedMode : "Partitioning",
   clean_install : "Clean Install",
-  clean_install_warning : "Warning : This wil delete all your programs, documents, photos, music, and any other files in all operating systems.",
+  clean_install_warning : "Warning : This will delete all of your programs, documents, photos, music, and any other files in existing operating systems.",
   cancel_clean_install : "Cancel",
   low_memory_warning : "Your physical memory is under 1 GB, which doesn't meet minimum requirements. Installation can't be continued.",
   low_partition_size_warning : "Your selected partition is under 8 GB, which doesn't meet minimum requirements. Please select another bigger partition or installation can't be continued.",
   low_disk_size_warning : "Your selected disk is under 8 GB, which doesn't meet minimum requirements. Please select another bigger disk or installation can't be continued.",
-  partoedi_warning : "WARNING : Advanced partition feature is still in development. You may found bug(s) and lead to data loss. If so, please report to http://dev.blankon.id/newticket."
+  partoedi_warning : "WARNING : Advanced partition feature is still in development. You may found bug(s) and lead to data loss. If so, please report to https://github.com/BlankOn/Uluwatu/issues."
 }
 
 var id = {
@@ -1658,5 +1658,5 @@ var id = {
   low_memory_warning : "Memori komputer Anda berukuran di bawah 1 GB, tidak memenuhi standar minimal. Pemasangan tidak dapat dilanjutkan.",
   low_partition_size_warning : "Partisi yang Anda pilih berukuran di bawah 8 GB, tidak memenuhi standar minimal. Pilih partisi lain yang lebih besar atau pemasangan tidak dapat dilanjutkan.",
   low_disk_size_warning : "Diska yang Anda pilih berukuran di bawah 8 GB, tidak memenuhi standar minimal. Pilih diska lain yang lebih besar atau pemasangan tidak dapat dilanjutkan.",
-  partoedi_warning : "PERINGATAN : Fitur dalam moda mahir masih dalam pengembangan. Anda mungkin akan menemui beberapa kutu dan kesalahan yang dapat berujung pada kehilangan data. Jika itu terjadi, silakan laporkan  http://http://dev.blankon.id/newticket."
+  partoedi_warning : "PERINGATAN : Fitur dalam moda mahir masih dalam pengembangan. Anda mungkin akan menemui beberapa kutu dan kesalahan yang dapat berujung pada kehilangan data. Jika itu terjadi, silakan laporkan https://github.com/BlankOn/Uluwatu/issues."
 }
