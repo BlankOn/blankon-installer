@@ -1,0 +1,323 @@
+# SOME DESCRIPTIVE TITLE
+# Copyright (C) 2018ee Software Foundation, Inc.
+# This file is distributed under the same license as the BlankOn Installer
+# Cihan Alkan <cihanalk@gmail.com>, 2018
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2012-04-16 16:32+0400\n"
+"PO-Revision-Date: 2018-01-29 20:02+0300\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.0.6\n"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Welcome to BlankOn"
+msgstr "BlankOn'a Hoşgeldiniz"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Welcome to BlankOn installation program. Please choose your language and region below continue. If your choice is not on the list, you can choose the default values and set again later after the system is fully installed in the Settings application."
+msgstr "BlankOn kurulum programına hoş geldiniz. Lütfen aşağıdan dilinizi ve bölgenizi seçip devam edin. Seçiminiz listede yoksa, varsayılan değerleri seçebilir ve sistem tam olarak yüklendikten sonra Ayarlar uygulamasından tekrar ayarlayabilirsiniz."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Language"
+msgstr "Dil"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Region"
+msgstr "Bölge"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Keyboard"
+msgstr "Klavye"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "You can choose whether want to continue using the Live CD or to install into your computer"
+msgstr "Çalışan CD'yi kullanmaya devam etmeyi veya bilgisayarınıza yüklemek isteyip istemediğinizi seçebilirsiniz"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Continue using Live CD"
+msgstr "Çalışan CD kullanmaya devam et"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Install BlankOn"
+msgstr "BlankOn Kur"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Installation Target"
+msgstr "Kurulum Hedefi"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Sorry, it seems that there is no device that we can install BlankOn into. Please attach a hard drive or flash disk before continuing. If you're running as normal user, try again running the installer as root."
+msgstr "Üzgünüz, görünüşe bakılırsa, içine BlankOn yükleyebileceğimiz herhangi bir cihaz yok. Devam etmeden önce lütfen bir sabit disk veya flash disk takın. Normal kullanıcı olarak çalışıyorsanız, yükleyiciyi root olarak tekrar başlatın."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please wait while I scan your computer for available devices"
+msgstr "Bilgisayarınız kullanılabilir aygıtlar için taranırken lütfen bekleyin"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please choose the partition on device below which you would like to install BlankOn into."
+msgstr "Lütfen, aşağıdan BlankOn yüklemek istediğiniz bölümünü seçin."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "WARNING"
+msgstr "UYARI"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "The selected partition will be wiped out. Swap partition will be created if you don't have one."
+msgstr "Seçilen bölüm silinmiş olacak. Takas bölümü, yoksa oluşturulacak."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Personalization"
+msgstr "Kişiselleştirme"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please enter your personalization preference below.."
+msgstr "Lütfen kişiselleştirme tercihinizi aşağıda giriniz."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Enforce strong password"
+msgstr "Güçlü parolayı zorla"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Automatically login"
+msgstr "Otomatik giriş"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Computer Name"
+msgstr "Bilgisayar Adı"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Computer name must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space."
+msgstr "Bilgisayar adı en az 1 karakter uzunluğunda olmalı ve bir harf ile başlamalı. Boşluk bırakmadan küçük harflerle yazılmalıdır."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Your Name"
+msgstr "Gerçek Adınız"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "User Name"
+msgstr "Kullanıcı Adınız"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Username must be at least 1 character long and started with an alphabet. It must be written in lowercase ascii without any space."
+msgstr "Kullanıcı adı, en az 1 karakter uzunluğundaki alfabetik bir karakterle başlamalıdır. Boşluk içermeyen küçük harflerle yazılmalıdır."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password"
+msgstr "Parola"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password must be at least 8 character long with number and alphabet lowercase and uppercase combination."
+msgstr "Parola, sayı ve alfabe küçük ve büyük harf kombinasyonu ile en az 8 karakter uzunluğunda olmalıdır."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password must be at least 1 character."
+msgstr "Parola en az 1 karakter olmalıdır."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password should be at least 8 character long with number and alphabet lowercase and uppercase combination, otherwise it will be very easy for others to guess your password."
+msgstr "Parola, sayı ve alfabe küçük ve büyük harf kombinasyonuyla en az 8 karakter uzunluğunda olmalı, aksi takdirde başkalarının şifrenizi tahmin etmesi çok kolay olacaktır."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Password (once again)"
+msgstr "Parola (yeniden)"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "You must use exactly the same password as typed above."
+msgstr "Yukarıda yazılanla tamamen aynı parola girmeniz gerekir."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Installation Summary"
+msgstr "Kurulum Özeti"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "This is our installation summary. Please proceed if you're agree. Beyond this point, the installer will make changes to your system and you can't go back."
+msgstr "Bu bizim kurulum özetimiz. Kabul ediyorsanız lütfen devam edin. Bu noktadan sonra, yükleyici sisteminizde değişiklik yapacak ve geri dönemeyeceksiniz."
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Target device"
+msgstr "Hedef aygıt"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Target partition"
+msgstr "Hedef bölüm"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Computer name"
+msgstr "Bilgisayar adı"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Full name"
+msgstr "Tam isim"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "User name"
+msgstr "Kullanıcı adı"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Installation"
+msgstr "Kurulum"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Please wait a moment while the installation is applied to your system"
+msgstr "Kurulum yapılırken lütfen biraz bekleyin"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Preparing"
+msgstr "Hazırlanıyor"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Done"
+msgstr "Tamam"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Your system is ready, now please continue to reboot into your newly installed system"
+msgstr "Sisteminiz hazır, lütfen yeni kurulan sisteminizden yeniden başlatarak devam edin"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Reboot to newly installed system"
+msgstr "Yeni kurulan sistem ile yeniden başlatın"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "ADVANCED MODE"
+msgstr "GELİŞMİŞ MOD"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Click to switch to Quick Mode"
+msgstr "Hızlı Moda geçmek için tıklayın"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Click to switch to Advanced Mode"
+msgstr "Gelişmiş Mod'a geçmek için tıklayın"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Previous"
+msgstr "Geri"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Next"
+msgstr "İleri"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Sorry,"
+msgstr "Üzgünüm,"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "There is an error during installation. Please see the log below, you can capture this or just send the /var/log/blankon-installer.log file to blankon-dev@googlegroups.com"
+msgstr "Kurulum sırasında bir hata oluştu. Lütfen aşağıdaki günlüğe bakın, Günlüe bakarak sorunu çözebilir veya  /var/log/blankon-installer.log dosyasını blankon-dev@googlegroups.com adresine gönderebilirsiniz"
+
+#. type: span
+#: FIXME:0
+#, no-wrap
+msgid "Exit installation and continue using LiveCD"
+msgstr "Kurulumdan çıkın ve Çalışan CD'yi kullanmaya devam edin"
+
+#. type: textarea
+#: FIXME:0
+#, no-wrap
+msgid "Please wait while loading the log..."
+msgstr "Günlüğü yüklerken lütfen bekleyin ..."
