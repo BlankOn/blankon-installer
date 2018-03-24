@@ -681,6 +681,8 @@ public class Installation : GLib.Object {
         } else if ((EfiCollector.is_efi_system () && !efi_partitions.is_empty && createESPPartition) || (EfiCollector.is_efi_system () && cleanInstall)) {
             efiPartition = "false";
             efiNeedFormat = "Y";
+        } else if (EfiCollector.is_efi_system() && !efi_partitions.is_empty){
+            efiPartition = "false";
         }
         string [] c = { "/sbin/b-i-install-grub", device_path, efiPartition, efiNeedFormat };
         do_simple_command_with_args (c, Step.GRUB, "installing_grub", "Unable to install GRUB");
